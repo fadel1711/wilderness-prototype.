@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.11 · Premium Stylized Adventure</title>
+<title>Wilderness — v0.12 · Echo Cave Visual Rebuild</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -150,7 +150,7 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.11</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.12</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="damageOverlay"></div>
 <div class="vitals" aria-label="Survival status"><div class="vitalRow">❤ <span>HP</span><div class="vitalBar"><i id="healthFill"></i></div><b id="healthNumber">100</b></div><div class="vitalRow">⚡ <span>SP</span><div class="vitalBar"><i id="staminaFill"></i></div><b id="staminaNumber">100</b></div><span id="safeLabel" class="safeLabel">🛖 Homestead safe</span></div><div id="timeHud" class="timehud" aria-label="Time of day">☀ Day 1 · 09:00</div><button id="mapButton" class="mapquick" aria-label="Open map">🗺 Map</button><div id="waypointHud" class="waypointhud">🧭 Explore · 🗺 Map</div><div id="interaction"></div><div id="toast" class="toast"></div>
@@ -201,15 +201,15 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
   <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
   <p id="bagSummary" class="bagsummary">24 slots</p>
   <div id="inventorySlots" class="inventorygrid"></div>
-  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Enjoy building without farming. v0.9 also tops up seeds so you can test crops freely. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and simple effects. Low effects also lowers render resolution for performance.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.11 world after confirmation.</p>
+  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Enjoy building without farming. v0.9 also tops up seeds so you can test crops freely. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and simple effects. Low effects also lowers render resolution for performance.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.12 world after confirmation.</p>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">PREMIUM STYLIZED ADVENTURE</div><h1>Wilderness · v0.11</h1><p>Your v0.10 world is preserved. This update focuses on redesigned trees, a more detailed survivor, cabin architecture, organic terrain, and a new sky treatment. Farming, caves, building, combat and the safe homestead are unchanged. No raids, no payments.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using free starter seeds. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. Audio starts only after pressing Enter. Adjust audio and effects inside Bag → Game settings.</p></div></div>
+<div id="modal"><div class="intro"><div class="eyebrow">ECHO CAVE · VISUAL REBUILD</div><h1>Wilderness · v0.12</h1><p>Your v0.11 world is preserved. This graphics-first benchmark rebuilds Echo Cave with an irregular rocky arch, a sculpted tunnel, mossy entrance and warm torchlight. The forest approach is more layered. Your homestead, cave loot, combat, construction, map, farming and progress all remain unchanged. No raids and no payments.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using free starter seeds. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. Audio starts only after pressing Enter. Adjust audio and effects inside Bag → Game settings.</p></div></div>
 <div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all eleven files are in the same GitHub repository folder.</p></div></div>
 <script>
-// v0.11 boot diagnostics do not touch browser storage or saves.
+// v0.12 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -227,20 +227,20 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
     box.style.display='flex';
     if(failure)reason.textContent='Startup error: '+failure;
     else reason.textContent='The game did not finish loading. Checking files…';
-    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js'];
+    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.11',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.12',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
-      if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all eleven files to the repository root.';return;}
+      if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all twelve files to the repository root.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
-      if(!contents[0].includes("version:'0.11'")||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v011_singleplayer')||!contents[6].includes('CROPS')||!contents[7].includes('DAY_SECONDS')||!contents[8].includes('createSkyGradient')){
-        reason.textContent='Mixed or outdated files detected. Replace index.html and all nine JavaScript files together from the v0.11 ZIP.';return;
+      if(!contents[0].includes("version:'0.12'")||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v012_singleplayer')||!contents[6].includes('CROPS')||!contents[7].includes('DAY_SECONDS')||!contents[8].includes('createSkyGradient')||!contents[9].includes('CAVE_ART_VERSION')){
+        reason.textContent='Mixed or outdated files detected. Replace index.html and all ten JavaScript files together from the v0.12 ZIP.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.11"></script>
+<script type="module" src="./game.js?v=0.12"></script>
 </body>
 </html>
