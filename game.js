@@ -1,13 +1,14 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.10';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.10';
+import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.11';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.11';
 
-import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.10';
+import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.11';
 
-import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.10';
-import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.10';
-import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.10';
-import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.10';
+import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.11';
+import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.11';
+import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.11';
+import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.11';
+import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.11';
 
 // Wilderness v0.7 — survival combat with v0.7 crafting, equipment, storage, and interiors; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
@@ -29,49 +30,20 @@ $('world').appendChild(renderer.domElement);
 const ambientSky=new THREE.HemisphereLight('#ecf2e6', '#6f6653', 2.1);scene.add(ambientSky);
 const sunlight = new THREE.DirectionalLight('#f9edd9', 1.8);
 sunlight.position.set(-28, 43, 19); scene.add(sunlight);
+const skyGradient=createSkyGradient(THREE,scene);
 
-function makeTexture(kind, seed) {
-  // Tiny tileable textures generated entirely on-device. No image downloads.
-  const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 128;
-  const ctx = canvas.getContext('2d'); if (!ctx) return null;
-  let state = seed >>> 0;
-  const roll = () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296; };
-  if (kind === 'grass') {
-    ctx.fillStyle = '#797f64'; ctx.fillRect(0, 0, 128, 128);
-    for (let i = 0; i < 2600; i++) {
-      const v = Math.floor(95 + roll() * 45);
-      ctx.fillStyle = `rgba(${Math.floor(v*.75)},${v},${Math.floor(v*.66)},${.07 + roll()*.14})`;
-      ctx.fillRect(roll()*128, roll()*128, 1 + roll()*3, 1 + roll()*3);
-    }
-    for (let i = 0; i < 110; i++) {
-      ctx.strokeStyle = roll() > .5 ? '#8b8c7055' : '#394e3a3a'; ctx.lineWidth = .55;
-      const x=roll()*128, y=roll()*128; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+(roll()-.5)*4,y-3-roll()*4); ctx.stroke();
-    }
-  } else if (kind === 'wood') {
-    ctx.fillStyle = '#92765b'; ctx.fillRect(0, 0, 128, 128);
-    for (let i = 0; i < 185; i++) {
-      const x=roll()*128;
-      ctx.strokeStyle = roll()>.42 ? '#54432c30' : '#e0c49430';ctx.lineWidth=.6+roll()*1.7;
-      ctx.beginPath();ctx.moveTo(x,0);ctx.bezierCurveTo(x+roll()*5,41,x-roll()*5,88,x+roll()*4,128);ctx.stroke();
-    }
-  } else if (kind === 'stone') {
-    ctx.fillStyle='#888b83';ctx.fillRect(0,0,128,128);
-    for(let i=0;i<1800;i++){const v=Math.floor(90+roll()*75);ctx.fillStyle=`rgba(${v},${v+2},${v},${.025+roll()*.09})`;ctx.fillRect(roll()*128,roll()*128,1+roll()*3,1+roll()*3);}
-  } else if (kind === 'roof') {
-    ctx.fillStyle='#655f54';ctx.fillRect(0,0,128,128);
-    for(let y=4;y<128;y+=19){ctx.fillStyle='#25272328';ctx.fillRect(0,y,128,2);for(let x=(y%38)*2-32;x<128;x+=35){ctx.fillRect(x,y,2,19);}}
-  }
-  const t=new THREE.CanvasTexture(canvas);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return t;
-}
+// v0.11 textured materials are generated by visual-system.js.
+function makeTexture(kind, seed){return makeArtTexture(THREE,renderer,kind,seed);}
 const grassTexture = makeTexture('grass', 906), woodTexture=makeTexture('wood',317),stoneTexture=makeTexture('stone',44),roofTexture=makeTexture('roof',72);
-if(grassTexture)grassTexture.repeat.set(31,31);
+if(grassTexture)grassTexture.repeat.set(42,42);
 const mat=(color,texture=null,roughness=1)=>new THREE.MeshStandardMaterial({color, map:texture||null, roughness});
-const grassMat=mat('#a2a58e',grassTexture), earth=mat('#7f755e'), pathMat=mat('#a59a7a');
-const trunk=mat('#80705c',woodTexture), foliage=[mat('#54705a'),mat('#627962'),mat('#486652'),mat('#647b59')];
+const grassMat=mat('#e0e4c4',grassTexture), earth=mat('#7b6650'), pathMat=mat('#a28b6a');
+const trunk=mat('#80705c',woodTexture), foliage=[mat('#426554'),mat('#58755b'),mat('#375c4b'),mat('#6b8460')];
 const rockMat=mat('#b4b7af',stoneTexture), rockDark=mat('#989b94',stoneTexture);
-const timber=mat('#b5a084',woodTexture),timberDark=mat('#92745b',woodTexture), beam=mat('#6a5945',woodTexture);
-const roofMat=mat('#9c9285',roofTexture), glassMat=mat('#9ab1ae',null,.24);
-const coat=mat('#5b6960'),coatDark=mat('#455047'),trousers=mat('#5c5148'),skin=mat('#d4ad8d'),hair=mat('#483e34'),bootMat=mat('#3b342c');
+const timber=mat('#c8b59a',woodTexture),timberDark=mat('#a58d75',woodTexture), beam=mat('#705a47',woodTexture);
+const roofMat=mat('#b0aaa4',roofTexture), glassMat=new THREE.MeshStandardMaterial({color:'#a1cad0',roughness:.24,metalness:.15,transparent:true,opacity:.76});
+const clothTexture=makeTexture('cloth',1029);const coat=mat('#819079',clothTexture),coatDark=mat('#425447',clothTexture),trousers=mat('#64584a'),skin=mat('#d7ab85'),hair=mat('#3e372f'),bootMat=mat('#40372e');
+const trimLeather=mat('#70523e'), linen=mat('#c0b49c'),brass=mat('#b69c66'),hoodMat=mat('#516856',clothTexture);
 const shadowMat=new THREE.MeshBasicMaterial({color:'#1b2119',transparent:true,opacity:.17,depthWrite:false});
 function mesh(geometry,material,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
 const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
@@ -100,27 +72,51 @@ for(let i=0;i<95;i++){
 const distantHill=mat('#758779');
 for(let i=0;i<17;i++){
   const a=i/17*Math.PI*2,r=115+random()*20,rr=7+random()*9,h=12+random()*17;
-  const hill=mesh(new THREE.ConeGeometry(rr,h,7),distantHill,scene,Math.sin(a)*r,4,Math.cos(a)*r);hill.rotation.y=random()*6;
+  const hill=mesh(new THREE.IcosahedronGeometry(1,1),distantHill,scene,Math.sin(a)*r,1.0,Math.cos(a)*r);hill.scale.set(rr,h*.60,rr*.85);hill.rotation.y=random()*6;
 }
 
-// Character: an intentionally modest, textured-feeling indie model, not AAA art.
-const player = new THREE.Group();scene.add(player);
+// Premium v0.11 survivor: layered travel clothes, believable silhouette and sturdy gear.
+// Animation controls, body positioning and tool mounts deliberately keep the old identifiers.
+const player=new THREE.Group();scene.add(player);
 const legs=new THREE.Group(),arms=new THREE.Group();player.add(legs,arms);
-const torso=mesh(new THREE.CapsuleGeometry(.34,.73,4,10),coat,player,0,1.44,0);torso.scale.z=.82;
-const collar=mesh(new THREE.CylinderGeometry(.20,.25,.14,10),coatDark,player,0,1.94,0);
-mesh(new THREE.SphereGeometry(.29,14,10),skin,player,0,2.21,0);
-const cap=mesh(new THREE.SphereGeometry(.295,12,8,0,Math.PI*2,0,Math.PI*.47),hair,player,0,2.26,0);
-mesh(box(.47,.60,.17),timberDark,player,0,1.41,-.35); // small travelling pack
-mesh(box(.12,.45,.11),beam,player,0,1.45,-.46);
-const armL=mesh(new THREE.CapsuleGeometry(.12,.5,3,8),coat,arms,-.50,1.39,0);
-const armR=mesh(new THREE.CapsuleGeometry(.12,.5,3,8),coat,arms,.50,1.39,0);
-const legL=mesh(new THREE.CapsuleGeometry(.135,.52,3,8),trousers,legs,-.18,.53,0);
-const legR=mesh(new THREE.CapsuleGeometry(.135,.52,3,8),trousers,legs,.18,.53,0);
-mesh(box(.28,.15,.40),bootMat,legL,0,-.36,.07);mesh(box(.28,.15,.40),bootMat,legR,0,-.36,.07);
-const playerShadow = disk(player,0,0,.50,shadowMat,.007);
-// Modest visible tools follow the right hand rather than floating in the scene.
+const torso=mesh(new THREE.CylinderGeometry(.36,.31,.94,10),coat,player,0,1.49,0);torso.scale.z=.72;
+const waist=mesh(new THREE.CylinderGeometry(.34,.33,.14,10),trimLeather,player,0,1.08,0);
+const tunicFlap=mesh(box(.50,.35,.07),coatDark,player,0,.92,.25);
+mesh(box(.58,.80,.12),hoodMat,player,0,1.48,-.26); // fitted leather/cloth vest on back
+const collar=mesh(new THREE.CylinderGeometry(.23,.29,.20,10),hoodMat,player,0,2.00,0);
+mesh(new THREE.SphereGeometry(.262,14,10),skin,player,0,2.27,0).scale.set(.95,1.12,.90);
+// The hoodie/hair creates a readable human profile from the rear camera.
+mesh(new THREE.SphereGeometry(.273,13,9,0,Math.PI*2,0,Math.PI*.52),hair,player,0,2.35,-.025);
+mesh(box(.23,.045,.05),hair,player,0,2.37,.238); // natural fringe
+for(const sx of [-1,1]){
+  mesh(new THREE.SphereGeometry(.025,6,5),hair,player,sx*.093,2.27,.231);
+  mesh(new THREE.SphereGeometry(.075,6,6),coatDark,player,sx*.35,1.85,0); // shoulders
+}
+const bag=mesh(box(.50,.70,.22),trimLeather,player,0,1.45,-.41);
+mesh(box(.38,.13,.035),brass,player,0,1.36,-.54);
+mesh(box(.14,.12,.045),coatDark,player,0,1.31,-.565);
+for(const sx of [-1,1]){
+  const strap=mesh(box(.095,.82,.06),trimLeather,player,sx*.19,1.54,.24);strap.rotation.z=-sx*.14;
+  mesh(box(.075,.105,.04),brass,player,sx*.19,1.25,.29);
+}
+mesh(box(.22,.17,.09),brass,player,0,1.08,.32);
+mesh(box(.14,.24,.10),trimLeather,player,.34,1.06,.03); // belt pouch
+const armL=mesh(new THREE.CapsuleGeometry(.115,.57,3,8),coat,arms,-.46,1.41,0);
+const armR=mesh(new THREE.CapsuleGeometry(.115,.57,3,8),coat,arms,.46,1.41,0);
+for(const arm of [armL,armR]){
+  mesh(new THREE.CylinderGeometry(.135,.12,.19,8),coatDark,arm,0,-.26,0); // sleeve cuff
+  mesh(new THREE.SphereGeometry(.105,8,6),trimLeather,arm,0,-.42,.02); // gloves
+}
+const legL=mesh(new THREE.CapsuleGeometry(.13,.58,3,8),trousers,legs,-.17,.55,0);
+const legR=mesh(new THREE.CapsuleGeometry(.13,.58,3,8),trousers,legs,.17,.55,0);
+for(const leg of [legL,legR]){
+  mesh(new THREE.CylinderGeometry(.145,.15,.18,8),trimLeather,leg,0,-.24,0);
+  mesh(box(.29,.24,.43),bootMat,leg,0,-.38,.075);
+  mesh(box(.3,.045,.47),trimLeather,leg,0,-.51,.08);
+}
+const playerShadow=disk(player,0,0,.56,shadowMat,.007);
 const weaponMount=new THREE.Group();weaponMount.position.set(.02,-.53,.13);armR.add(weaponMount);
-const handleMat=mat('#79624a',woodTexture),ironMat=mat('#858f8c',stoneTexture);
+const handleMat=mat('#79624a',woodTexture),ironMat=mat('#9ba4a0',stoneTexture);
 const axeModel=new THREE.Group(),pickModel=new THREE.Group();weaponMount.add(axeModel,pickModel);
 mesh(new THREE.CylinderGeometry(.052,.060,.97,8),handleMat,axeModel,0,-.28,0);
 mesh(box(.37,.23,.11),ironMat,axeModel,-.15,-.69,0);
@@ -128,33 +124,48 @@ mesh(new THREE.CylinderGeometry(.052,.060,1.03,8),handleMat,pickModel,0,-.23,0);
 mesh(box(.66,.12,.12),rockMat,pickModel,0,-.72,0);
 mesh(new THREE.ConeGeometry(.095,.27,6),ironMat,pickModel,-.35,-.73,0).rotation.z=Math.PI/2;
 mesh(new THREE.ConeGeometry(.095,.27,6),ironMat,pickModel,.35,-.73,0).rotation.z=-Math.PI/2;
-// Visible sword is kept simple to match the approved indie art style.
 const swordModel=new THREE.Group();weaponMount.add(swordModel);
 mesh(box(.11,.92,.11),ironMat,swordModel,0,-.44,0);
-mesh(box(.44,.10,.14),beam,swordModel,0,-.84,0);
+mesh(box(.44,.10,.14),brass,swordModel,0,-.84,0);
 mesh(new THREE.CylinderGeometry(.052,.052,.24,8),handleMat,swordModel,0,-1.02,0);
 swordModel.visible=false;
 player.position.set(0,0,0);
 
 const resourceRoot=new THREE.Group();scene.add(resourceRoot);
-const resources=[];const cameraOccluders=[];
+const resources=[];const cameraOccluders=[];const forestDetails=[];
+function registerForestDetail(mesh,x,z){forestDetails.push({mesh,x,z});return mesh;}
+function refreshForestLOD(low){for(const d of forestDetails){const dist2=(player.position.x-d.x)**2+(player.position.z-d.z)**2;d.mesh.visible=!low&&dist2<38*38;}}
 function addTree(id,x,z,s){
   const g=new THREE.Group();g.position.set(x,0,z);resourceRoot.add(g);
-  const trunkMesh=mesh(new THREE.CylinderGeometry(.22*s,.36*s,2.14*s,9),trunk,g,0,1.07*s,0);cameraOccluders.push(trunkMesh);
-  // Broadleaf trees break up the silhouette; pine trees keep the recognizable woodland look.
-  if(Number(id.slice(1))%5===0){
-    for(let j=0;j<5;j++){
-      const a=j*Math.PI*2/5+0.2;
-      const b=mesh(new THREE.SphereGeometry((1.13+(j%2)*.14)*s,9,7),foliage[(j+2)%4],g,Math.cos(a)*.60*s,(2.75+(j%2)*.27)*s,Math.sin(a)*.6*s);
-      b.scale.set(.88,.75,.88);
+  const trunkMesh=mesh(new THREE.CylinderGeometry(.21*s,.36*s,2.42*s,9),trunk,g,0,1.21*s,0);cameraOccluders.push(trunkMesh);
+  const index=Number(id.slice(1));
+  // Broadleaf canopy has offset layered clusters rather than a ball or a geometric cone.
+  if(index%5===0){
+    for(let j=0;j<8;j++){
+      const a=j*2.39996,r=(.45+(j%3)*.21)*s;
+      const color=foliage[(j+index)%foliage.length];
+      const leaf=mesh(new THREE.IcosahedronGeometry((.85+(j%3)*.12)*s,1),color,g,Math.sin(a)*r,(2.95+(j%4)*.21)*s,Math.cos(a)*r);
+      leaf.scale.set(1.09,.72,1.05);leaf.rotation.y=a; if(j>4)registerForestDetail(leaf,x,z);
     }
   } else {
-    for(let j=0;j<3;j++){
-      const cone=mesh(new THREE.ConeGeometry((1.48-j*.20)*s,(2.7-j*.07)*s,8),foliage[(j+Number(id.slice(1)))%4],g,0,(2.28+j*.82)*s,0);
-      cone.rotation.y=(j*.23);
+    for(let tier=0;tier<4;tier++){
+      const width=(1.49-tier*.25)*s,height=(1.65-tier*.13)*s;
+      const crown=mesh(new THREE.ConeGeometry(width,height,7),foliage[(tier+index)%foliage.length],g,0,(2.10+tier*.68)*s,0);
+      crown.rotation.y=tier*.37;
+      // Individual sprays break up the rigid triangular outline.
+      for(let arm=0;arm<3;arm++){
+        const a=arm*Math.PI*2/3+tier*.38;
+        const tuft=mesh(new THREE.IcosahedronGeometry(.45*s,0),foliage[(tier+arm+2)%foliage.length],g,Math.cos(a)*width*.74,(2.12+tier*.67)*s,Math.sin(a)*width*.74);
+        tuft.scale.y=.67;registerForestDetail(tuft,x,z);
+      }
     }
   }
-  disk(g,0,0,.60*s); resources.push({id,type:'tree',x,z,hits:3,group:g,radius:.38*s});
+  for(let j=0;j<3;j++){
+    const a=j*Math.PI*2/3+index*.3;
+    const root=mesh(new THREE.ConeGeometry(.14*s,.66*s,5),trunk,g,Math.cos(a)*.24*s,.18*s,Math.sin(a)*.24*s);
+    root.rotation.z=.42*Math.cos(a);root.rotation.x=.42*Math.sin(a);registerForestDetail(root,x,z);
+  }
+  disk(g,0,0,.64*s);resources.push({id,type:'tree',x,z,hits:3,group:g,radius:.38*s});
 }
 function addRock(id,x,z,s){
   const g=new THREE.Group();g.position.set(x,0,z);resourceRoot.add(g);
@@ -193,6 +204,7 @@ for(let i=0;i<60;i++){
   const patch=mesh(new THREE.CircleGeometry(1.5+outerRand()*2.4,10),outerGrasses[i%3],scene,x,-.076,z);
   patch.rotation.x=-Math.PI/2;
 }
+const premiumGround=createGroundScatter(THREE,scene,{world:WORLD,resources,count:780});
 // Decorative shrubs use an independent RNG, so v0.1 resource locations never shift.
 let detailSeed=48112;function detailRand(){detailSeed=(Math.imul(detailSeed,1664525)+1013904223)>>>0;return detailSeed/4294967296;}
 for(let i=0;i<45;i++){
@@ -341,7 +353,6 @@ function cabinShape(group,ghost=false){
   const frontL=mesh(box(1.45,2.65,.22),timberDark,group,-1.775,1.58,2.4);
   const frontR=mesh(box(1.45,2.65,.22),timberDark,group,1.775,1.58,2.4);
   const lintel=mesh(box(2.12,.38,.22),timberDark,group,0,2.72,2.4);
-  // Actual doorway is open; the solid wall colliders exactly match this geometry.
   for(const m of [back,left,right,frontL,frontR,lintel]){
     if(!ghost){m.material.side=THREE.DoubleSide;cameraOccluders.push(m);}
   }
@@ -349,19 +360,46 @@ function cabinShape(group,ghost=false){
   const roofB=mesh(box(3.04,.28,5.7),roofMat,group,1.2,3.6,0);roofB.rotation.z=-.59;
   roofA.userData.roof=true;roofB.userData.roof=true;
   if(!ghost)cameraOccluders.push(roofA,roofB);
-  mesh(box(.12,2.5,.15),beam,group,-1.07,1.38,2.55);mesh(box(.12,2.5,.15),beam,group,1.07,1.38,2.55);
+  // Construction geometry remains identical: all new pieces are decorative overlays.
+  for(const x of [-2.42,2.42])for(const z of [-2.42,2.42]){
+    mesh(box(.19,2.75,.19),beam,group,x,1.47,z);
+  }
+  for(const yy of [.42,1.09,1.75,2.45]){
+    mesh(box(4.9,.09,.08),beam,group,0,yy,-2.55);
+    for(const x of [-2.54,2.54])mesh(box(.09,.08,4.85),beam,group,x,yy,0);
+    for(const x of [-1.78,1.78])mesh(box(1.36,.07,.08),beam,group,x,yy,2.56);
+  }
+  for(const y of [.22,2.8])mesh(box(5.0,.10,.12),beam,group,0,y,-2.52);
+  for(const x of [-2.56,2.56])mesh(box(.12,.10,5),beam,group,x,2.82,0);
+  // Roof ridge and two overhanging dark eave lines hide with the roof.
+  const ridge=mesh(box(.18,.19,5.85),beam,group,0,4.47,0);ridge.userData.roof=true;
+  for(const x of [-2.56,2.56]){
+    const eave=mesh(box(.23,.12,5.75),beam,group,x,2.76,0);eave.userData.roof=true;
+  }
+  for(const x of [-1.07,1.07])mesh(box(.12,2.5,.15),beam,group,x,1.38,2.55);
   mesh(box(2.08,.12,.15),beam,group,0,2.57,2.56);
   mesh(box(1.19,.90,.06),glassMat,group,1.72,1.80,-2.55);
-  const frame=mesh(box(1.3,.08,.14),beam,group,1.72,2.26,-2.58);
-  frame.userData.decoration=true;
+  for(const x of [1.07,2.37])mesh(box(.075,.95,.13),beam,group,x,1.8,-2.62);
+  for(const y of [1.33,2.27])mesh(box(1.38,.075,.13),beam,group,1.72,y,-2.61);
+  mesh(box(.08,.89,.15),beam,group,1.72,1.8,-2.65);
+  mesh(box(1.35,.07,.15),beam,group,1.72,1.81,-2.65);
+  // Small entry lantern: warm emissive finish but no extra dynamic light/shadow pass.
+  const lamp=mesh(new THREE.CylinderGeometry(.09,.12,.32,6),new THREE.MeshStandardMaterial({color:'#e1ae65',emissive:'#dd9c49',emissiveIntensity:.36}),group,-1.18,2.16,2.64);
+  mesh(box(.17,.055,.17),beam,group,-1.18,2.35,2.64);
 }
 function modularShape(type,group,ghost){
   if(type==='foundation'){
     mesh(box(1.98,.54,1.98),rockMat,group,0,.27,0);
     for(const z of [-.77,.77])mesh(box(1.98,.13,.11),beam,group,0,.57,z);
+    for(const y of [.20,.39])mesh(box(1.94,.03,.01),rockDark,group,0,y,1.0);
   }
-  if(type==='floor')mesh(box(1.98,.24,1.98),timber,group,0,.12,0);
-  if(type==='wall')mesh(box(1.98,2.65,.20),timberDark,group,0,1.45,0);
+  if(type==='floor'){mesh(box(1.98,.24,1.98),timber,group,0,.12,0);
+    for(const x of [-.68,-.24,.22,.69])mesh(box(.025,.012,1.85),beam,group,x,.251,0);
+  }
+  if(type==='wall'){mesh(box(1.98,2.65,.20),timberDark,group,0,1.45,0);
+    for(const x of [-.92,.92])mesh(box(.10,2.65,.26),beam,group,x,1.45,0);
+    for(const y of [.44,1.30,2.16])mesh(box(1.91,.065,.25),beam,group,0,y,0);
+  }
   if(type==='door'){
     for(const x of [-.91,.91])mesh(box(.18,2.65,.22),timberDark,group,x,1.45,0);
     mesh(box(1.82,.38,.22),timberDark,group,0,2.59,0);
@@ -379,6 +417,7 @@ function modularShape(type,group,ghost){
     const a=mesh(box(1.17,.19,2.13),roofMat,group,-.48,3.07,0);a.rotation.z=.47;
     const b=mesh(box(1.17,.19,2.13),roofMat,group,.48,3.07,0);b.rotation.z=-.47;
     a.userData.roof=true;b.userData.roof=true;
+    const roofRidge=mesh(box(.11,.12,2.18),beam,group,0,3.42,0);roofRidge.userData.roof=true;
   }
   if(type==='path')mesh(box(1.91,.055,1.91),pathMat,group,0,.032,0);
   if(type==='fence'){
@@ -590,7 +629,7 @@ function storePreference(key,value){try{localStorage.setItem(key,value);}catch(e
 const sound=new SoundFx();let soundEnabled=preference(AUDIO_PREF,'on')==='on';
 let effectsQuality=preference(EFFECTS_PREF,'standard')==='low'?'low':'standard';
 sound.setEnabled(soundEnabled);
-function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio||1,effectsQuality==='low'?1:1.5));}
+function applyQuality(){renderer.setPixelRatio(Math.min(devicePixelRatio||1,effectsQuality==='low'?1:1.5));premiumGround.setLow(effectsQuality==='low');refreshForestLOD(effectsQuality==='low');}
 function updatePrefs(){ $('soundToggle').textContent=soundEnabled?'🔊 Sound On':'🔇 Sound Off'; $('effectsToggle').textContent=effectsQuality==='low'?'⚡ Effects Low':'✨ Effects Standard'; }
 function updateAtmosphere(){
   const mood=timeOfDay(atmosphere.elapsed),d=mood.light;
@@ -598,6 +637,7 @@ function updateAtmosphere(){
   sunlight.color.set('#f9ead6').lerp(new THREE.Color('#e8ae79'),mood.twilight*.45);
   scene.background.set('#7c91a0').lerp(new THREE.Color('#bcc8c3'),.40+.60*mood.daylight);
   scene.fog.color.copy(scene.background);
+  updateSkyGradient(THREE,skyGradient,mood.daylight,mood.twilight);
   renderer.toneMappingExposure=.80+.24*d;
   $('timeHud').textContent=(mood.night?'☾ ':'☀ ')+mood.label;
 }
@@ -670,7 +710,7 @@ function loadGame(){
   // Read the newest available save. Never overwrite a corrupt newer save with older data.
   try{
     const candidates=[
-      [SAVE_KEY,'v0.10'],[V09_KEY,'v0.9'],[V08_KEY,'v0.8'],[V07_KEY,'v0.7'],
+      [SAVE_KEY,'v0.11'],[V10_KEY,'v0.10'],[V09_KEY,'v0.9'],[V08_KEY,'v0.8'],[V07_KEY,'v0.7'],
       [V06_KEY,'v0.6'],[V05_KEY,'v0.5'],[V04_KEY,'v0.4'],
       [V03_KEY,'v0.3'],[LEGACY_KEY,'v0.2']
     ];
@@ -694,8 +734,8 @@ function loadGame(){
   nextBuildId=Math.max(0,...builds.map(b=>Number(b.id.slice(1))))+1;
   refreshElevations();findSafePosition();
   axeModel.visible=['axe','stone_axe'].includes(equipped);pickModel.visible=['pickaxe','iron_pickaxe'].includes(equipped);swordModel.visible=equipped==='sword';combatMode=equipped==='sword';
-  if(origin!=='v0.10')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
-  else loadMessage='v0.10 world loaded.';
+  if(origin!=='v0.11')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
+  else loadMessage='v0.11 world loaded.';
   refreshLootVisuals();
 }
 function renderInventory(){
@@ -731,7 +771,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.10-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.11-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -743,7 +783,7 @@ async function importSave(file){
   let imported;
   try{imported=normalizeSave(JSON.parse(await file.text()));}
   catch(e){toast('Import rejected: '+e.message);return;}
-  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.10 world will be replaced. Export it first if needed.`;
+  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.11 world will be replaced. Export it first if needed.`;
   if(!window.confirm(question))return;
   try{
     const previous=localStorage.getItem(SAVE_KEY);
@@ -757,7 +797,7 @@ function undoLastImport(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem(PRE_IMPORT_KEY)||'null'));}
   catch(e){toast('No valid pre-import recovery found');return;}
-  if(!window.confirm('Undo the last world import? This replaces your current v0.10 world with the previous version. Export your current world first if needed.'))return;
+  if(!window.confirm('Undo the last world import? This replaces your current v0.11 world with the previous version. Export your current world first if needed.'))return;
   try{
     const current=localStorage.getItem(SAVE_KEY);
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
@@ -1374,7 +1414,7 @@ function updateImpacts(dt){for(const p of impactPool){if(p.life<=0)continue;p.li
   p.mesh.position.x+=p.vx*dt;p.mesh.position.y+=p.vy*dt;p.mesh.position.z+=p.vz*dt;p.vy-=2.5*dt;p.mesh.material.opacity=Math.min(.65,p.life*1.25);
 }}
 let stepSoundCooldown=0,ambienceCooldown=12,moodTimer=0;
-const viewRay=new THREE.Raycaster();let uiTimer=0,saveTimer=0,roofTimer=0,farmVisualTimer=0;
+const viewRay=new THREE.Raycaster();let uiTimer=0,saveTimer=0,roofTimer=0,farmVisualTimer=0;let forestLodTimer=0;
 function updateCamera(dt){
   const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
   const target=new THREE.Vector3(player.position.x,1.53+player.position.y,player.position.z);
@@ -1391,6 +1431,7 @@ function updateCamera(dt){
 function tick(){
   requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.05);
   if(!paused){
+    forestLodTimer+=dt; if(forestLodTimer>.8){forestLodTimer=0;refreshForestLOD(effectsQuality==='low');}
     atmosphere.elapsed+=dt;moodTimer+=dt;if(moodTimer>.35){moodTimer=0;updateAtmosphere();}
     ambienceCooldown-=dt;if(ambienceCooldown<=0){ambienceCooldown=12+Math.random()*14;if(!timeOfDay(atmosphere.elapsed).night)sound.play('bird');}
     updateImpacts(dt);stepSoundCooldown=Math.max(0,stepSoundCooldown-dt);
@@ -1468,6 +1509,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.10',atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({version:'0.11',atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 window.__gameReady=true;refreshLootVisuals();updateFarmVisuals();renderMap();tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});

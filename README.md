@@ -1,57 +1,59 @@
-# Wilderness v0.10 — Atmosphere, Animation & Polish
+# Wilderness v0.11 — Premium Stylized Adventure
 
-**A complete GitHub Pages update** built from v0.9, with one new JavaScript module. One-player, no ads or paid features.
+**Full replacement package — graphics only.** This is a visual revision to the v0.10 game, not a fresh game or an experimental engine switch. The current project is a Three.js/WebGL browser prototype hosted on GitHub Pages. It still requires a network connection to load Three.js from the existing CDN.
 
-## What's changed
-- Gentle day/night light cycle (one in-game day every ~12 minutes of active play; does not advance while browser is closed).
-- Time-of-day HUD; subtle changes to sky, sunlight and warmth; nighttime remains bright enough to navigate.
-- Optional small synthesized sound effects for footsteps, chopping, mining, building, sword hits and occasional birds. No downloads, music tracks or third-party audio services.
-- Small, pooled gathering/placement particles. **Low effects** disables them and lowers render pixel ratio for iPhone performance.
-- Controls for **Sound On/Off** and **Effects Standard/Low** in **Bag → Game settings**. Preferences persist on the device independently from world saves.
-- All v0.9 worlds (cabins, crops, resources, caves, discoveries, equipment, chests) migrate to a separate **v0.10** save slot. New backup exports include the current time of day.
+## Contents (11 files)
 
-This is a **polish release**, not a full character/art redesign. The basic geometric 3D art remains; a future art pass would need rigged models and proper textures.
+- `index.html` — visual UI polish, v0.11 label and startup diagnostics
+- `game.js` — replacement complete game including upgraded character/tree/building visuals
+- `visual-system.js` — NEW: procedural textures, gradient sky and low-cost instanced grass
+- `save-system.js` — versioned, separate v0.11 save slot, reads older saves
+- `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js` — complete compatible files
+- `README.md` — this guide
 
-## Files — upload ALL TEN to the repository ROOT
-1. `index.html`
-2. `game.js`
-3. `construction.js`
-4. `save-system.js`
-5. `craft-system.js`
-6. `combat-system.js`
-7. `exploration-system.js`
-8. `farm-system.js`
-9. **`atmosphere-system.js` (NEW)**
-10. `README.md`
+## What's changed visually
 
-All files are complete replacements; do not upload the ZIP itself as your website.
+- New stylized terrain textures with more natural moss/grass colors, stone flecks, wood planking, roof shingles and cloth texture
+- Layered foliage silhouettes: irregular broadleaf crowns and tiered evergreens with organic tufts
+- More believable survivor silhouette with hood/collar, layers of clothing, leather straps, belt, pouch, gloves, boots and pack
+- Cabin timber framing, roof ridge/eaves, windows, lantern detail and modular structure edging
+- Gradient sky with daytime and twilight colors that follow the existing time cycle
+- Instanced ground vegetation and automatic distant-tree detail reduction; Low Effects also disables added detail
+- Subtle UI treatment. All joystick/build/combat/button positions stay familiar
 
-## Exact iPhone upload steps
-1. Open your **current working v0.9 game**. Tap **Bag → Export world**, save the JSON in Files and confirm it exists.
-2. Save your old v0.9 ZIP for rollback. Download and extract the new v0.10 ZIP in the iPhone **Files** app.
-3. Open your **existing** Wilderness GitHub repository. Do not make a new repository or edit GitHub Pages settings.
-4. In the repository root, replace all eight existing app files (`index.html`, `game.js`, `construction.js`, `save-system.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`) with the versions from the ZIP.
-5. Add `atmosphere-system.js` to the **same folder**.
-6. Replace `README.md` with the included file.
-7. Commit to `main`, then visit **Actions** and confirm the GitHub Pages deploy succeeded.
-8. Open your **existing** Pages URL in Safari and reload. Verify the upper-left title reads **Single-player · v0.10**.
-9. Enter the game. Open **Bag → Game settings** to turn sound off or set effects low if desired. Do not clear Safari website data.
+**Important limitation:** These assets remain procedurally created low-poly meshes, not artist-built/rigged character and world assets. This is a substantial improvement in design and material cohesion but cannot match a professional asset library or AAA-grade animation. No promises about frame rate without a device test.
 
-If startup fails, check all eight .js files and `index.html` are in the same root. The startup error screen attempts to identify missing or mixed versions. Keep the previous ZIP and exported backup until the new build passes acceptance tests.
+## Upload from iPhone (manual, safe)
 
-## Save compatibility / rollback
-- v0.10 writes to `wilderness_v010_singleplayer` and only reads the v0.9 key when upgrading; old v0.9 data remains untouched.
-- A fresh install with no prior save starts at 09:00 on Day 1. Migrated worlds also start at Day 1, 09:00; all buildings/crops/quests are retained.
-- JSON import/export includes the new time field. Old JSON backups are accepted by the migration parser.
-- If you need to go back, re-upload your **complete** v0.9 ZIP to GitHub. Progress made only in v0.10 won't appear in v0.9.
+1. In the running **v0.10** game, go to **Bag → Export world** and save the JSON backup to iPhone **Files**. Do not skip this step.
+2. Keep the working **v0.10 ZIP** in Files as a rollback package.
+3. Download and **extract this v0.11 ZIP** in Files.
+4. In your existing Wilderness GitHub repository, open the folder currently containing `index.html`. All files below must be uploaded together into **that same folder** (normally repository root), **not** inside a new `v0.11` folder.
+5. Replace these **9 existing files** with the corresponding complete new copies: `index.html`, `game.js`, `save-system.js`, `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js`.
+6. **Add** the new `visual-system.js` in that same folder and replace `README.md`. Final website folder: **10 files excluding README, 11 including README**.
+7. Commit to the branch GitHub Pages actually deploys (normally `main`). Verify **GitHub → Actions** has completed its Pages deployment, then open the original game URL. It should say **Single-player · v0.11**.
+8. If the browser still shows v0.10, reload Safari and check GitHub Pages finished deploying. Do **not** clear Safari website data.
 
-## Acceptance test
-- Existing cabin and stairs, storage, inventory, wolves, landmarks, crops, blueprints and waypoints persist.
-- Time HUD moves forward; lighting transitions gradually and remains playable at night.
-- Sound can be enabled and disabled on iPhone after tapping Enter.
-- Gathering/building actions show subtle particles in Standard mode; Low mode reduces effects while movement remains smooth.
-- Collision, joystick, cave, construction, farming, combat and save refresh still work.
-- Export a fresh JSON and import it: buildings, farm plots, discoveries and time of day should survive.
+## Save safety and rollback
 
-## Test limitations
-JavaScript, save migration and isolated atmosphere logic can be automated in this environment. A real iPhone Safari rendering/audio/performance acceptance test is still required before calling v0.10 stable.
+- New save: `wilderness_v011_singleplayer` (schema version 10).
+- Migration source: `wilderness_v010_singleplayer` (schema version 9). The old key is **read only**.
+- The older save remains available in Safari. New progress in v0.11 is not automatically merged back into v0.10.
+- The game's import recovery key is separate: `wilderness_v011_pre_import_recovery`.
+- If v0.11 misbehaves, keep your exported backup, re-upload the full v0.10 package, and reload your original game website. This reopens the earlier saved world.
+- Do not delete GitHub Pages data or change domains. Saves are per browser/origin and are not synced to an account.
+- If v0.11 reports an invalid save, **do not import a new one over it blindly**. Keep the original JSON and send the error message.
+
+## Suggested iPhone acceptance test
+
+1. Start v0.11 and confirm previous v0.10 world, position, structures, chests, inventory, farm and discoveries are present.
+2. Compare the survivor, trees, roof architecture, wood/stone textures, sky and grass. Confirm the difference is noticeable and cohesive.
+3. Explore around cabins/trees, pass through raised doorways, climb steps, and check the camera.
+4. Build modular walls/roofs and confirm the decorative overlays do not block placement or break indoor visibility.
+5. Test both Standard and Low effects on your iPhone. Watch for stutter and overheating.
+6. Test gather, fight, craft, farm, caves, map, waypoint, and rest. No gameplay changes are intended.
+7. Save, refresh, export JSON, and verify the earlier v0.10 browser world remains recoverable.
+
+## Technical checks
+
+Code syntax, save migration and archive integrity are checked prior to delivery. Browser 3D rendering on your physical iPhone/Safari still needs your acceptance test. None of these procedural textures require additional image files or paid assets.
