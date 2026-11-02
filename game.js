@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import {LEGACY_KEY,V03_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js';
 import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation} from './construction.js';
 
-// Wilderness v0.4 — modular building upgrade; keeps the approved v0.3 forest and movement.
+// Wilderness v0.4.1 — stair/floor join hotfix and compact placement controls; preserves v0.4 saves.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
@@ -220,10 +220,15 @@ function modularShape(type,group,ghost){
     a.userData.roof=true;b.userData.roof=true;
   }
   if(type==='stairs'){
-    for(let i=0;i<4;i++)mesh(box(1.56,.13,.46),timber,group,0,.075+i*.14,.69-i*.45);
-    // Ascends along local -Z toward a raised foundation.
+    // Four overlapping treads bridge into the raised tile. The top tread
+    // physically overlaps the foundation/floor edge to prevent a visual gap.
+    for(let i=0;i<4;i++){
+      const tread=mesh(box(1.56,.13,.62),timber,group,0,.55*(i+1)/4-.065,.76-i*.50);
+      tread.userData.stairTread=i;
+    }
     for(const x of [-.70,.70]){
-      const rail=mesh(box(.10,.9,2),beam,group,x,.47,0);rail.rotation.x=-.16;
+      const rail=mesh(box(.10,.9,2.12),beam,group,x,.47,-.04);
+      rail.rotation.x=-.16;rail.userData.stairRail=true;
     }
   }
   if(!ghost){group.traverse(o=>{if(o.isMesh&&(wallType(type)||type==='roof')){o.material.side=THREE.DoubleSide;cameraOccluders.push(o);}});}
@@ -236,6 +241,18 @@ function createBuild(type,x,z,rot,ghost=false){
   return group;
 }
 function hasFoundation(x,z){return builds.some(b=>b.type==='foundation'&&Math.hypot(b.x-x,b.z-z)<.35);}
+function raisedStairTarget(b){
+  // The upper end of a stair meets the raised tile two metres ahead.
+  const x=b.x-2*Math.sin(b.rot),z=b.z-2*Math.cos(b.rot);
+  const topFloor=builds.some(t=>t.type==='floor'&&Math.hypot(t.x-x,t.z-z)<.35);
+  return topFloor&&hasFoundation(x,z)?.79:.55;
+}
+function applyStairProfile(group,target){
+  group.traverse(o=>{
+    if(o.userData.stairTread!==undefined)o.position.y=target*(o.userData.stairTread+1)/4-.065;
+    if(o.userData.stairRail){o.position.y=target/2+.20;o.scale.y=(target+.35)/.9;}
+  });
+}
 function refreshElevations(){
   for(const b of builds){
     if(!b.group)continue;
@@ -246,6 +263,8 @@ function refreshElevations(){
       support=hasFoundation(b.x-ss,b.z-c)||hasFoundation(b.x+ss,b.z+c);
     }
     b.group.position.y=support?.55:0;
+    if(b.type==='floor')b.walkTop=support?.79:.24;
+    if(b.type==='stairs'){b.walkTop=raisedStairTarget(b);applyStairProfile(b.group,b.walkTop);}
   }
 }
 function disposeGhost(){if(!preview)return;preview.traverse(o=>{if(o.isMesh&&o.material.isMeshBasicMaterial)o.material.dispose();});buildRoot.remove(preview);preview=null;}
@@ -275,15 +294,23 @@ function obstacleAt(x,z){
 }
 function groundHeightAt(x,z){
   let h=0;
+  // Walk on the actual top of floors, including floors laid over foundations.
+  // Check all platforms and ramps; overlap across the stair/foundation join
+  // means the character cannot drop into a tiny crack between two meshes.
   for(const b of builds){
     if(b.type==='foundation'){
-      const p=localPoint(x,z,b);if(Math.abs(p.x)<.93&&Math.abs(p.z)<.93)h=Math.max(h,.55);
+      const q=localPoint(x,z,b);
+      if(Math.abs(q.x)<=1.02&&Math.abs(q.z)<=1.02)h=Math.max(h,.55);
+    }
+    if(b.type==='floor'){
+      const q=localPoint(x,z,b);
+      if(Math.abs(q.x)<=1.01&&Math.abs(q.z)<=1.01)h=Math.max(h,b.walkTop??.24);
     }
     if(b.type==='stairs'){
-      const p=localPoint(x,z,b);
-      if(Math.abs(p.x)<.7&&Math.abs(p.z)<.96){
-        // Staircase rises toward local -Z, ending level with a foundation.
-        h=Math.max(h,.55*Math.min(1,Math.max(0,(.97-p.z)/1.94)));
+      const q=localPoint(x,z,b);
+      if(Math.abs(q.x)<=.79&&q.z<=1.10&&q.z>=-1.20){
+        const progress=Math.max(0,Math.min(1,(1.10-q.z)/2.14));
+        h=Math.max(h,(b.walkTop??.55)*progress);
       }
     }
   }
@@ -305,7 +332,7 @@ function roofVisible(){
 }
 // v0.3 backpack; starter tools occupy two dedicated slots.
 let inventory=startingInventory(),equipped='axe',inventoryOpen=false;
-let buildMode=false,selected='cabin',orientation=0,preview=null,validPlacement=false;
+let buildMode=false,buildPickerOpen=false,selected='cabin',orientation=0,preview=null,validPlacement=false;
 let nudgeX=0,nudgeZ=0,previewPosition={x:0,z:0},placementReason='';
 let yaw=0,pitch=.38,nearby=null,runTime=0,moveVX=0,moveVZ=0;
 let actionUntil=0,swingTime=0,impactTarget=null;
@@ -451,10 +478,11 @@ function projectedPos(){
   return snappedPosition(selected,x,z,orientation);
 }
 function updatePreview(){
-  if(!buildMode)return;
+  if(!buildMode||buildPickerOpen)return;
   const {x,z}=projectedPos();previewPosition={x,z};
   if(!preview)preview=createBuild(selected,x,z,orientation,true);
   preview.position.set(x,0,z);preview.rotation.y=orientation;
+  if(selected==='stairs')applyStairProfile(preview,raisedStairTarget({x,z,rot:orientation}));
   placementReason=placementVerdict({type:selected,x,z,rot:orientation},builds,resources,player.position,WORLD);
   validPlacement=!placementReason;
   const enough=amount('wood')>=costs[selected].wood&&amount('stone')>=costs[selected].stone;
@@ -468,22 +496,31 @@ function choose(type){
   if(!BUILD_TYPES.includes(type))return;
   selected=type;orientation=0;nudgeX=0;nudgeZ=0;
   document.querySelectorAll('[data-type]').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
-  disposeGhost();updatePreview();
+  buildPickerOpen=false;syncBuildUi();disposeGhost();updatePreview();
+}
+function syncBuildUi(){
+  $('buildPanel').classList.toggle('show',buildMode&&buildPickerOpen);
+  $('placementDock').classList.toggle('show',buildMode&&!buildPickerOpen);
+  $('pieceLabel').textContent=selected.charAt(0).toUpperCase()+selected.slice(1);
+}
+function openBuildPicker(){
+  if(!buildMode)return;
+  buildPickerOpen=true;disposeGhost();syncBuildUi();
 }
 function setBuildMode(enabled){
   if(enabled&&inventoryOpen)setInventory(false);
-  buildMode=enabled;$('buildPanel').classList.toggle('show',enabled);
+  buildMode=enabled;buildPickerOpen=enabled;syncBuildUi();
   // Keep the approved mobile interface legible: hide tool shortcuts while designing.
   $('toolStrip').style.display=enabled?'none':'flex';
   $('buildToggle').textContent=enabled?'✕ Close Build':'🔨 Build';$('action').style.display=enabled?'none':'block';
-  if(!enabled)disposeGhost();else updatePreview();
+  if(!enabled)disposeGhost();
 }
 function nudge(dx,dz){nudgeX=THREE.MathUtils.clamp(nudgeX+dx,-8,8);nudgeZ=THREE.MathUtils.clamp(nudgeZ+dz,-8,8);updatePreview();}
 function nudgeRelative(right,forward){
   nudge(-Math.cos(yaw)*right*2+Math.sin(yaw)*forward*2,Math.sin(yaw)*right*2+Math.cos(yaw)*forward*2);
 }
 function place(){
-  if(!buildMode||paused)return;updatePreview();if(!validPlacement){toast(placementReason||'Find a clear area');return;}
+  if(!buildMode||buildPickerOpen||paused)return;updatePreview();if(!validPlacement){toast(placementReason||'Find a clear area');return;}
   if(builds.length>=500){toast('World building limit reached');return;}
   const c=costs[selected];if(!payCosts(inventory,c)){toast('Gather more materials first');return;}
   const {x,z}=previewPosition;
@@ -506,6 +543,7 @@ $('action').addEventListener('click',gather);
 $('save').addEventListener('click',()=>saveGame());
 $('buildToggle').addEventListener('click',()=>setBuildMode(!buildMode));
 $('closeBuild').addEventListener('click',()=>setBuildMode(false));
+$('changePiece').addEventListener('click',openBuildPicker);
 $('rotate').addEventListener('click',()=>{orientation=normalizedRotation(orientation+Math.PI/2);updatePreview();});
 $('resetNudge').addEventListener('click',()=>{nudgeX=nudgeZ=0;updatePreview();});
 $('nudgeLeft').addEventListener('click',()=>nudgeRelative(-1,0));
@@ -624,6 +662,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.4.0',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({version:'0.4.1',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 window.__gameReady=true;tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});
