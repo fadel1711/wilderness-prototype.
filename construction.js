@@ -136,5 +136,11 @@ export const STOCK_BLUEPRINTS=Object.freeze([
   {name:'Garden Corner',parts:[
     ...[[0,0],[2,0],[0,2],[2,2]].map(([dx,dz])=>({type:'path',dx,dz,rot:0})),
     {type:'planter',dx:4,dz:0,rot:0},{type:'planter',dx:4,dz:2,rot:0},
-    {type:'fence',dx:1,dz:0,rot:Math.PI/2}]}
+    {type:'fence',dx:1,dz:0,rot:Math.PI/2}]},
+  {name:'Ranger Rest',parts:[
+    {type:'floor',dx:0,dz:0,rot:0},
+    {type:'floor',dx:2,dz:0,rot:0},
+    {type:'wall',dx:0,dz:-1,rot:0},
+    {type:'wall',dx:-1,dz:0,rot:Math.PI/2},
+    {type:'roof',dx:0,dz:0,rot:0}]}
 ]);

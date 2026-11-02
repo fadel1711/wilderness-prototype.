@@ -1,12 +1,14 @@
-// Wilderness v0.7. Old Safari keys are only READ, never overwritten by migration.
+// Wilderness v0.8. Prior Safari save keys are READ only, never overwritten by migration.
+import {normalizeExploration} from './exploration-system.js';
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
 export const V04_KEY='wilderness_v04_singleplayer';
 export const V05_KEY='wilderness_v05_singleplayer';
 export const V06_KEY='wilderness_v06_singleplayer';
-export const SAVE_KEY='wilderness_v07_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v07_pre_import_recovery';
+export const V07_KEY='wilderness_v07_singleplayer';
+export const SAVE_KEY='wilderness_v08_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v08_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -44,11 +46,11 @@ export function payCosts(inv,costs){
   return true;
 }
 function fields(s,version){
-  if(!s||typeof s!=='object'||Array.isArray(s)||!numberIn(s.px,-46,46)||!numberIn(s.pz,-46,46))throw Error('Invalid player position.');
+  if(!s||typeof s!=='object'||Array.isArray(s)||!numberIn(s.px,version>=7?-86:-46,version>=7?86:46)||!numberIn(s.pz,version>=7?-86:-46,version>=7?86:46))throw Error('Invalid player position.');
   if(!s.resources||typeof s.resources!=='object'||Array.isArray(s.resources))throw Error('Missing resource states.');
   const resources={};
   for(const [id,hits] of Object.entries(s.resources)){
-    if(!/^(?:t(?:[0-9]|[12][0-9]|3[0-3])|r(?:[0-9]|1[0-9]|2[0-6]))$/.test(id))throw Error('Unknown resource ID.');
+    if(!/^[tr](?:0|[1-9][0-9]?)$/.test(id)||(id[0]==='t'?Number(id.slice(1))>73:Number(id.slice(1))>50))throw Error('Unknown resource ID.');
     if(!integerIn(hits,0,id.startsWith('t')?3:2))throw Error('Invalid resource hits.');
     resources[id]=hits;
   }
@@ -76,7 +78,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -108,7 +110,7 @@ export function normalizeSave(input){
   }
   for(const id of chestIds)if(!storage[id])storage[id]=Array(16).fill(null);
   let combat={hp:100,stamina:100,wolves:{}};
-  if(s.version===6){
+  if(s.version>=6){
     const c=s.combat;
     if(!c||typeof c!=='object'||Array.isArray(c)||!numberIn(c.hp,0,100)||!numberIn(c.stamina,0,100)||!c.wolves||typeof c.wolves!=='object'||Array.isArray(c.wolves))throw Error('Invalid combat save.');
     const wolves={};
@@ -118,7 +120,8 @@ export function normalizeSave(input){
     }
     combat={hp:c.hp,stamina:c.stamina,wolves};
   }
-  return {version:6,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat};
+  const exploration=normalizeExploration(s.version>=7?s.exploration:null);
+  return {version:7,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}}})=>normalizeSave({version:6,inventory,equipped,px,pz,resources,builds,plans,storage,combat});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null}})=>normalizeSave({version:7,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

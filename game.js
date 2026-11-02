@@ -1,21 +1,22 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.7';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.7';
+import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.8';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.8';
 
-import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.7';
+import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.8';
 
-import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.7';
+import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.8';
+import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.8';
 
 // Wilderness v0.7 — survival combat with v0.7 crafting, equipment, storage, and interiors; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
-const WORLD = 46;
+const WORLD = EXPLORE_RADIUS;
 const clock = new THREE.Clock(), cameraDistance = 7.4, PLAYER_RADIUS = 0.32;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#a9b8b5');
-scene.fog = new THREE.Fog('#a9b8b5', 38, 91);
-const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 125);
+scene.fog = new THREE.Fog('#a9b8b5', 52, 180);
+const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 245);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power', alpha: false });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
@@ -73,7 +74,7 @@ const shadowMat=new THREE.MeshBasicMaterial({color:'#1b2119',transparent:true,op
 function mesh(geometry,material,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
 const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
 function disk(parent,x,z,r,material=shadowMat,y=-.052){const m=mesh(new THREE.CircleGeometry(r,16),material,parent,x,y,z);m.rotation.x=-Math.PI/2;return m;}
-mesh(new THREE.PlaneGeometry(110,110),grassMat,scene,0,-.09,0).rotation.x=-Math.PI/2;
+mesh(new THREE.PlaneGeometry(194,194),grassMat,scene,0,-.09,0).rotation.x=-Math.PI/2;
 
 // Old deterministic RNG consumption is preserved so previously collected resource IDs
 // stay in their original positions after upgrading a saved v0.1.1 world.
@@ -96,7 +97,7 @@ for(let i=0;i<95;i++){
 }
 const distantHill=mat('#758779');
 for(let i=0;i<17;i++){
-  const a=i/17*Math.PI*2,r=58+random()*20,rr=7+random()*9,h=12+random()*17;
+  const a=i/17*Math.PI*2,r=115+random()*20,rr=7+random()*9,h=12+random()*17;
   const hill=mesh(new THREE.ConeGeometry(rr,h,7),distantHill,scene,Math.sin(a)*r,4,Math.cos(a)*r);hill.rotation.y=random()*6;
 }
 
@@ -167,6 +168,29 @@ for(let i=0;i<27;i++){
   const a=random()*Math.PI*2,r=9+Math.sqrt(random())*35,x=Math.cos(a)*r,z=Math.sin(a)*r;
   if(Math.abs(x)>WORLD||Math.abs(z)>WORLD)continue;addRock('r'+i,x,z,.75+random()*.8);
 }
+// v0.8 outer woodland uses a separate generator and preserves every legacy resource position.
+let outerSeed=718192;function outerRand(){outerSeed=(Math.imul(outerSeed,1664525)+1013904223)>>>0;return outerSeed/4294967296;}
+function distantFromLandmarks(x,z,r=9){return LANDMARKS.every(l=>Math.hypot(x-l.x,z-l.z)>r);}
+for(let i=34;i<=73;i++){
+  const angle=outerRand()*Math.PI*2, radius=53+outerRand()*27;
+  const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+  if(Math.abs(x)>WORLD-5||Math.abs(z)>WORLD-5||!distantFromLandmarks(x,z,9))continue;
+  addTree('t'+i,x,z,.69+outerRand()*.5);
+}
+for(let i=27;i<=50;i++){
+  const angle=outerRand()*Math.PI*2,radius=53+outerRand()*26;
+  const x=Math.cos(angle)*radius,z=Math.sin(angle)*radius;
+  if(Math.abs(x)>WORLD-5||Math.abs(z)>WORLD-5||!distantFromLandmarks(x,z,8))continue;
+  addRock('r'+i,x,z,.65+outerRand()*.65);
+}
+// Low-cost terrain accents give the new outer map different recognizable regions.
+const outerGrasses=[mat('#72866e'),mat('#85886c'),mat('#777d67')];
+for(let i=0;i<60;i++){
+  const a=outerRand()*Math.PI*2,r=50+outerRand()*34,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  if(!distantFromLandmarks(x,z,5)){continue;}
+  const patch=mesh(new THREE.CircleGeometry(1.5+outerRand()*2.4,10),outerGrasses[i%3],scene,x,-.076,z);
+  patch.rotation.x=-Math.PI/2;
+}
 // Decorative shrubs use an independent RNG, so v0.1 resource locations never shift.
 let detailSeed=48112;function detailRand(){detailSeed=(Math.imul(detailSeed,1664525)+1013904223)>>>0;return detailSeed/4294967296;}
 for(let i=0;i<45;i++){
@@ -180,6 +204,58 @@ for(let i=0;i<45;i++){
 // A faint, walkable dirt patch makes the home clearing visually distinct.
 const clearing=mesh(new THREE.CircleGeometry(4.3,26),pathMat,scene,0,-.071,0);clearing.rotation.x=-Math.PI/2;clearing.material=new THREE.MeshStandardMaterial({color:'#999178',transparent:true,opacity:.22,depthWrite:false});
 
+// Real, enterable exploration locations. Modest geometry and low light counts for iPhone.
+const featureRoot=new THREE.Group();scene.add(featureRoot);
+const lightWood=mat('#75664f',woodTexture),cliff=mat('#73776d',stoneTexture),caveStone=mat('#555b55',stoneTexture),caveFloor=mat('#6c685d',stoneTexture);
+const lootGroups={};let caveRoof=null;
+function addDecorCrate(parent,x,y,z){
+  const crate=mesh(box(1.0,.75,.82),timberDark,parent,x,y+.375,z);
+  mesh(box(1.09,.12,.91),beam,parent,x,y+.79,z);
+  return crate;
+}
+function createLandmarkMeshes(){
+  // Campsite: old tent frame, unclaimed resource crate and unlit stone fire ring.
+  const camp=new THREE.Group();camp.position.set(-63,0,38);featureRoot.add(camp);
+  mesh(box(4,.12,4),pathMat,camp,0,.03,0);
+  const tarp=mesh(new THREE.ConeGeometry(2.25,2.6,4),mat('#8b8067'),camp,-1,1.3,-.65);tarp.rotation.y=Math.PI/4;
+  for(let i=0;i<8;i++){const a=i*Math.PI/4;mesh(new THREE.DodecahedronGeometry(.27,0),rockDark,camp,1.05+Math.cos(a)*.72,.20,1+Math.sin(a)*.72);}
+  const campBox=new THREE.Group();campBox.position.set(1.35,0,-1.15);camp.add(campBox);addDecorCrate(campBox,0,0,0);lootGroups.camp=campBox;
+  // Overlook: raised rocky shelf with a timber signpost (no inaccessible climbing).
+  const lookout=new THREE.Group();lookout.position.set(55,0,62);featureRoot.add(lookout);
+  mesh(new THREE.CylinderGeometry(5.9,6.3,.30,9),cliff,lookout,0,-.02,0);
+  mesh(box(.20,2.0,.20),beam,lookout,0,1.0,0);
+  mesh(box(2.0,.53,.18),timber,lookout,0,1.75,0);
+  for(let i=0;i<7;i++){const a=i*Math.PI*2/7;mesh(new THREE.DodecahedronGeometry(.6+i%3*.18,0),cliff,lookout,Math.cos(a)*5.8,.28,Math.sin(a)*5.8);}
+  // The cave is open at its north-facing mouth (+z). Interior extends south (-z).
+  // Side walls and the back wall have matching player collision rules.
+  const cv=new THREE.Group();cv.position.set(66,0,-61);featureRoot.add(cv);
+  mesh(box(6.35,.13,22.7),caveFloor,cv,0,.04,0);
+  for(const side of [-1,1]){
+    mesh(box(.95,3.75,22.5),caveStone,cv,side*3.50,1.88,0);
+    for(let n=0;n<7;n++){
+      const rock=mesh(new THREE.DodecahedronGeometry(.74+(n%3)*.20,0),cliff,cv,side*3.9,.5+(n%2)*.32,-9.5+n*3);
+      rock.scale.y=1.7;
+    }
+  }
+  mesh(box(7.8,3.8,.95),caveStone,cv,0,1.9,-11.2); // solid back wall
+  caveRoof=mesh(box(8.4,.68,23.5),caveStone,cv,0,4.2,0); // hidden when inside
+  for(const z of [-7,4]){
+    const base=mesh(box(.18,1.25,.18),beam,cv,2.8,.72,z);
+    const flame=mesh(new THREE.ConeGeometry(.18,.43,6),mat('#e9ba74'),cv,2.8,1.5,z);
+  }
+  // Cave-mouth rim remains visible when roof fades.
+  for(const x of [-3.7,3.7])mesh(new THREE.DodecahedronGeometry(1.7,0),cliff,cv,x,1.0,11.15);
+  mesh(box(7.4,.9,1.1),cliff,cv,0,3.85,11.15);
+  const boxGroup=new THREE.Group();boxGroup.position.set(0,0,-6);cv.add(boxGroup);
+  addDecorCrate(boxGroup,0,0,0);lootGroups.cache=boxGroup;
+}
+createLandmarkMeshes();
+function caveInside(x,z){return x>62.3&&x<69.7&&z< -50&&z> -72.7;}
+function caveWallAt(x,z){
+  // The north opening is unobstructed; passageways cannot be entered through solid rock.
+  return (z>-72.65&&z<-49.6&&((x>61.7&&x<63.3)||(x>68.7&&x<70.3))) ||
+    (x>61.9&&x<70.1&&z>-73.0&&z<-71.4);
+}
 // Three lightweight wolves; independent of the deterministic resource RNG.
 const wolves=[];
 const wolfFur=mat('#7b7569'),wolfMuzzle=mat('#aaa090'),wolfEyes=new THREE.MeshBasicMaterial({color:'#e7cda3'});
@@ -358,7 +434,7 @@ function hitsRect(x,z,hx,hz,r=PLAYER_RADIUS){
 }
 function localPoint(x,z,b){const dx=x-b.x,dz=z-b.z,c=Math.cos(b.rot),s=Math.sin(b.rot);return {x:c*dx-s*dz,z:s*dx+c*dz};}
 function obstacleAt(x,z){
-  if(Math.abs(x)>WORLD-.65||Math.abs(z)>WORLD-.65)return true;
+  if(Math.abs(x)>WORLD-.65||Math.abs(z)>WORLD-.65||caveWallAt(x,z))return true;
   for(const r of resources){if(r.hits>0&&Math.hypot(x-r.x,z-r.z)<PLAYER_RADIUS+r.radius)return true;}
   for(const b of builds){
     if(['floor','foundation','roof','stairs','chair'].includes(b.type))continue;
@@ -426,6 +502,7 @@ function roofVisible(){
 // v0.3 backpack; starter tools occupy two dedicated slots.
 let inventory=startingInventory(),equipped='axe',inventoryOpen=false,plans=[],storage={},nextBuildId=1;
 let stationOpen=false,stationId=null;
+let exploration={discovered:[],claimed:[],waypoint:null},mapOpen=false,mapDrawTime=0;
 let buildMode=false,buildPickerOpen=false,selected='cabin',orientation=0,preview=null,previewSignature='',validPlacement=false;
 let nudgeX=0,nudgeZ=0,previewPosition={x:0,z:0},placementReason='';
 let yaw=0,pitch=.38,nearby=null,runTime=0,moveVX=0,moveVZ=0;
@@ -482,7 +559,7 @@ function updateHud(){
   if(inventoryOpen)renderInventory();
 }
 function saveData(){return makeSave({inventory,equipped,px:player.position.x,pz:player.position.z,
-  resources:Object.fromEntries(resources.map(r=>[r.id,r.hits])),builds:builds.map(({id,type,x,z,rot})=>({id,type,x,z,rot})),plans,storage,combat:{hp:health,stamina,wolves:Object.fromEntries(wolves.filter(w=>w.deadUntil>Date.now()).map(w=>[w.id,w.deadUntil]))}});}
+  resources:Object.fromEntries(resources.map(r=>[r.id,r.hits])),builds:builds.map(({id,type,x,z,rot})=>({id,type,x,z,rot})),plans,storage,exploration,combat:{hp:health,stamina,wolves:Object.fromEntries(wolves.filter(w=>w.deadUntil>Date.now()).map(w=>[w.id,w.deadUntil]))}});}
 function saveGame(silent=false){
   if(saveReadFailed){if(!silent)toast('Save protected: export/recover your old world first');return false;}
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));if(!silent)toast('World saved to this browser ✓');return true;}
@@ -501,16 +578,17 @@ function loadGame(){
   let raw=null,origin='';
   try{
     const newer=localStorage.getItem(SAVE_KEY);
-    if(newer){raw=JSON.parse(newer);origin='v0.7';}
+    if(newer){raw=JSON.parse(newer);origin='v0.8';}
+    else {const prev07=localStorage.getItem(V07_KEY);if(prev07){raw=JSON.parse(prev07);origin='v0.7';}
     else {const prev06=localStorage.getItem(V06_KEY);if(prev06){raw=JSON.parse(prev06);origin='v0.6';}
     else {const prev05=localStorage.getItem(V05_KEY);if(prev05){raw=JSON.parse(prev05);origin='v0.5';}
     else {const prev04=localStorage.getItem(V04_KEY);if(prev04){raw=JSON.parse(prev04);origin='v0.4';}
       else {const prev=localStorage.getItem(V03_KEY);if(prev){raw=JSON.parse(prev);origin='v0.3';}
-        else {const older=localStorage.getItem(LEGACY_KEY);if(older){raw=JSON.parse(older);origin='v0.2';}}}}}}
+        else {const older=localStorage.getItem(LEGACY_KEY);if(older){raw=JSON.parse(older);origin='v0.2';}}}}}}}
   }catch(e){saveReadFailed=true;loadMessage='Save could not be read. Stored data was not overwritten.';return;}
   if(!raw)return;
   let data;try{data=normalizeSave(raw);}catch(e){saveReadFailed=true;loadMessage='Save validation failed. Existing browser data was left untouched.';console.error(e);return;}
-  inventory=data.inventory;equipped=data.equipped;plans=data.plans||[];storage=data.storage||{};health=Math.max(1,data.combat.hp);stamina=data.combat.stamina;player.position.set(data.px,0,data.pz);
+  inventory=data.inventory;equipped=data.equipped;plans=data.plans||[];storage=data.storage||{};exploration=data.exploration||normalizeExploration();health=Math.max(1,data.combat.hp);stamina=data.combat.stamina;player.position.set(data.px,0,data.pz);
   for(const w of wolves){w.deadUntil=data.combat.wolves[w.id]||0;w.group.visible=w.deadUntil<=Date.now();}
   for(const r of resources){
     if(Object.prototype.hasOwnProperty.call(data.resources,r.id)){
@@ -523,8 +601,9 @@ function loadGame(){
   nextBuildId=Math.max(0,...builds.map(b=>Number(b.id.slice(1))))+1;
   refreshElevations();findSafePosition();
   axeModel.visible=['axe','stone_axe'].includes(equipped);pickModel.visible=['pickaxe','iron_pickaxe'].includes(equipped);swordModel.visible=equipped==='sword';combatMode=equipped==='sword';
-  if(origin!=='v0.7')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
-  else loadMessage='v0.7 world loaded.';
+  if(origin!=='v0.8')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
+  else loadMessage='v0.8 world loaded.';
+  refreshLootVisuals();
 }
 function renderInventory(){
   const cells=$('inventorySlots');cells.textContent='';
@@ -541,7 +620,7 @@ function renderInventory(){
   $('bagSummary').textContent=`${inventory.filter(Boolean).length}/${inventory.length} slots occupied · ${amount('wood')} wood · ${amount('stone')} stone`;
   $('restorePrevious').disabled=!localStorage.getItem(PRE_IMPORT_KEY);
 }
-function syncCombatDock(){const show=equipped==='sword'&&!buildMode&&!inventoryOpen&&!stationOpen&&!paused;$('combatControls').classList.toggle('show',show);if(!show)blockHeld=false;}
+function syncCombatDock(){const show=equipped==='sword'&&!buildMode&&!inventoryOpen&&!stationOpen&&!mapOpen&&!paused;$('combatControls').classList.toggle('show',show);if(!show)blockHeld=false;}
 function setInventory(open){inventoryOpen=open;$('inventoryPanel').classList.toggle('show',open);
   if(open){if(buildMode)setBuildMode(false);if(stationOpen)closeStation();renderInventory();}
   $('bagToggle').classList.toggle('active',open);syncCombatDock();
@@ -559,7 +638,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.7-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.8-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -571,7 +650,7 @@ async function importSave(file){
   let imported;
   try{imported=normalizeSave(JSON.parse(await file.text()));}
   catch(e){toast('Import rejected: '+e.message);return;}
-  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.7 world will be replaced. Export it first if needed.`;
+  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.8 world will be replaced. Export it first if needed.`;
   if(!window.confirm(question))return;
   try{
     const previous=localStorage.getItem(SAVE_KEY);
@@ -585,7 +664,7 @@ function undoLastImport(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem(PRE_IMPORT_KEY)||'null'));}
   catch(e){toast('No valid pre-import recovery found');return;}
-  if(!window.confirm('Undo the last world import? This replaces your current v0.7 world with the previous version. Export your current world first if needed.'))return;
+  if(!window.confirm('Undo the last world import? This replaces your current v0.8 world with the previous version. Export your current world first if needed.'))return;
   try{
     const current=localStorage.getItem(SAVE_KEY);
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
@@ -689,7 +768,8 @@ function updatePreview(){
   $('buildStatus').textContent=`${selectedName()} · ${x}, ${z} · ${placementReason||(deficit?'Need '+deficit:'Ready to place')}`;
 }
 function choose(type){
-  if(!BUILD_TYPES.includes(type)&&!/^stock:[01]$/.test(type)&&!/^saved:[0-5]$/.test(type))return;
+  if(!BUILD_TYPES.includes(type)&&!/^stock:[012]$/.test(type)&&!/^saved:[0-5]$/.test(type))return;
+  if(type==='stock:2'&&!exploration.claimed.includes('camp')){toast('Find the Forgotten Camp cache to unlock Ranger Rest');return;}
   if(type.startsWith('saved:')&&!plans[Number(type.slice(6))])return;
   selected=type;orientation=0;nudgeX=0;nudgeZ=0;
   document.querySelectorAll('[data-type]').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
@@ -715,7 +795,7 @@ function openBuildPicker(){
 }
 function setBuildMode(enabled){
   if(enabled&&inventoryOpen)setInventory(false);if(enabled&&stationOpen)closeStation();
-  buildMode=enabled;buildPickerOpen=enabled;renderSavedBlueprints();syncBuildUi();
+  buildMode=enabled;buildPickerOpen=enabled;renderSavedBlueprints();$('rangerRest').hidden=!exploration.claimed.includes('camp');syncBuildUi();
   $('toolStrip').style.display=enabled?'none':'flex';
   $('buildToggle').textContent=enabled?'✕ Close Build':'🔨 Build';$('action').style.display=enabled?'none':'block';
   if(!enabled)disposeGhost();syncCombatDock();
@@ -788,7 +868,88 @@ function getNearbyStation(){
 }
 function labelForStation(b){return ({workbench:'Workbench',chest:'Storage chest',furnace:'Furnace',bed:'Bed'})[b.type]||b.type;}
 function closeStation(){stationOpen=false;stationId=null;$('stationPanel').classList.remove('show');syncCombatDock();}
+// Exploration: discoveries persist, loot claims are atomic, and home never moves.
+function refreshLootVisuals(){for(const [id,g] of Object.entries(lootGroups))g.visible=!exploration.claimed.includes(id);}
+function closestCache(){
+  return LANDMARKS.filter(l=>l.loot&&!exploration.claimed.includes(l.id)&&distance2D(l,player.position)<3.1)
+    .sort((a,b)=>distance2D(a,player.position)-distance2D(b,player.position))[0];
+}
+function claimCache(location){
+  if(!location||distance2D(location,player.position)>3.1)return false;
+  const rewards=claimLoot(exploration,location.id);if(!rewards)return false;
+  const staged=inventory.map(s=>s?{...s}:null);
+  try{for(const [id,qty] of Object.entries(rewards))addItem(staged,id,qty,{expand:true});}
+  catch(e){toast('Backpack full — make room before opening the cache.');return false;}
+  const before=inventory,prior={...exploration,claimed:[...exploration.claimed],discovered:[...exploration.discovered]};
+  inventory=staged;
+  if(!exploration.discovered.includes(location.id))exploration.discovered.push(location.id);
+  exploration.claimed.push(location.id);
+  if(!saveGame(true)){inventory=before;exploration=prior;toast('Could not save treasure. Try again.');return false;}
+  refreshLootVisuals();updateHud();toast('🎁 '+location.name+' opened'+(location.id==='camp'?' · Ranger Rest blueprint unlocked!':' · treasure collected!'));return true;
+}
+function updateDiscoveries(){
+  let changed=false;
+  for(const l of nearbyLandmarks(player.position)){
+    if(exploration.discovered.includes(l.id))continue;
+    exploration.discovered.push(l.id);changed=true;
+    toast('🧭 Discovered: '+l.name);
+  }
+  if(changed){saveGame(true);renderMap();}
+}
+function waypointLocation(){return exploration.waypoint==='home'?{x:0,z:0,name:'Home',icon:'🏠'}:
+  LANDMARKS.find(l=>l.id===exploration.waypoint)||null;}
+function drawMap(){
+  const canvas=$('mapCanvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');if(!ctx)return;
+  const s=canvas.width,c=(n)=>((n+WORLD)/(2*WORLD))*s;
+  ctx.clearRect(0,0,s,s);ctx.fillStyle='#6d8065';ctx.fillRect(0,0,s,s);
+  // Quiet stylized topographic zones, not a satellite map.
+  ctx.fillStyle='#879178';ctx.beginPath();ctx.ellipse(c(52),c(60),55,43,-.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#516854';ctx.beginPath();ctx.ellipse(c(-61),c(41),62,54,.3,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#77786b';ctx.beginPath();ctx.ellipse(c(66),c(-59),48,69,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#aeb69a44';ctx.lineWidth=1;
+  for(let i=20;i<s;i+=33){ctx.beginPath();ctx.moveTo(i,0);ctx.lineTo(i,s);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i);ctx.lineTo(s,i);ctx.stroke();}
+  for(const l of LANDMARKS){
+    const found=exploration.discovered.includes(l.id);
+    const x=c(l.x),y=c(l.z);
+    ctx.beginPath();ctx.arc(x,y,found?9:7,0,Math.PI*2);ctx.fillStyle=found?'#ddc991':'#b2bca5';ctx.fill();
+    ctx.fillStyle='#23352b';ctx.font='bold 12px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(found?l.icon:'?',x,y+.5);
+  }
+  const waypoint=waypointLocation();
+  if(waypoint){ctx.strokeStyle='#f4da99';ctx.lineWidth=2;ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(c(player.position.x),c(player.position.z));ctx.lineTo(c(waypoint.x),c(waypoint.z));ctx.stroke();ctx.setLineDash([]);}
+  ctx.fillStyle='#f0ead6';ctx.beginPath();ctx.arc(c(0),c(0),8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#25352c';ctx.font='bold 11px system-ui';ctx.fillText('H',c(0),c(0));
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(c(player.position.x),c(player.position.z),5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#243729';ctx.lineWidth=2;ctx.stroke();
+}
+function renderMap(){
+  const el=$('mapLocations');if(!el)return;el.textContent='';
+  const rows=[{id:'home',name:'Homestead',icon:'🏠',x:0,z:0},...LANDMARKS];
+  for(const l of rows){
+    const known=l.id==='home'||exploration.discovered.includes(l.id);
+    const btn=document.createElement('button');btn.className='mapPlace';
+    const dist=Math.round(distance2D(l,player.position));
+    btn.textContent=`${known?l.icon:'❔'} ${known?l.name:'Unexplored location'} · ${dist}m${exploration.waypoint===l.id?' ✓':''}`;
+    btn.addEventListener('click',()=>{exploration.waypoint=exploration.waypoint===l.id?null:l.id;saveGame(true);closeMap();toast(exploration.waypoint?'Waypoint selected':'Waypoint cleared');});
+    el.append(btn);
+  }
+  drawMap();
+}
+function openMap(){if(paused)return;
+  if(inventoryOpen)setInventory(false);if(stationOpen)closeStation();if(buildMode)setBuildMode(false);
+  mapOpen=true;$('mapPanel').classList.add('show');syncCombatDock();renderMap();
+}
+function closeMap(){mapOpen=false;$('mapPanel').classList.remove('show');syncCombatDock();}
+function updateWaypointHud(){
+  const w=waypointLocation();
+  if(!w){$('waypointHud').textContent='🧭 Explore · 🗺 Map';return;}
+  const bearing=Math.atan2(w.x-player.position.x,w.z-player.position.z)-yaw;
+  const relative=Math.atan2(Math.sin(bearing),Math.cos(bearing));
+  const arrows=['↑','↗','→','↘','↓','↙','←','↖'];
+  const arrow=arrows[(Math.round(relative/(Math.PI/4))+8)%8];
+  $('waypointHud').textContent=`${arrow} ${w.name} · ${Math.round(distance2D(w,player.position))} m`;
+}
 function interactOrGather(){
+  if(mapOpen)return;
+  const cache=closestCache();if(cache){claimCache(cache);return;}
   if(paused||inventoryOpen||buildMode||stationOpen)return;
   const station=getNearbyStation();if(station){openStation(station);return;}
   gather();
@@ -994,6 +1155,9 @@ $('refillSupplies').addEventListener('click',()=>refillMaterials());
 $('restorePrevious').addEventListener('click',undoLastImport);
 $('importBackup').addEventListener('click',()=>$('backupFile').click());
 $('backupFile').addEventListener('change',async e=>{const file=e.target.files?.[0];e.target.value='';await importSave(file);});
+$('mapButton').addEventListener('click',openMap);
+$('closeMap').addEventListener('click',closeMap);
+$('clearWaypoint').addEventListener('click',()=>{exploration.waypoint=null;saveGame(true);renderMap();toast('Waypoint removed');});
 $('action').addEventListener('click',interactOrGather);
 $('save').addEventListener('click',()=>saveGame());
 $('buildToggle').addEventListener('click',()=>setBuildMode(!buildMode));
@@ -1036,7 +1200,9 @@ addEventListener('keydown',e=>{
   if(e.key.toLowerCase()==='e')interactOrGather();
   if(e.key==='1')equip(amount('stone_axe')?'stone_axe':'axe');if(e.key==='2')equip(amount('iron_pickaxe')?'iron_pickaxe':'pickaxe');if(e.key==='3')equip('sword');
   if(e.key.toLowerCase()==='x')attack();if(e.key.toLowerCase()==='c')dodge();if(e.key.toLowerCase()==='q')setBlock(true);
-  if(e.key.toLowerCase()==='i')setInventory(!inventoryOpen);
+  if(e.key.toLowerCase()==='m')mapOpen?closeMap():openMap();
+  if(e.key==='Escape'&&mapOpen)closeMap();
+  if(e.key.toLowerCase()==='i'&&!mapOpen)setInventory(!inventoryOpen);
   if(e.key.toLowerCase()==='b')setBuildMode(!buildMode);
   if(e.key.toLowerCase()==='f')place();
   if(e.key.toLowerCase()==='r'&&buildMode){orientation=normalizedRotation(orientation+Math.PI/2);updatePreview();}
@@ -1066,8 +1232,8 @@ function tick(){
   requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.05);
   if(!paused){
     combatTime+=dt;attackCooldown=Math.max(0,attackCooldown-dt);attackTimer=Math.max(0,attackTimer-dt);dodgeTimer=Math.max(0,dodgeTimer-dt);
-    const axisX=(inventoryOpen||stationOpen)?0:move.x+(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
-    const axisZ=(inventoryOpen||stationOpen)?0:move.y+(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
+    const axisX=(inventoryOpen||stationOpen||mapOpen)?0:move.x+(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
+    const axisZ=(inventoryOpen||stationOpen||mapOpen)?0:move.y+(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
     const amount=Math.min(1,Math.hypot(axisX,axisZ));
     let dx=0,dz=0;
     if(amount>.055){
@@ -1117,8 +1283,12 @@ function tick(){
     if(buildMode)updatePreview();
     uiTimer+=dt;saveTimer+=dt;
     if(uiTimer>.16){
-      uiTimer=0;updateCombatUi();nearby=getNearest();const station=getNearbyStation();$('interaction').style.display=!buildMode&&!inventoryOpen&&!stationOpen&&(station||nearby)?'block':'none';
-      if(station){$('interaction').textContent=`${labelForStation(station)} · Tap Use`; $('action').textContent='🖐 Use';}
+      uiTimer=0;updateCombatUi();updateWaypointHud();
+      if(caveRoof)caveRoof.visible=!caveInside(player.position.x,player.position.z);
+      if(!mapOpen)updateDiscoveries();
+      nearby=getNearest();const station=getNearbyStation(),cache=closestCache();$('interaction').style.display=!buildMode&&!inventoryOpen&&!stationOpen&&!mapOpen&&(cache||station||nearby)?'block':'none';
+      if(cache){$('interaction').textContent=`🎁 ${cache.name} · Tap to open`;$('action').textContent='🎁 Open';}
+      else if(station){$('interaction').textContent=`${labelForStation(station)} · Tap Use`; $('action').textContent='🖐 Use';}
       else if(nearby){
         const required=nearby.type==='tree'?'axe':'pickaxe';
         $('interaction').textContent=`${nearby.type==='tree'?'Tree':'Rock'} · ${nearby.hits} hits · ${['stone_axe','iron_pickaxe'].includes(equipped)||equipped===required?'Ready':'Equip '+ITEM[required].name}`;
@@ -1130,6 +1300,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.7',health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
-window.__gameReady=true;tick();
+window.__wildernessDebug=()=>({version:'0.8',exploration:JSON.parse(JSON.stringify(exploration)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__gameReady=true;refreshLootVisuals();renderMap();tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});
