@@ -1,104 +1,98 @@
-# Wilderness v0.3 — Tools, Backpack & Gathering
+# Wilderness v0.4 — Construction 2.0
 
-**Single-player · iPhone/browser prototype · free, no ads, no purchases · full GitHub Pages replacement package**
+**Single-player · third-person 3D · free, no ads or purchases · GitHub Pages/iPhone browser**
 
-This package is an upgrade of your working **v0.2** website. It retains the same forest, muted color palette, joystick mapping, resource positions, physical collisions, cabin doors, modular floor/wall pieces, and building costs. It does **not** require Supabase, accounts, or a new repository.
+This update **builds on the player-approved v0.3**. It keeps the same forest, natural colors, character controls, deterministic tree/rock locations, tools, backpack, resource gathering, cabin, collision behavior, and export/import system. No Supabase or online account is needed. The Three.js library still loads from jsDelivr, so the first page load requires an internet connection.
 
-## ZIP contents — all four files are required
+## Contents — ALL FIVE files are required
 
-```
-index.html       Complete mobile screen, build menu, backpack, backup buttons
-game.js         Entire 3D game, tools, gathering, building, movement, save wiring
-save-system.js  Inventory rules, version-1 save migration, JSON import validation
-README.md       This guide and acceptance checklist
-```
+- `index.html` — complete interface and modular construction menu
+- `game.js` — complete 3D game logic, character, forest, buildings, controls, camera
+- `construction.js` — **NEW** snap rules, placement checks, resource prices
+- `save-system.js` — **REPLACE** existing file; version-3 format and older-save migration
+- `README.md` — this complete installation, verification and rollback guide
 
-The spaces in the illustration above are for readability; actual filenames are exactly `index.html`, `game.js`, `save-system.js`, and `README.md`. Place **all four at the repository root** (not inside a `v0.3` folder). Do not upload only the ZIP or create duplicate names such as `game (1).js`.
+Upload the **individual extracted files** into the **root** of your existing Wilderness repository, not the ZIP and not a nested `v0.4` folder. All file names are lowercase and exact.
 
-## What's new
+## What changed
 
-- **Equipable tools:** a visible axe and pickaxe on the character, on-screen quick-select buttons, and keyboard `1` / `2` shortcuts.
-- **Tool-gated gathering:** use the axe on trees and the pickaxe on rocks. A wrong tool explains what to switch to. Chopping and mining have a short arm-swing animation, hit feedback, and a cooldown against rapid double-taps.
-- **Resource rewards:** gather three wood per depleted tree, two stone per depleted rock, as before. Resources stay at their deterministic v0.2 positions and respect previously depleted states.
-- **Backpack:** 24 initial slots, wood and stone stacks of 99, two starter tool slots, resource counters, tap a tool slot to equip it. Older legitimate material totals are preserved even if extra slots are needed. The existing building menu now spends materials from the backpack rather than obsolete counters.
-- **Save migration:** reads v0.2's `wilderness_v01_singleplayer` key **without changing or deleting it**. Writes v0.3 data under `wilderness_v03_singleplayer`, using format version 2. Player position, cabin/floor/wall placement, resource depletion and amounts carry forward.
-- **Backups:** Backpack → **Export world** downloads a JSON world file. **Import world** validates a JSON backup, previews counts in a confirmation dialog, and only then replaces the current v0.3 world. An automatic pre-import snapshot makes **Undo last import** available in the backpack after an import.
-- **Saving:** local autosave approximately every 12 seconds, manual Save, and page-hide save. No internet account or database required. Three.js itself still loads from jsDelivr when first opening the page online.
+Eight build choices: `Cabin`, `Foundation`, `Floor`, `Wall`, `Doorway`, `Window`, `Roof`, and `Steps`.
 
-**Not yet included:** inventory drag-and-drop/splitting, craftable tools or tool durability, new resources or biomes, enemy combat, advanced modular construction, farming, multiplayer. Those belong in later updates.
+- **Hybrid foundation:** The original premade, walk-in cabin blueprint remains. Use new 2m modular tiles to build a separate room or home manually.
+- **Smart snap:** Floors, foundations, roofs and steps snap to even-numbered 2m grid tile centers. Walls, doorways and windows snap to tile edges, changing alignment when you rotate 90°.
+- **Positioning:** Four on-screen arrows shift the ghost preview relative to the camera in 2m increments. `Reset position` cancels those adjustments. Rotate turns it 90°.
+- **Support rules:** Place a floor or foundation before its wall/door/window. A roof needs a floor beneath plus at least two neighboring wall edges. A staircase's high end must face an adjacent foundation.
+- **Physical interaction:** Regular walls and window panels are solid; the middle of a doorway remains open. Raised foundations need steps to approach from below; character height changes smoothly while using them.
+- **Interior roofs:** Modular roof panels disappear while your character stands below them, so you can view your room. Previous cabin roof behavior remains.
+- **Material spending:** Building costs are deducted from your backpack only when a valid, affordable placement is confirmed. Green ghost = can build; yellow = insufficient resources; red = blocked/unsupported. Read the message for details.
+- **World saving:** The new v0.4 save uses `wilderness_v04_singleplayer` (save format v3). The **old v0.3 save key** `wilderness_v03_singleplayer` and earlier v0.2 key `wilderness_v01_singleplayer` are **never changed by v0.4**. Older cabins, floor/wall pieces, inventory, resources, player position and tool selection are imported.
+- **Backups:** Bag → Export world downloads `.json`; Bag → Import world validates backups (v0.2, v0.3, v0.4) and confirms before replacing. Undo last import keeps a separate v0.4 pre-import snapshot.
 
-## Before updating — protect your progress
+**Not in this version:** dismantling or recovering placed pieces, decorating, editing existing cabin blueprint geometry, saving reusable custom blueprints, complex terrain sculpting, advanced multi-story floors, combat, farming, multiplayer. Those are later goals. Stairs serve raised foundations, not full multi-story staircases.
 
-1. Use the **same iPhone, same Safari profile, and same GitHub Pages URL** where v0.2 currently saves. Browser storage belongs to that exact website address; switching to a different GitHub Pages URL will look like a fresh game.
-2. Keep your **v0.2 ZIP** in the iPhone Files app as a code rollback copy. It is **not** a backup of your browser save.
-3. **Do not delete Safari website data**, use Private Browsing, or delete your repository. Your existing v0.2 browser save will remain stored separately after upgrading, but changing sites or clearing data can lose it.
+## CRITICAL: Protect your existing world FIRST
 
-## Install v0.3 from an iPhone, step by step
+1. **Before uploading v0.4**, open your *working v0.3 website on your iPhone*.
+2. Tap **🎒 Bag → Export world**. Verify the JSON actually appears in iPhone **Files / Downloads**. Keep it as a backup. This matters because GitHub ZIPs are code backups, **not world backups**.
+3. Keep the old v0.3 ZIP as your code rollback copy.
+4. Use the **exact same Safari profile and GitHub Pages URL** after the upgrade. Browser saves are tied to that website origin. Do **not** clear Safari history/website data or switch to Private Browsing.
 
-1. Tap the `wilderness-prototype-v0.3.zip` download in ChatGPT, then open it in **Files** to unzip it.
-2. Open **your existing Wilderness GitHub repository** in Safari. Do not create another repository and do not use the Dino Dominion repository.
-3. Go to the repository's **main branch** and its top-level folder (where `index.html` and `game.js` are already located).
-4. Choose **Add file → Upload files**. Select all four unzipped files. Replace the current `index.html`, `game.js`, and `README.md`, and **add the new `save-system.js`**.
-5. Commit to `main`. If GitHub's mobile interface will not replace a same-named file by uploading, use **Request Desktop Website** in Safari, or open the existing file's editing menu and replace **its entire contents**. Do not leave the old `index.html` or `game.js` active with alternate names. Check that `save-system.js` is present alongside them.
-6. Leave **Settings → Pages → Deploy from a branch → main → /(root)** exactly as it was. Your successful v0.2 configuration does not need changing.
-7. Open the repository's **Actions** tab and check that the GitHub Pages deployment completed. Open **the same website URL** you used for v0.2.
-8. Refresh Safari if necessary. If you still see v0.2, append `?v=03` to the end of the website URL (e.g. `https://example.github.io/your-repo/?v=03`), which changes the page request but keeps the same website's browser storage. **Do not clear site data.**
-9. The top-left should read **Single-player · v0.3**. Your current cabin, collected materials, resource depletion, and player position should reappear automatically.
-10. Tap **🎒 Bag → Export world** immediately after checking your progress. Save the downloaded `.json` file in the **Files** app and keep a second copy if possible.
+## Install v0.4 — detailed iPhone instructions
 
-### If an old world does not appear
+1. Download `wilderness-prototype-v0.4.zip` in ChatGPT, then go to iPhone **Files** and tap it to unzip.
+2. Open **your existing Wilderness GitHub repository** in Safari, not a new repository and not Dino Dominion.
+3. In the `main` branch at the repository root, choose **Add file → Upload files**. Upload/replace **`index.html`**, **`game.js`**, **`save-system.js`**, and **`README.md`**. Upload **`construction.js`** as a new file.
+4. GitHub sometimes refuses replacing same-name files in mobile upload. If so, use Safari **Request Desktop Website**, or open each existing file and use GitHub's **Edit** function to replace its **entire contents**. Do not upload files named `index (1).html` or a nested ZIP folder.
+5. Make sure the root now contains these five files: `index.html`, `game.js`, `construction.js`, `save-system.js`, `README.md`.
+6. Commit all changes to `main`. If you commit in multiple steps, the site may temporarily fail until **all five** match—do not test until the last commit deploys.
+7. **Settings → Pages** stays `Deploy from a branch → main → /(root)`. No change needed.
+8. Open **Actions** and confirm the GitHub Pages deployment succeeded.
+9. Open your **existing game URL** in Safari. If an older build is cached, append `?v=04` to the existing URL and reload. This preserves the same browser-storage origin. **Do not erase website data.**
+10. The game should say `Single-player · v0.4`. Start the game and confirm your old cabin, materials, equipped tools and gathered resources remain.
+11. Immediately open **🎒 Bag → Export world**, download your new **v0.4** JSON backup and keep it in Files.
 
-**Stop and do not begin rebuilding or importing random files.** First check that you are using the exact same GitHub Pages URL and Safari profile, and that all four files were uploaded to the root. The v0.2 key is deliberately left untouched, so returning to v0.2 may still show your previous world. Share the visible error or page details before altering website data.
+## Construction controls on iPhone
 
-## iPhone controls
+1. Tap **🔨 Build**. Tap **▦ Floor** and aim at a clear patch of forest. The transparent floor snaps onto the 2m grid.
+2. Tap **← Left**, **Right →**, **↑ Farther**, or **↓ Closer** to shift the preview, or walk a little. Tap **↻ Rotate 90°** for orientation. The status panel shows the selected piece, position and why placement may be blocked.
+3. Tap **✓ Place** when green and affordable. Costs come directly from your backpack.
+4. Select **Wall**, **Doorway** or **Window**. Aim at an edge of the floor. Rotate to change which edge is used. A wall edge must be near a floor/foundation tile.
+5. Add another wall/door/window on a different edge. When there are at least two wall edges, select **Roof** to cover the tile.
+6. For raised platforms, place a **Foundation**, optionally put a **Floor** on top, and place **Steps** on the neighboring tile facing uphill toward that foundation. The direction of the steps matters.
+7. Exit Build with **✕ Close**. Walk through your doorway and around the new room. Roof sections hide while you stand underneath them.
 
-- **Move:** left joystick; push farther to run. **Look:** swipe on open space at the right of the screen.
-- **Axe:** tap `🪓 Axe` above the action buttons, approach a tree, tap `Chop` three times, allowing a brief pause between swings. At the final hit you collect **3 wood**.
-- **Pickaxe:** tap `⛏ Pickaxe`, approach a rock, tap `Mine` twice. At the final hit you collect **2 stone**.
-- **Bag:** tap `🎒 Bag` to inspect wood, stone, and tools. Tapping a tool slot equips it. Tap **✕ Close** to return to the world.
-- **Build:** tap `🔨 Build`, choose Cabin/Floor/Wall, rotate, and place. Costs still come from gathered wood and stone. Close Build before gathering.
-- **Manual Save:** tap **Save**. The game also autosaves in the browser.
-- **Desktop keyboard:** WASD/arrows move, Shift runs, mouse drag looks, `1` axe, `2` pickaxe, `E` gather, `I` bag, `B` build, `R` rotate, `F` place.
+**Important:** You can construct a separate modular home next to your older premade cabin. Directly editing individual walls of the pre-existing cabin and custom-blueprint saving are reserved for v0.5.
 
-## Export, import, and recover
+### Keyboard controls, if using a computer
 
-### Export (non-destructive)
+- WASD / arrows move; Shift runs; drag mouse to turn camera
+- `1` axe; `2` pickaxe; `E` gather; `I` backpack; `B` build; `F` place; `R` rotate
+- In Build mode: `H` left; `L` right; `K` farther; `J` closer
 
-1. Open **🎒 Bag**.
-2. Tap **⬇ Export world**.
-3. Safari should prepare a download named approximately `Wilderness-v0.3-world-YYYY-MM-DD.json`. Check Downloads/Files and **confirm the file is actually saved**; do not rely on the in-game toast alone.
-4. Keep that `.json` as your offline backup. It includes the world, player location, buildings, depleted resources, tool selection, and inventory. The JSON does not contain login credentials.
+## Acceptance tests — report pass/fail before starting v0.5
 
-### Import (replaces the current v0.3 world)
+1. **Migration:** All old v0.3 buildings, wood/stone, inventory, equipped tools, saved position and depleted resources still load; old v0.3 remains available for rollback.
+2. **Movement:** Camera, left/right joystick, collision with trees/rocks and old cabin doorway still work.
+3. **Gathering:** Axe collects wood and pickaxe collects stone; resources arrive in backpack.
+4. **Modular floor:** Place a floor, verify snapping and wood cost. The same tile should reject a duplicate floor.
+5. **Walls and edges:** Place a wall next to a floor. Rotate it and test that a wall without any supporting tile is rejected.
+6. **Door & window:** Add a doorway and window to separate floor edges. Walk through the doorway, but not through the window or solid wall.
+7. **Roof:** Add at least two wall edges, then a roof panel. Verify a roof without support is rejected and that roof visibility changes while walking inside/outside.
+8. **Foundation & steps:** Place a raised foundation with steps facing its edge. Walk up and down and inspect the character's height and camera.
+9. **Placement feedback:** Red, yellow and green previews and status explanations make sense; nothing is charged after failed placements.
+10. **Save / recovery:** Save and refresh; new buildings and inventory persist. Export JSON; verify it exists in Files; import it and confirm restoration.
+11. **Performance:** Building menu is accessible, mobile controls don't overlap badly, and the game is still smooth enough on your iPhone.
 
-1. **Export the current world first.**
-2. Open **🎒 Bag → ⬆ Import world**. Select a previously exported `.json` file from Files.
-3. The importer checks the save version, material quantities, resources, buildings, coordinates, and item slots. Damaged/unsupported JSON is rejected **before** changing your current save.
-4. Read the confirmation prompt with the backup's building count and wood/stone totals. Tap **Cancel** to keep the current world, or **OK** to replace the v0.3 world and reload.
-5. The current v0.3 save is copied to a separate local pre-import recovery key before it is replaced. After import, **🎒 Bag → ↶ Undo last import** can restore that snapshot. This recovery is also browser-local, not a substitute for a downloaded backup.
+If you can't test a feature because of missing materials, mark it **not yet tested**, not failed.
 
-### Rollback to v0.2
+## Rollback if v0.4 fails
 
-1. Re-upload the complete, saved **v0.2 `index.html` and `game.js`** files to your existing GitHub root, replacing the v0.3 versions. `save-system.js` is unused by v0.2 and can remain in the repository.
-2. Wait for the Pages deployment and open your existing URL. v0.2 reads its **original, untouched** save key. Note that progress made **only in v0.3** won't show in v0.2; use v0.3 export/import to recover that later.
-3. Re-upload all v0.3 files to return to the upgraded build. The separate v0.3 save key is preserved as long as Safari website data remains.
+1. **Do not erase Safari website data.** Open your old saved v0.3 ZIP in Files.
+2. Replace your repository's `index.html`, `game.js` and `save-system.js` with the **complete old v0.3 versions**, and also the old `README.md` if you like. The extra v0.4 `construction.js` can remain in the root; v0.3 doesn't import it.
+3. Wait for GitHub Pages Actions to complete and reopen the **same URL**. The old **v0.3 browser save remains in its own key**, unchanged by v0.4.
+4. Any progress made only in v0.4 will **not** appear when running v0.3. Export a v0.4 JSON backup before rolling back if the game still opens.
+5. When ready to return to v0.4, reupload the full v0.4 package. Your v0.4 save remains unless you cleared Safari site data.
 
-## v0.3 acceptance tests
+### Testing & limitations
 
-- [ ] 1. Game opens from the existing URL and reads **v0.3** (not blank or stuck on the loading screen).
-- [ ] 2. Previous cabin, buildings, player location, wood, stone, and depleted resources survive migration.
-- [ ] 3. Joystick left/right/up/down and rotating camera remain correct.
-- [ ] 4. Axe is visibly selected. Tree responds to three deliberate chops and adds three wood to the backpack.
-- [ ] 5. Try mining with the axe: a helpful message requests the pickaxe and the rock remains unchanged. Switch tools; mine twice to receive two stone.
-- [ ] 6. Backpack opens and shows 24 initial slots, both tools, and resource stacks. Tap a tool slot to equip it and close the backpack.
-- [ ] 7. Place a floor, wall, or cabin. Materials are deducted from the backpack; the old walkable cabin doorway and wall collisions still behave properly.
-- [ ] 8. Save, refresh, and confirm tools, buildings, items, and depleted resource states remain.
-- [ ] 9. Export a JSON file; confirm it appears in Files and is readable. Import the file and confirm world restoration after the confirmation dialog.
-- [ ] 10. After import, **Undo last import** is enabled and restores the preceding v0.3 snapshot.
-- [ ] 11. Play for 5–10 minutes and check mobile responsiveness and performance.
-
-## Technical verification and limitations
-
-Automated checks performed for this release: Node JavaScript syntax, schema/migration tests (including legacy building/resource preservation, item stacking, atomic building costs, rejecting malformed JSON), and a sandboxed in-memory runtime with a stub renderer for game initialization, UI callbacks, gathering, building, saving, backup export/import, and its page-hide guard. These checks **do not render the real Three.js graphics or emulate iPhone Safari**. A real-browser test was attempted but blocked by the test environment's navigation restrictions. Your on-device acceptance checklist is the final verification.
-
-This remains a small, ordinary-looking indie-game mechanics prototype, not a full survival game. Visuals remain purposefully modest and unchanged from the v0.2 style that passed your tests. The JSON backup is a downloaded user file, not a cloud save. Do not clear browser website data until you have independently verified a backup.
+Syntax checks, deterministic snap/support rules, v0.3→v0.4 migration, simulated gameplay events, collision, roof visibility, inventory charges and backup recovery were tested. The HTML build panel was also inspected at narrow portrait and landscape sizes. A full live GPU-rendered iPhone/Safari test could **not** be completed in this environment, so user acceptance testing is required before calling v0.4 stable.

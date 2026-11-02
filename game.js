@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js';
+import {LEGACY_KEY,V03_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js';
+import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation} from './construction.js';
 
-// Wilderness v0.2 — visual + collision upgrade of the working v0.1.1 prototype.
+// Wilderness v0.4 — modular building upgrade; keeps the approved v0.3 forest and movement.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
@@ -170,7 +171,7 @@ for(let i=0;i<45;i++){
 const clearing=mesh(new THREE.CircleGeometry(4.3,26),pathMat,scene,0,-.071,0);clearing.rotation.x=-Math.PI/2;clearing.material=new THREE.MeshStandardMaterial({color:'#999178',transparent:true,opacity:.22,depthWrite:false});
 
 const builds=[],buildRoot=new THREE.Group();scene.add(buildRoot);
-const costs={cabin:{wood:12,stone:5},floor:{wood:2,stone:0},wall:{wood:3,stone:0}};
+const costs=COSTS;
 function cabinShape(group,ghost=false){
   mesh(box(5,.28,5),timber,group,0,.14,0);
   const back=mesh(box(5,2.65,.22),timberDark,group,0,1.58,-2.4);
@@ -193,16 +194,59 @@ function cabinShape(group,ghost=false){
   const frame=mesh(box(1.3,.08,.14),beam,group,1.72,2.26,-2.58);
   frame.userData.decoration=true;
 }
+function modularShape(type,group,ghost){
+  if(type==='foundation'){
+    mesh(box(1.98,.54,1.98),rockMat,group,0,.27,0);
+    for(const z of [-.77,.77])mesh(box(1.98,.13,.11),beam,group,0,.57,z);
+  }
+  if(type==='floor')mesh(box(1.98,.24,1.98),timber,group,0,.12,0);
+  if(type==='wall')mesh(box(1.98,2.65,.20),timberDark,group,0,1.45,0);
+  if(type==='door'){
+    for(const x of [-.91,.91])mesh(box(.18,2.65,.22),timberDark,group,x,1.45,0);
+    mesh(box(1.82,.38,.22),timberDark,group,0,2.59,0);
+    mesh(box(1.7,.07,.22),beam,group,0,.06,0); // Low threshold, walkable
+  }
+  if(type==='window'){
+    mesh(box(1.98,.83,.2),timberDark,group,0,.42,0);
+    mesh(box(1.98,.67,.2),timberDark,group,0,2.44,0);
+    mesh(box(1.35,1.10,.12),glassMat,group,0,1.39,0);
+    for(const x of [-.89,.89])mesh(box(.18,1.1,.23),beam,group,x,1.39,0);
+    mesh(box(.11,1.1,.13),beam,group,0,1.39,.03);
+  }
+  if(type==='roof'){
+    // A pair of pitched slabs: each tile sits over its matching floor.
+    const a=mesh(box(1.17,.19,2.13),roofMat,group,-.48,3.07,0);a.rotation.z=.47;
+    const b=mesh(box(1.17,.19,2.13),roofMat,group,.48,3.07,0);b.rotation.z=-.47;
+    a.userData.roof=true;b.userData.roof=true;
+  }
+  if(type==='stairs'){
+    for(let i=0;i<4;i++)mesh(box(1.56,.13,.46),timber,group,0,.075+i*.14,.69-i*.45);
+    // Ascends along local -Z toward a raised foundation.
+    for(const x of [-.70,.70]){
+      const rail=mesh(box(.10,.9,2),beam,group,x,.47,0);rail.rotation.x=-.16;
+    }
+  }
+  if(!ghost){group.traverse(o=>{if(o.isMesh&&(wallType(type)||type==='roof')){o.material.side=THREE.DoubleSide;cameraOccluders.push(o);}});}
+}
 function createBuild(type,x,z,rot,ghost=false){
   const group=new THREE.Group();group.position.set(x,0,z);group.rotation.y=rot;buildRoot.add(group);
   if(type==='cabin')cabinShape(group,ghost);
-  if(type==='floor')mesh(box(2,.26,2),timber,group,0,.14,0);
-  if(type==='wall'){
-    const m=mesh(box(2,2.7,.22),timberDark,group,0,1.48,0);
-    if(!ghost){m.material.side=THREE.DoubleSide;cameraOccluders.push(m);}
-  }
+  else modularShape(type,group,ghost);
   if(ghost){group.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshBasicMaterial({color:'#98d9ac',transparent:true,opacity:.40,depthWrite:false,side:THREE.DoubleSide});});}
   return group;
+}
+function hasFoundation(x,z){return builds.some(b=>b.type==='foundation'&&Math.hypot(b.x-x,b.z-z)<.35);}
+function refreshElevations(){
+  for(const b of builds){
+    if(!b.group)continue;
+    let support=false;
+    if(['floor','roof'].includes(b.type))support=hasFoundation(b.x,b.z);
+    if(wallType(b.type)){
+      const c=Math.cos(b.rot),ss=Math.sin(b.rot);
+      support=hasFoundation(b.x-ss,b.z-c)||hasFoundation(b.x+ss,b.z+c);
+    }
+    b.group.position.y=support?.55:0;
+  }
 }
 function disposeGhost(){if(!preview)return;preview.traverse(o=>{if(o.isMesh&&o.material.isMeshBasicMaterial)o.material.dispose();});buildRoot.remove(preview);preview=null;}
 
@@ -215,27 +259,54 @@ function obstacleAt(x,z){
   if(Math.abs(x)>WORLD-.65||Math.abs(z)>WORLD-.65)return true;
   for(const r of resources){if(r.hits>0&&Math.hypot(x-r.x,z-r.z)<PLAYER_RADIUS+r.radius)return true;}
   for(const b of builds){
-    if(b.type==='floor')continue;
+    if(['floor','foundation','roof','stairs'].includes(b.type))continue;
     const p=localPoint(x,z,b);
-    if(b.type==='wall'){
+    if(b.type==='wall'||b.type==='window'){
       if(hitsRect(p.x,p.z,1,.11))return true;
+    }else if(b.type==='door'){
+      // The frame is solid, but the middle is a genuinely walkable gap.
+      if(hitsRect(p.x-.91,p.z,.09,.11)||hitsRect(p.x+.91,p.z,.09,.11))return true;
     }else if(b.type==='cabin'&&Math.abs(p.x)<3&&Math.abs(p.z)<3){
       if(hitsRect(p.x,p.z+2.4,2.5,.11)||hitsRect(p.x-2.4,p.z,.11,2.5)||hitsRect(p.x+2.4,p.z,.11,2.5)
-       ||hitsRect(p.x+1.6,p.z-2.4,.9,.11)||hitsRect(p.x-1.6,p.z-2.4,.9,.11))return true;
+        ||hitsRect(p.x+1.6,p.z-2.4,.9,.11)||hitsRect(p.x-1.6,p.z-2.4,.9,.11))return true;
     }
   }
   return false;
 }
+function groundHeightAt(x,z){
+  let h=0;
+  for(const b of builds){
+    if(b.type==='foundation'){
+      const p=localPoint(x,z,b);if(Math.abs(p.x)<.93&&Math.abs(p.z)<.93)h=Math.max(h,.55);
+    }
+    if(b.type==='stairs'){
+      const p=localPoint(x,z,b);
+      if(Math.abs(p.x)<.7&&Math.abs(p.z)<.96){
+        // Staircase rises toward local -Z, ending level with a foundation.
+        h=Math.max(h,.55*Math.min(1,Math.max(0,(.97-p.z)/1.94)));
+      }
+    }
+  }
+  return h;
+}
 function roofVisible(){
   for(const b of builds){
-    if(b.type!=='cabin'||!b.group)continue;
-    const p=localPoint(player.position.x,player.position.z,b),indoors=Math.abs(p.x)<2.25&&Math.abs(p.z)<2.25;
-    b.group.traverse(o=>{if(o.userData.roof)o.visible=!indoors;});
+    if(!b.group)continue;
+    if(b.type==='cabin'){
+      const p=localPoint(player.position.x,player.position.z,b);
+      const indoors=Math.abs(p.x)<2.25&&Math.abs(p.z)<2.25;
+      b.group.traverse(o=>{if(o.userData.roof)o.visible=!indoors;});
+    }else if(b.type==='roof'){
+      const p=localPoint(player.position.x,player.position.z,b);
+      const below=Math.abs(p.x)<1.08&&Math.abs(p.z)<1.08;
+      b.group.traverse(o=>{if(o.userData.roof)o.visible=!below;});
+    }
   }
 }
 // v0.3 backpack; starter tools occupy two dedicated slots.
 let inventory=startingInventory(),equipped='axe',inventoryOpen=false;
 let buildMode=false,selected='cabin',orientation=0,preview=null,validPlacement=false;
+let nudgeX=0,nudgeZ=0,previewPosition={x:0,z:0},placementReason='';
 let yaw=0,pitch=.38,nearby=null,runTime=0,moveVX=0,moveVZ=0;
 let actionUntil=0,swingTime=0,impactTarget=null;
 const move={x:0,y:0},keys=new Set();let joystickPointer=null,lookPointer=null,lastLookX=0,lastLookY=0,paused=true;
@@ -244,7 +315,7 @@ const amount=id=>count(inventory,id);
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('toast').classList.remove('show'),2150);}
 function updateHud(){
   $('woodCount').textContent=amount('wood');$('stoneCount').textContent=amount('stone');
-  $('task').textContent=builds.some(b=>b.type==='cabin')?'Cabin built! Keep developing your homestead.':'Gather 12 wood and 5 stone, then place your cabin blueprint.';
+  $('task').textContent=builds.length?'Homestead in progress · explore or add new modular rooms.':'Gather wood and stone, then build a cabin or your own modular home.';
   $('axeEquip').classList.toggle('active',equipped==='axe');$('pickEquip').classList.toggle('active',equipped==='pickaxe');
   $('equippedLabel').textContent=ITEM[equipped].name;
   if(inventoryOpen)renderInventory();
@@ -268,8 +339,9 @@ function loadGame(){
   let raw=null,origin='';
   try{
     const newer=localStorage.getItem(SAVE_KEY);
-    if(newer){raw=JSON.parse(newer);origin='v0.3';}
-    else {const older=localStorage.getItem(LEGACY_KEY);if(older){raw=JSON.parse(older);origin='v0.2';}}
+    if(newer){raw=JSON.parse(newer);origin='v0.4';}
+    else {const prev=localStorage.getItem(V03_KEY);if(prev){raw=JSON.parse(prev);origin='v0.3';}
+      else {const older=localStorage.getItem(LEGACY_KEY);if(older){raw=JSON.parse(older);origin='v0.2';}}}
   }catch(e){loadMessage='Save could not be read. Stored data was not overwritten.';return;}
   if(!raw)return;
   let data;try{data=normalizeSave(raw);}catch(e){loadMessage='Save validation failed. Existing browser data was left untouched.';console.error(e);return;}
@@ -282,9 +354,9 @@ function loadGame(){
     }
   }
   for(const b of data.builds){const group=createBuild(b.type,b.x,b.z,b.rot);builds.push({...b,group});}
-  findSafePosition();
-  if(origin==='v0.2')loadMessage=saveGame(true)?'Existing v0.2 world imported; old save preserved.':'Old world loaded; please export a backup.';
-  else loadMessage='v0.3 world loaded.';
+  refreshElevations();findSafePosition();
+  if(origin!=='v0.4')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
+  else loadMessage='v0.4 world loaded.';
 }
 function renderInventory(){
   const cells=$('inventorySlots');cells.textContent='';
@@ -316,7 +388,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.3-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.4-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -328,7 +400,7 @@ async function importSave(file){
   let imported;
   try{imported=normalizeSave(JSON.parse(await file.text()));}
   catch(e){toast('Import rejected: '+e.message);return;}
-  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.3 world will be replaced. Export it first if needed.`;
+  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.4 world will be replaced. Export it first if needed.`;
   if(!window.confirm(question))return;
   try{
     const previous=localStorage.getItem(SAVE_KEY);
@@ -342,7 +414,7 @@ function undoLastImport(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem(PRE_IMPORT_KEY)||'null'));}
   catch(e){toast('No valid pre-import recovery found');return;}
-  if(!window.confirm('Undo the last world import? This replaces your current v0.3 world with the previous version. Export your current world first if needed.'))return;
+  if(!window.confirm('Undo the last world import? This replaces your current v0.4 world with the previous version. Export your current world first if needed.'))return;
   try{
     const current=localStorage.getItem(SAVE_KEY);
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
@@ -374,38 +446,52 @@ function gather(){
 }
 function projectedPos(){
   const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)),d=selected==='cabin'?6:4.1;
-  return {x:THREE.MathUtils.clamp(Math.round((player.position.x+forward.x*d)/2)*2,-WORLD+3,WORLD-3),
-          z:THREE.MathUtils.clamp(Math.round((player.position.z+forward.z*d)/2)*2,-WORLD+3,WORLD-3)};
+  const x=THREE.MathUtils.clamp(player.position.x+forward.x*d+nudgeX,-WORLD+3,WORLD-3);
+  const z=THREE.MathUtils.clamp(player.position.z+forward.z*d+nudgeZ,-WORLD+3,WORLD-3);
+  return snappedPosition(selected,x,z,orientation);
 }
 function updatePreview(){
-  if(!buildMode)return;const {x,z}=projectedPos();
+  if(!buildMode)return;
+  const {x,z}=projectedPos();previewPosition={x,z};
   if(!preview)preview=createBuild(selected,x,z,orientation,true);
   preview.position.set(x,0,z);preview.rotation.y=orientation;
-  const radius=selected==='cabin'?3.3:1.25;
-  const clearResource=!resources.some(r=>r.hits>0&&Math.hypot(x-r.x,z-r.z)<radius+r.radius+.5);
-  const clearBuilding=!builds.some(b=>Math.hypot(x-b.x,z-b.z)<radius+(b.type==='cabin'?2.1:.35));
-  const clearPlayer=Math.hypot(x-player.position.x,z-player.position.z)>1.3;
-  validPlacement=clearResource&&clearBuilding&&clearPlayer;
+  placementReason=placementVerdict({type:selected,x,z,rot:orientation},builds,resources,player.position,WORLD);
+  validPlacement=!placementReason;
   const enough=amount('wood')>=costs[selected].wood&&amount('stone')>=costs[selected].stone;
   const color=validPlacement?(enough?'#97c8a1':'#d8bc87'):'#d28779';
   preview.traverse(o=>{if(o.isMesh)o.material.color.set(color);});
   $('place').disabled=!validPlacement||!enough;
-  $('place').textContent=!validPlacement?'Location blocked':enough?'✓ Place':'Need materials';
+  $('place').textContent=!validPlacement?'Blocked':enough?'✓ Place':'Need supplies';
+  $('buildStatus').textContent=`${selected.toUpperCase()} · ${x}, ${z} · ${placementReason||(!enough?'Gather '+(costs[selected].wood-amount('wood')>0?(costs[selected].wood-amount('wood'))+' wood ':'')+(costs[selected].stone-amount('stone')>0?(costs[selected].stone-amount('stone'))+' stone':''):'Ready to place')}`;
 }
-function choose(type){selected=type;document.querySelectorAll('[data-type]').forEach(b=>b.classList.toggle('active',b.dataset.type===type));disposeGhost();updatePreview();}
+function choose(type){
+  if(!BUILD_TYPES.includes(type))return;
+  selected=type;orientation=0;nudgeX=0;nudgeZ=0;
+  document.querySelectorAll('[data-type]').forEach(b=>b.classList.toggle('active',b.dataset.type===type));
+  disposeGhost();updatePreview();
+}
 function setBuildMode(enabled){
   if(enabled&&inventoryOpen)setInventory(false);
   buildMode=enabled;$('buildPanel').classList.toggle('show',enabled);
+  // Keep the approved mobile interface legible: hide tool shortcuts while designing.
+  $('toolStrip').style.display=enabled?'none':'flex';
   $('buildToggle').textContent=enabled?'✕ Close Build':'🔨 Build';$('action').style.display=enabled?'none':'block';
   if(!enabled)disposeGhost();else updatePreview();
 }
+function nudge(dx,dz){nudgeX=THREE.MathUtils.clamp(nudgeX+dx,-8,8);nudgeZ=THREE.MathUtils.clamp(nudgeZ+dz,-8,8);updatePreview();}
+function nudgeRelative(right,forward){
+  nudge(-Math.cos(yaw)*right*2+Math.sin(yaw)*forward*2,Math.sin(yaw)*right*2+Math.cos(yaw)*forward*2);
+}
 function place(){
-  if(!buildMode||paused)return;updatePreview();if(!validPlacement){toast('Find a clear area');return;}
+  if(!buildMode||paused)return;updatePreview();if(!validPlacement){toast(placementReason||'Find a clear area');return;}
+  if(builds.length>=500){toast('World building limit reached');return;}
   const c=costs[selected];if(!payCosts(inventory,c)){toast('Gather more materials first');return;}
-  const {x,z}=projectedPos();
+  const {x,z}=previewPosition;
   const group=createBuild(selected,x,z,orientation);
   builds.push({type:selected,x,z,rot:orientation,group});
-  updateHud();saveGame(true);toast(selected==='cabin'?'Cabin constructed! Walk through the front doorway.':'Building piece placed');updatePreview();
+  refreshElevations();updateHud();saveGame(true);
+  toast(selected==='cabin'?'Cabin built! Doorway stays open.':`${selected} placed at ${x}, ${z}`);
+  updatePreview();
 }
 $('start').addEventListener('click',()=>{$('modal').classList.add('hidden');paused=false;toast(loadMessage||'Explore and build your homestead!');});
 $('bagToggle').addEventListener('click',()=>setInventory(!inventoryOpen));
@@ -420,7 +506,12 @@ $('action').addEventListener('click',gather);
 $('save').addEventListener('click',()=>saveGame());
 $('buildToggle').addEventListener('click',()=>setBuildMode(!buildMode));
 $('closeBuild').addEventListener('click',()=>setBuildMode(false));
-$('rotate').addEventListener('click',()=>{orientation=(orientation+Math.PI/2)%(Math.PI*2);updatePreview();});
+$('rotate').addEventListener('click',()=>{orientation=normalizedRotation(orientation+Math.PI/2);updatePreview();});
+$('resetNudge').addEventListener('click',()=>{nudgeX=nudgeZ=0;updatePreview();});
+$('nudgeLeft').addEventListener('click',()=>nudgeRelative(-1,0));
+$('nudgeRight').addEventListener('click',()=>nudgeRelative(1,0));
+$('nudgeForward').addEventListener('click',()=>nudgeRelative(0,1));
+$('nudgeBack').addEventListener('click',()=>nudgeRelative(0,-1));
 $('place').addEventListener('click',place);
 document.querySelectorAll('[data-type]').forEach(b=>b.addEventListener('click',()=>choose(b.dataset.type)));
 
@@ -452,7 +543,8 @@ addEventListener('keydown',e=>{
   if(e.key.toLowerCase()==='i')setInventory(!inventoryOpen);
   if(e.key.toLowerCase()==='b')setBuildMode(!buildMode);
   if(e.key.toLowerCase()==='f')place();
-  if(e.key.toLowerCase()==='r'&&buildMode){orientation=(orientation+Math.PI/2)%(Math.PI*2);updatePreview();}
+  if(e.key.toLowerCase()==='r'&&buildMode){orientation=normalizedRotation(orientation+Math.PI/2);updatePreview();}
+  if(buildMode&&['h','j','k','l'].includes(e.key.toLowerCase())){const dirs={h:[-1,0],l:[1,0],k:[0,1],j:[0,-1]};nudgeRelative(...dirs[e.key.toLowerCase()]);}
 });
 addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
 addEventListener('blur',()=>{keys.clear();move.x=move.y=0;joystickPointer=null;knob.style.transform='translate(0,0)';});
@@ -463,7 +555,7 @@ addEventListener('resize',()=>{
 const viewRay=new THREE.Raycaster();let uiTimer=0,saveTimer=0,roofTimer=0;
 function updateCamera(dt){
   const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
-  const target=new THREE.Vector3(player.position.x,1.53,player.position.z);
+  const target=new THREE.Vector3(player.position.x,1.53+player.position.y,player.position.z);
   const desired=target.clone().addScaledVector(forward,-cameraDistance*Math.cos(pitch));
   desired.y+=cameraDistance*Math.sin(pitch);
   // Pull the camera forward when a solid house surface blocks its line of sight.
@@ -492,9 +584,9 @@ function tick(){
     moveVZ=THREE.MathUtils.damp(moveVZ,dz*speed,12,dt);
     // Separately resolve X and Z to glide naturally along obstacles.
     const nextX=player.position.x+moveVX*dt;
-    if(!obstacleAt(nextX,player.position.z))player.position.x=nextX;else moveVX=0;
+    if(!obstacleAt(nextX,player.position.z)&&groundHeightAt(nextX,player.position.z)-groundHeightAt(player.position.x,player.position.z)<.28)player.position.x=nextX;else moveVX=0;
     const nextZ=player.position.z+moveVZ*dt;
-    if(!obstacleAt(player.position.x,nextZ))player.position.z=nextZ;else moveVZ=0;
+    if(!obstacleAt(player.position.x,nextZ)&&groundHeightAt(player.position.x,nextZ)-groundHeightAt(player.position.x,player.position.z)<.28)player.position.z=nextZ;else moveVZ=0;
     const moving=Math.hypot(moveVX,moveVZ)>.17;
     if(moving&&swingTime<=0){
       const angle=Math.atan2(moveVX,moveVZ);
@@ -513,6 +605,8 @@ function tick(){
       if(impactTarget?.hits>0&&progress>.30&&progress<.70)impactTarget.group.rotation.z=Math.sin(progress*Math.PI*5)*.055;
       if(!swingTime){armR.rotation.z=0;if(impactTarget)impactTarget.group.rotation.z=0;impactTarget=null;}
     }
+    const ground=groundHeightAt(player.position.x,player.position.z);
+    player.position.y=THREE.MathUtils.damp(player.position.y,ground,14,dt);
     roofTimer+=dt;if(roofTimer>.09){roofVisible();roofTimer=0;}
     updateCamera(dt);
     if(buildMode)updatePreview();
@@ -530,6 +624,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.3.0',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,paused});
+window.__wildernessDebug=()=>({version:'0.4.0',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 window.__gameReady=true;tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.3 · Backpack & Gathering</title>
+<title>Wilderness — v0.4 · Construction 2.0</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -40,17 +40,45 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 .backuptools{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}#restorePrevious{width:100%;margin-top:8px;padding:9px;font-size:11px;background:#3f4e44}.backuptools strong{font-size:13px}.backuptools p{font-size:11px;line-height:1.5;color:#c7d0c3;margin:6px 0 10px}.backupbuttons{display:flex;gap:7px}.backupbuttons button{flex:1;padding:10px 6px;font-size:11px;font-weight:700;background:#4d5d4e}
 @media (max-width:375px){.toolstrip{bottom:calc(env(safe-area-inset-bottom) + 150px);right:8px}.inventorypanel{top:calc(env(safe-area-inset-top) + 86px);bottom:calc(env(safe-area-inset-bottom) + 154px)}.actions #bagToggle{min-width:70px}.primaryactions{gap:4px}}
 @media (orientation:landscape) and (max-height:460px){.toolstrip{bottom:calc(env(safe-area-inset-bottom) + 90px);right:12px}.inventorypanel{top:calc(env(safe-area-inset-top) + 42px);bottom:calc(env(safe-area-inset-bottom) + 8px);right:12px;width:360px}.itemslot{min-height:60px}}
+
+/* v0.4 mobile construction interface: scroll within menu rather than covering the joystick. */
+.panel{max-height:min(66vh,460px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.buildchoices{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.buildchoices button{padding:7px 2px;font-size:10px;min-height:54px;line-height:1.25}
+.buildchoices button small{display:block;color:#e2e4d3cc;font-size:9px;margin-top:3px;white-space:nowrap}
+.buildstatus{margin:9px 0 5px;padding:8px 9px;background:#1e2a23;border:1px solid #d5c7a022;border-radius:9px;font-size:11px;line-height:1.35;min-height:32px}
+.nudgecontrols{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:8px 0 0}
+.nudgecontrols button{padding:9px 2px;background:#405346;font-size:10px;white-space:nowrap}
+.buildcontrols button{padding:10px 4px;min-width:0;font-size:11px}
+#resetNudge{background:#3e5143}
+@media(max-width:375px){.buildchoices button{font-size:9px}.buildchoices button small{font-size:8px}.nudgecontrols button{font-size:9px}}
+@media(orientation:landscape) and (max-height:460px){.panel{max-height:calc(100vh - 24px);max-width:440px;right:120px;bottom:8px}.buildchoices button{min-height:43px}.small{display:block;font-size:10px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.3</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.4</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="interaction"></div><div id="toast" class="toast"></div>
 <div class="toolstrip" id="toolStrip"><span>Equipped: <b id="equippedLabel">Wooden axe</b></span><div class="toolbuttons"><button id="axeEquip" class="active" aria-label="Equip axe">🪓 Axe</button><button id="pickEquip" aria-label="Equip pickaxe">⛏ Pickaxe</button></div></div>
 <div class="hud-bottom"><div id="stick" aria-label="Movement joystick"><div id="knob"></div></div><div class="actions"><div class="primaryactions"><button id="action">Gather</button><button id="bagToggle">🎒 Bag</button></div><div class="subactions"><button id="save">Save</button><button id="buildToggle">🔨 Build</button></div></div></div>
-<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Homestead building</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div><div class="buildchoices"><button data-type="cabin" class="active">🏠 Cabin<br><small>12 🪵 · 5 🪨</small></button><button data-type="floor">▦ Floor<br><small>2 🪵</small></button><button data-type="wall">▥ Wall<br><small>3 🪵</small></button></div><div class="buildcontrols"><button id="rotate">↻ Rotate</button><button id="place">✓ Place</button></div><div class="small">Walk to aim the transparent preview, rotate to align and place it. Completed cabins have a real doorway and solid walls. This is a starter building system, not full modular construction yet.</div></div>
+<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Construction 2.0</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div>
+  <div class="buildchoices">
+    <button data-type="cabin" class="active">🏠 Cabin<small>12 🪵 + 5 🪨</small></button>
+    <button data-type="foundation">▤ Foundation<small>2 🪵 + 2 🪨</small></button>
+    <button data-type="floor">▦ Floor<small>2 🪵</small></button>
+    <button data-type="wall">▥ Wall<small>3 🪵</small></button>
+    <button data-type="door">🚪 Doorway<small>3 🪵</small></button>
+    <button data-type="window">▣ Window<small>3 🪵 + 1 🪨</small></button>
+    <button data-type="roof">⌂ Roof<small>4 🪵</small></button>
+    <button data-type="stairs">▰ Steps<small>3 🪵</small></button>
+  </div>
+  <p id="buildStatus" class="buildstatus" aria-live="polite">Aim at open ground. Floors snap to 2-metre tiles; walls snap to tile edges.</p>
+  <div class="nudgecontrols"><button id="nudgeLeft" aria-label="Shift construction left">← Left</button><button id="nudgeForward">↑ Farther</button><button id="nudgeBack">↓ Closer</button><button id="nudgeRight" aria-label="Shift construction right">Right →</button></div>
+  <div class="buildcontrols"><button id="rotate">↻ Rotate 90°</button><button id="resetNudge">◎ Reset position</button><button id="place">✓ Place</button></div>
+  <div class="small">FLOOR / FOUNDATION → WALLS, DOOR, WINDOWS → ROOF. A roof needs two wall edges. Steps go beside a foundation. Green = valid, amber = materials missing, red = blocked. A roof disappears while you're below it.</div>
+</div>
 <section id="inventoryPanel" class="inventorypanel" role="dialog" aria-label="Backpack and world backup">
   <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
   <p id="bagSummary" class="bagsummary">24 slots</p>
@@ -60,9 +88,9 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">TOOLS & BACKPACK UPDATE</div><h1>Wilderness · v0.3</h1><p>Equip your axe for trees or pickaxe for rocks, gather supplies, and inspect your new backpack. Your v0.2 world and buildings will import automatically without deleting the original save.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Switch axe/pickaxe above the controls · Gather by a tree or rock · Bag for inventory and backups · Build to construct.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · 1/2 equip · E gather · I backpack · B build · F place · R rotate.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Use the same GitHub Pages URL. Export backups regularly from your backpack; do not clear Safari site data.</p></div></div>
+<div id="modal"><div class="intro"><div class="eyebrow">MODULAR CONSTRUCTION UPDATE</div><h1>Wilderness · v0.4</h1><p>Build floors and foundations, snap walls and doorways to edges, add windows, stairs and roof panels. Your older cabins and inventory will be brought forward without deleting your v0.3 save.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Switch axe/pickaxe above the controls · Gather by a tree or rock · Bag for inventory and backups · Build for eight construction pieces, plus four positioning controls.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · 1/2 equip · E gather · I backpack · B build · F place · R rotate · H/J/K/L position.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Use the same GitHub Pages URL. Export backups regularly from your backpack; do not clear Safari site data.</p></div></div>
 <div id="loaderror"><div><h2>3D engine couldn't load</h2><p>Open this page online in Safari. Wilderness currently loads Three.js from a public CDN.</p></div></div>
-<script type="module" src="./game.js?v=0.3.0"></script>
+<script type="module" src="./game.js?v=0.4.0"></script>
 <script>setTimeout(()=>{if(!window.__gameReady)document.getElementById('loaderror').style.display='flex'},18000)</script>
 </body>
 </html>
