@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.4.1 · Construction Hotfix</title>
+<title>Wilderness — v0.5 · Blueprints & Land</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -54,7 +54,7 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 @media(max-width:375px){.buildchoices button{font-size:9px}.buildchoices button small{font-size:8px}.nudgecontrols button{font-size:9px}}
 @media(orientation:landscape) and (max-height:460px){.panel{max-height:calc(100vh - 24px);max-width:440px;right:120px;bottom:8px}.buildchoices button{min-height:43px}.small{display:block;font-size:10px}}
 
-/* v0.4.1: After selecting a piece, show a compact placement toolbar, not the full picker. */
+/* v0.4.1 compact placement toolbar preserved in v0.5. */
 .placementdock{position:fixed;z-index:8;right:12px;bottom:calc(env(safe-area-inset-bottom) + 171px);width:min(262px,calc(100vw - 28px));padding:9px;background:#253229ed;border:1px solid #dfd9b938;border-radius:13px;box-shadow:0 8px 20px #0005;display:none;pointer-events:auto}
 .placementdock.show{display:block}
 .placementhead{display:flex;align-items:center;justify-content:space-between;gap:6px}
@@ -67,17 +67,29 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 .placementdock .buildcontrols button{padding:9px 3px;font-size:10px;font-weight:750}
 @media(max-width:375px){.placementdock{right:8px;bottom:calc(env(safe-area-inset-bottom) + 160px);width:238px}}
 @media(orientation:landscape) and (max-height:460px){.placementdock{right:130px;bottom:calc(env(safe-area-inset-bottom) + 8px);width:245px;padding:6px}.placementdock .buildstatus{max-height:30px;margin:3px 0}.placementdock .nudgecontrols button,.placementdock .buildcontrols button{padding:5px 1px}}
+
+/* v0.5: scrollable blueprint / land-management picker; the 3D placement view stays clear. */
+.buildchoices{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.pickersection{font-size:10px;font-weight:800;letter-spacing:.6px;color:#e8d8ae;margin:10px 2px 5px}
+.planlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.planlist button{background:#435b46;border-color:#7c947c66;padding:8px 5px;font-size:11px;min-height:38px}
+.planlist .planshint{font-size:10px;color:#d6d9c8b6;line-height:1.35;grid-column:span 2}
+.landtools{display:flex;gap:6px;margin-top:8px}
+.landtools button{flex:1;padding:9px 5px;background:#5b614c;font-size:10px;font-weight:750}
+#dismantleNearest{background:#6b5548}
+@media(max-width:375px){.planlist button,.landtools button{font-size:9px}.pickersection{margin-top:7px}}
+@media(orientation:landscape) and (max-height:460px){.pickersection{margin:6px 2px 2px}.landtools button{padding:6px}.planlist button{min-height:30px;padding:4px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.4.1</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.5</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="interaction"></div><div id="toast" class="toast"></div>
 <div class="toolstrip" id="toolStrip"><span>Equipped: <b id="equippedLabel">Wooden axe</b></span><div class="toolbuttons"><button id="axeEquip" class="active" aria-label="Equip axe">🪓 Axe</button><button id="pickEquip" aria-label="Equip pickaxe">⛏ Pickaxe</button></div></div>
 <div class="hud-bottom"><div id="stick" aria-label="Movement joystick"><div id="knob"></div></div><div class="actions"><div class="primaryactions"><button id="action">Gather</button><button id="bagToggle">🎒 Bag</button></div><div class="subactions"><button id="save">Save</button><button id="buildToggle">🔨 Build</button></div></div></div>
-<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Construction 2.0</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div>
+<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Construction 2.5</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div>
   <div class="buildchoices">
     <button data-type="cabin" class="active">🏠 Cabin<small>12 🪵 + 5 🪨</small></button>
     <button data-type="foundation">▤ Foundation<small>2 🪵 + 2 🪨</small></button>
@@ -87,8 +99,16 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
     <button data-type="window">▣ Window<small>3 🪵 + 1 🪨</small></button>
     <button data-type="roof">⌂ Roof<small>4 🪵</small></button>
     <button data-type="stairs">▰ Steps<small>3 🪵</small></button>
+    <button data-type="path">▥ Path<small>1 🪨</small></button>
+    <button data-type="fence">╏Fence<small>2 🪵</small></button>
+    <button data-type="planter">🌱 Planter<small>2 🪵 + 1 🪨</small></button>
   </div>
-  <div class="small">Tap a piece to preview it in the world. The menu will close so you can position it using the compact toolbar. Floors / foundations → walls / doors → roof. Steps attach to a raised foundation. Green = valid, amber = resources missing, red = blocked.</div>
+  <div class="pickersection">READY-MADE BLUEPRINTS</div>
+  <div class="planlist"><button data-type="stock:0">🏗 Raised Deck</button><button data-type="stock:1">🌿 Garden Corner</button></div>
+  <div class="pickersection">YOUR DESIGNS</div>
+  <div id="savedPlans" class="planlist"></div>
+  <div class="landtools"><button id="saveNearby">📐 Save nearby design</button><button id="dismantleNearest">↶ Dismantle nearest</button></div>
+  <div class="small">Foundations support floors automatically. A raised cabin needs a complete 3×3 foundation pad (9 tiles). Choose a piece or blueprint to hide this panel and use the compact placement controls. Green = placeable, amber = missing materials, red = blocked. Save up to six custom designs. Dismantling refunds materials.</div>
 </div>
 <div id="placementDock" class="placementdock" role="group" aria-label="Construction placement controls">
   <div class="placementhead"><strong id="pieceLabel">Cabin</strong><button id="changePiece" aria-label="Choose another construction piece">▦ Pieces</button></div>
@@ -100,14 +120,14 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
   <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
   <p id="bagSummary" class="bagsummary">24 slots</p>
   <div id="inventorySlots" class="inventorygrid"></div>
-  <div class="backuptools"><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.4 world after confirmation.</p>
+  <div class="backuptools"><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.5 world after confirmation.</p>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">CONSTRUCTION HOTFIX</div><h1>Wilderness · v0.4.1</h1><p>Steps now join raised floors without a drop-through seam. Choose a building piece to automatically hide the large menu and position it using the compact toolbar. Your v0.4 world remains saved.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Switch axe/pickaxe above the controls · Gather by a tree or rock · Bag for inventory and backups · Build → choose a piece to close the menu; use the small toolbar to move, rotate or place; Pieces reopens the list.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · 1/2 equip · E gather · I backpack · B build · F place · R rotate · H/J/K/L position.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Use the same GitHub Pages URL. Export backups regularly from your backpack; do not clear Safari site data.</p></div></div>
+<div id="modal"><div class="intro"><div class="eyebrow">BLUEPRINTS & LAND DEVELOPMENT</div><h1>Wilderness · v0.5</h1><p>Build floors and full cabins on raised foundations. Place new ready-made layouts, save your own nearby construction as a reusable blueprint, decorate with paths, fences and planters, and dismantle pieces with material refunds. Your older v0.4 save remains untouched.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Switch axe/pickaxe above the controls · Gather by a tree or rock · Bag for inventory and backups · Build → choose a piece or blueprint; the full menu hides; move, rotate and place in the small toolbar; Pieces reopens the list. To elevate a cabin, first lay a 3×3 (9-tile) foundation pad. Use Save nearby design and Dismantle nearest while near structures.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · 1/2 equip · E gather · I backpack · B build · F place · R rotate · H/J/K/L position.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Use the same GitHub Pages URL. Export backups regularly from your backpack; do not clear Safari site data.</p></div></div>
 <div id="loaderror"><div><h2>3D engine couldn't load</h2><p>Open this page online in Safari. Wilderness currently loads Three.js from a public CDN.</p></div></div>
-<script type="module" src="./game.js?v=0.4.1"></script>
+<script type="module" src="./game.js?v=0.5"></script>
 <script>setTimeout(()=>{if(!window.__gameReady)document.getElementById('loaderror').style.display='flex'},18000)</script>
 </body>
 </html>

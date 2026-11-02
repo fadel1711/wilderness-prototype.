@@ -1,9 +1,10 @@
-// Wilderness v0.4 — retains BOTH older Safari save keys (v0.2 and v0.3) unchanged.
-// Version-3 saves accept v0.4 modular pieces; older v1/v2 and export backups also import.
+// Wilderness v0.5. Old Safari keys are only READ, never overwritten by migration.
+// The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
-export const SAVE_KEY='wilderness_v04_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v04_pre_import_recovery';
+export const V04_KEY='wilderness_v04_singleplayer';
+export const SAVE_KEY='wilderness_v05_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v05_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -14,14 +15,14 @@ export const MIN_SLOTS=24,MAX_SLOTS=160;
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const numberIn=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const integerIn=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
-const types=['cabin','floor','wall','foundation','door','window','roof','stairs'];
+const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter'];
+const earlier=['cabin','floor','wall','foundation','door','window','roof','stairs'];
 export function startingInventory(){const a=Array(MIN_SLOTS).fill(null);a[0]={id:'axe',qty:1};a[1]={id:'pickaxe',qty:1};return a;}
 export function count(inv,id){return inv.reduce((n,s)=>n+(s?.id===id?s.qty:0),0);}
 export function freeCapacity(inv,id){const d=ITEM[id];return d?inv.reduce((n,s)=>n+(s?.id===id?d.max-s.qty:!s?d.max:0),0):0;}
 export function addItem(inv,id,qty,{expand=false}={}){
   const d=ITEM[id];if(!d||d.tool||!integerIn(qty,0,100000000))throw Error('Invalid item');
   if(!expand&&freeCapacity(inv,id)<qty)return false;
-  // Stage changes to avoid partially adding an item if the bag is full.
   const clone=inv.map(s=>s?{...s}:null);let remaining=qty;
   for(const s of clone)if(remaining&&s?.id===id){const a=Math.min(remaining,d.max-s.qty);s.qty+=a;remaining-=a;}
   for(let i=0;remaining&&i<clone.length;i++)if(!clone[i]){const a=Math.min(remaining,d.max);clone[i]={id,qty:a};remaining-=a;}
@@ -47,14 +48,26 @@ function fields(s,version){
   }
   if(!Array.isArray(s.builds)||s.builds.length>500)throw Error('Invalid building list.');
   const builds=s.builds.map(b=>{
-    if(!b||!types.includes(b.type)||(version<3&&!['cabin','floor','wall'].includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
+    if(!b||!types.includes(b.type)||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
     return {type:b.type,x:b.x,z:b.z,rot:b.rot};
   });
   return {px:s.px,pz:s.pz,resources,builds};
 }
+function blueprintsFrom(s){
+  const plans=s.plans??[];
+  if(!Array.isArray(plans)||plans.length>6)throw Error('Invalid custom blueprints.');
+  return plans.map(plan=>{
+    if(!plan||typeof plan.name!=='string'||plan.name.length>40||!/^[\w\s-]{1,40}$/.test(plan.name)||!Array.isArray(plan.parts)||!plan.parts.length||plan.parts.length>30)throw Error('Invalid custom blueprint.');
+    const parts=plan.parts.map(p=>{
+      if(!p||!types.includes(p.type)||!numberIn(p.dx,-12,12)||!numberIn(p.dz,-12,12)||!numberIn(p.rot,-1000,1000))throw Error('Invalid blueprint part.');
+      return {type:p.type,dx:p.dx,dz:p.dz,rot:p.rot};
+    });
+    return {name:plan.name,parts};
+  });
+}
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -70,7 +83,7 @@ export function normalizeSave(input){
     equipped=['axe','pickaxe'].includes(s.equipped)?s.equipped:'axe';
     while(inv.length<MIN_SLOTS)inv.push(null);
   }
-  return {version:3,inventory:inv,equipped,...world};
+  return {version:4,inventory:inv,equipped,...world,plans:s.version===4?blueprintsFrom(s):[]};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds})=>normalizeSave({version:3,inventory,equipped,px,pz,resources,builds});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[]})=>normalizeSave({version:4,inventory,equipped,px,pz,resources,builds,plans});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});
