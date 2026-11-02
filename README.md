@@ -1,59 +1,57 @@
-# Wilderness v0.9 — Farming, Animals & a Modest Graphics Upgrade
+# Wilderness v0.10 — Atmosphere, Animation & Polish
 
-A **single-player, free browser survival prototype** based directly on the player-tested v0.8 game.
+**A complete GitHub Pages update** built from v0.9, with one new JavaScript module. One-player, no ads or paid features.
 
-## What changed
+## What's changed
+- Gentle day/night light cycle (one in-game day every ~12 minutes of active play; does not advance while browser is closed).
+- Time-of-day HUD; subtle changes to sky, sunlight and warmth; nighttime remains bright enough to navigate.
+- Optional small synthesized sound effects for footsteps, chopping, mining, building, sword hits and occasional birds. No downloads, music tracks or third-party audio services.
+- Small, pooled gathering/placement particles. **Low effects** disables them and lowers render pixel ratio for iPhone performance.
+- Controls for **Sound On/Off** and **Effects Standard/Low** in **Bag → Game settings**. Preferences persist on the device independently from world saves.
+- All v0.9 worlds (cabins, crops, resources, caves, discoveries, equipment, chests) migrate to a separate **v0.10** save slot. New backup exports include the current time of day.
 
-- **A subtle graphics improvement:** warmer daylight and lighting, natural ground detail, flowers, mushrooms, fallen logs, and small environmental accents. The existing art style stays simple and iPhone-friendly.
-- **Crops:** carrots, potatoes, and wheat grow in the existing **Planter** building. Plants visibly change size while growing; they're ready after roughly 45, 60, and 75 seconds respectively. They **never spoil while you are away**.
-- **Peaceful animals:** two wandering chickens and two rabbits animate near the starting homestead. They're ambient creatures, not livestock systems yet.
-- **Cooking and comfort:** craft **Vegetable Stew** at the existing furnace using carrots, potatoes, and wheat. Crafting it gives a one-time health/stamina boost; the stew also goes into your backpack. Resting at a bed restores health/stamina and grants a short comfort recovery bonus.
-- **Creative Supplies:** the existing refill button now adds seeds too.
-- **Save preservation:** v0.9 writes to `wilderness_v09_singleplayer` and reads v0.8's `wilderness_v08_singleplayer` (and older versions) without overwriting those older saves.
+This is a **polish release**, not a full character/art redesign. The basic geometric 3D art remains; a future art pass would need rigged models and proper textures.
 
-## Complete GitHub files (9)
+## Files — upload ALL TEN to the repository ROOT
+1. `index.html`
+2. `game.js`
+3. `construction.js`
+4. `save-system.js`
+5. `craft-system.js`
+6. `combat-system.js`
+7. `exploration-system.js`
+8. `farm-system.js`
+9. **`atmosphere-system.js` (NEW)**
+10. `README.md`
 
-`index.html`, `game.js`, `construction.js`, `save-system.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, **`farm-system.js` (NEW)**, `README.md`.
+All files are complete replacements; do not upload the ZIP itself as your website.
 
-All nine files must be uploaded to the **root** of the same Wilderness repository. Do not upload the ZIP itself to GitHub as the website.
+## Exact iPhone upload steps
+1. Open your **current working v0.9 game**. Tap **Bag → Export world**, save the JSON in Files and confirm it exists.
+2. Save your old v0.9 ZIP for rollback. Download and extract the new v0.10 ZIP in the iPhone **Files** app.
+3. Open your **existing** Wilderness GitHub repository. Do not make a new repository or edit GitHub Pages settings.
+4. In the repository root, replace all eight existing app files (`index.html`, `game.js`, `construction.js`, `save-system.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`) with the versions from the ZIP.
+5. Add `atmosphere-system.js` to the **same folder**.
+6. Replace `README.md` with the included file.
+7. Commit to `main`, then visit **Actions** and confirm the GitHub Pages deploy succeeded.
+8. Open your **existing** Pages URL in Safari and reload. Verify the upper-left title reads **Single-player · v0.10**.
+9. Enter the game. Open **Bag → Game settings** to turn sound off or set effects low if desired. Do not clear Safari website data.
 
-## Install from iPhone (Safari + GitHub Pages)
+If startup fails, check all eight .js files and `index.html` are in the same root. The startup error screen attempts to identify missing or mixed versions. Keep the previous ZIP and exported backup until the new build passes acceptance tests.
 
-1. Open your **working v0.8** game, tap **Bag → Export world**, and save the JSON backup in the iPhone Files app. Confirm the file exists before proceeding.
-2. Download and unzip `wilderness-prototype-v0.9.zip` in Files.
-3. Open your **existing Wilderness GitHub repository** (the one publishing your current game). Do **not** create a new one.
-4. Upload complete replacements for **`index.html`, `game.js`, `construction.js`, `save-system.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, and `README.md`**. Choose to replace/overwrite files with matching names.
-5. Upload **`farm-system.js`** as an additional new file in the repository root.
-6. Commit your changes to `main`, then check **Actions** to confirm GitHub Pages finished deploying successfully. Do not change the Pages branch or root settings.
-7. Open your existing game URL in Safari and reload. The top-left header should read **`Single-player · v0.9`**.
-8. If you see a startup message about a missing or outdated file, confirm all seven JS files and `index.html` are at the repository root with the matching v0.9 files. Do **not** clear Safari's website data.
+## Save compatibility / rollback
+- v0.10 writes to `wilderness_v010_singleplayer` and only reads the v0.9 key when upgrading; old v0.9 data remains untouched.
+- A fresh install with no prior save starts at 09:00 on Day 1. Migrated worlds also start at Day 1, 09:00; all buildings/crops/quests are retained.
+- JSON import/export includes the new time field. Old JSON backups are accepted by the migration parser.
+- If you need to go back, re-upload your **complete** v0.9 ZIP to GitHub. Progress made only in v0.10 won't appear in v0.9.
 
-## How to use the new gameplay
+## Acceptance test
+- Existing cabin and stairs, storage, inventory, wolves, landmarks, crops, blueprints and waypoints persist.
+- Time HUD moves forward; lighting transitions gradually and remains playable at night.
+- Sound can be enabled and disabled on iPhone after tapping Enter.
+- Gathering/building actions show subtle particles in Standard mode; Low mode reduces effects while movement remains smooth.
+- Collision, joystick, cave, construction, farming, combat and save refresh still work.
+- Export a fresh JSON and import it: buildings, farm plots, discoveries and time of day should survive.
 
-- **Plant:** Tap **Build → Planter**, place it, exit building mode, walk close to the planter, and tap **Use**. Choose carrots, potatoes, or wheat.
-- **Get seeds for testing:** Tap **Bag → Refill supplies (+ ore + seeds)**. This preserves your items and existing world; it isn't a purchase.
-- **Harvest:** Return to the planter after the crop is ready and tap **Use → Harvest**. A harvested planter can be replanted.
-- **Cook:** Take one carrot, one potato, and one wheat to a **Furnace** and craft Vegetable Stew.
-- **Rest:** Walk to a **Bed**, tap **Use**, and choose Rest and recover.
-- The chickens and rabbits are **ambient decoration** for this release; there's no feeding or breeding yet.
-
-## Save/rollback safety
-
-- **v0.9** uses a new browser storage key and leaves the v0.8 save intact. Do not delete Safari website data.
-- Export a JSON backup after confirming your v0.9 world is correct.
-- To roll back, replace the repository files with your archived **complete v0.8 release** and refresh. Changes made exclusively in v0.9 will not appear in the v0.8 save.
-- Imports into v0.9 replace only its current save after confirmation; **Undo last import** supports reversing the most recent import.
-
-## Acceptance checklist
-
-1. Your v0.8 cabins, foundations, inventory, chests, crafting stations, discovered places, wolves, and waypoints load normally.
-2. The new natural-color detail feels pleasant; iPhone movement and frame rate remain acceptable.
-3. Planter allows planting all three crops, visibly growing, harvesting, and replanting.
-4. Creative Supplies adds seeds; furnace can craft Vegetable Stew.
-5. Chickens and rabbits move near the homestead without interfering with controls.
-6. Bed rest, gathering, combat, building, and exploration still work.
-7. Save → reload retains your farm plots, equipment, and buildings; JSON backup/export and import work.
-
-## Verification limits
-
-Source syntax and simulated runtime tests passed, including old-save migration, planting/harvest state, backup export and preservation. A real iPhone Safari graphics/runtime test is still required; successful simulated checks are **not** proof of device performance.
+## Test limitations
+JavaScript, save migration and isolated atmosphere logic can be automated in this environment. A real iPhone Safari rendering/audio/performance acceptance test is still required before calling v0.10 stable.
