@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.5.1';
-import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.5.1';
+import {LEGACY_KEY,V03_KEY,V04_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.5.2';
+import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.5.2';
 
-// Wilderness v0.5.1 — startup and module-cache hotfix; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
+// Wilderness v0.5.2 — entrance access and creative supply hotfix; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
@@ -177,9 +177,9 @@ function cabinShape(group,ghost=false){
   const back=mesh(box(5,2.65,.22),timberDark,group,0,1.58,-2.4);
   const left=mesh(box(.22,2.65,5),timberDark,group,-2.4,1.58,0);
   const right=mesh(box(.22,2.65,5),timberDark,group,2.4,1.58,0);
-  const frontL=mesh(box(1.8,2.65,.22),timberDark,group,-1.6,1.58,2.4);
-  const frontR=mesh(box(1.8,2.65,.22),timberDark,group,1.6,1.58,2.4);
-  const lintel=mesh(box(1.4,.55,.22),timberDark,group,0,2.63,2.4);
+  const frontL=mesh(box(1.45,2.65,.22),timberDark,group,-1.775,1.58,2.4);
+  const frontR=mesh(box(1.45,2.65,.22),timberDark,group,1.775,1.58,2.4);
+  const lintel=mesh(box(2.12,.38,.22),timberDark,group,0,2.72,2.4);
   // Actual doorway is open; the solid wall colliders exactly match this geometry.
   for(const m of [back,left,right,frontL,frontR,lintel]){
     if(!ghost){m.material.side=THREE.DoubleSide;cameraOccluders.push(m);}
@@ -188,8 +188,8 @@ function cabinShape(group,ghost=false){
   const roofB=mesh(box(3.04,.28,5.7),roofMat,group,1.2,3.6,0);roofB.rotation.z=-.59;
   roofA.userData.roof=true;roofB.userData.roof=true;
   if(!ghost)cameraOccluders.push(roofA,roofB);
-  mesh(box(.12,2.5,.15),beam,group,-.74,1.38,2.55);mesh(box(.12,2.5,.15),beam,group,.74,1.38,2.55);
-  mesh(box(1.18,.12,.15),beam,group,0,2.58,2.56);
+  mesh(box(.12,2.5,.15),beam,group,-1.07,1.38,2.55);mesh(box(.12,2.5,.15),beam,group,1.07,1.38,2.55);
+  mesh(box(2.08,.12,.15),beam,group,0,2.57,2.56);
   mesh(box(1.19,.90,.06),glassMat,group,1.72,1.80,-2.55);
   const frame=mesh(box(1.3,.08,.14),beam,group,1.72,2.26,-2.58);
   frame.userData.decoration=true;
@@ -301,7 +301,7 @@ function obstacleAt(x,z){
       if(hitsRect(p.x-.91,p.z,.09,.11)||hitsRect(p.x+.91,p.z,.09,.11))return true;
     }else if(b.type==='cabin'&&Math.abs(p.x)<3&&Math.abs(p.z)<3){
       if(hitsRect(p.x,p.z+2.4,2.5,.11)||hitsRect(p.x-2.4,p.z,.11,2.5)||hitsRect(p.x+2.4,p.z,.11,2.5)
-        ||hitsRect(p.x+1.6,p.z-2.4,.9,.11)||hitsRect(p.x-1.6,p.z-2.4,.9,.11))return true;
+        ||hitsRect(p.x+1.775,p.z-2.4,.725,.11)||hitsRect(p.x-1.775,p.z-2.4,.725,.11))return true;
     }
   }
   return false;
@@ -356,8 +356,44 @@ let nudgeX=0,nudgeZ=0,previewPosition={x:0,z:0},placementReason='';
 let yaw=0,pitch=.38,nearby=null,runTime=0,moveVX=0,moveVZ=0;
 let actionUntil=0,swingTime=0,impactTarget=null;
 const move={x:0,y:0},keys=new Set();let joystickPointer=null,lookPointer=null,lastLookX=0,lastLookY=0,paused=true;
-let toastTimeout=null,loadMessage='',suppressUnloadSave=false;
+let toastTimeout=null,loadMessage='',suppressUnloadSave=false,saveReadFailed=false;
 const amount=id=>count(inventory,id);
+const SUPPLY_MARKER='wilderness_v052_creative_grant';
+const BEFORE_GRANT='wilderness_v052_before_grant';
+function refillMaterials({automatic=false}={}){
+  // Atomic inventory update. Never erase existing tools or saved structures.
+  const candidate=inventory.map(slot=>slot?{...slot}:null);
+  try{
+    for(const id of ['wood','stone']){
+      const missing=Math.max(0,999-count(candidate,id));
+      if(missing)addItem(candidate,id,missing,{expand:true});
+    }
+  }catch(e){toast('Backpack cannot hold the building supplies');return false;}
+  const previous=inventory;
+  inventory=candidate;
+  if(!saveGame(true)){
+    inventory=previous;
+    toast('Could not save supplies — storage is unavailable');
+    return false;
+  }
+  updateHud();
+  if(!automatic)toast('Creative supplies: at least 999 wood + 999 stone ✓');
+  return true;
+}
+function grantSuppliesOnce(){
+  // This is a prototype, so v0.5.2 grants materials only once per Safari site.
+  // Preserve the pre-grant v0.5 world for recovery. Do not grant over an invalid save.
+  if(saveReadFailed)return;
+  try{
+    if(localStorage.getItem(SUPPLY_MARKER))return;
+    const original=localStorage.getItem(SAVE_KEY);
+    if(original!==null&&localStorage.getItem(BEFORE_GRANT)===null)localStorage.setItem(BEFORE_GRANT,original);
+    if(refillMaterials({automatic:true})){
+      localStorage.setItem(SUPPLY_MARKER,'1');
+      loadMessage=loadMessage?loadMessage+' 999 wood and stone added.':'999 wood and stone added for building.';
+    }
+  }catch(e){console.error('Supply grant failed',e);}
+}
 function toast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>$('toast').classList.remove('show'),2150);}
 function updateHud(){
   $('woodCount').textContent=amount('wood');$('stoneCount').textContent=amount('stone');
@@ -369,6 +405,7 @@ function updateHud(){
 function saveData(){return makeSave({inventory,equipped,px:player.position.x,pz:player.position.z,
   resources:Object.fromEntries(resources.map(r=>[r.id,r.hits])),builds:builds.map(({type,x,z,rot})=>({type,x,z,rot})),plans});}
 function saveGame(silent=false){
+  if(saveReadFailed){if(!silent)toast('Save protected: export/recover your old world first');return false;}
   try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));if(!silent)toast('World saved to this browser ✓');return true;}
   catch(e){if(!silent)toast('Save failed — export a backup');console.error('Save failed',e);return false;}
 }
@@ -389,9 +426,9 @@ function loadGame(){
     else {const prev04=localStorage.getItem(V04_KEY);if(prev04){raw=JSON.parse(prev04);origin='v0.4';}
       else {const prev=localStorage.getItem(V03_KEY);if(prev){raw=JSON.parse(prev);origin='v0.3';}
         else {const older=localStorage.getItem(LEGACY_KEY);if(older){raw=JSON.parse(older);origin='v0.2';}}}}
-  }catch(e){loadMessage='Save could not be read. Stored data was not overwritten.';return;}
+  }catch(e){saveReadFailed=true;loadMessage='Save could not be read. Stored data was not overwritten.';return;}
   if(!raw)return;
-  let data;try{data=normalizeSave(raw);}catch(e){loadMessage='Save validation failed. Existing browser data was left untouched.';console.error(e);return;}
+  let data;try{data=normalizeSave(raw);}catch(e){saveReadFailed=true;loadMessage='Save validation failed. Existing browser data was left untouched.';console.error(e);return;}
   inventory=data.inventory;equipped=data.equipped;plans=data.plans||[];player.position.set(data.px,0,data.pz);
   for(const r of resources){
     if(Object.prototype.hasOwnProperty.call(data.resources,r.id)){
@@ -469,7 +506,7 @@ function undoLastImport(){
     suppressUnloadSave=true;location.reload();
   }catch(e){toast('Recovery failed; saved worlds were not intentionally deleted');console.error(e);}
 }
-loadGame();axeModel.visible=equipped==='axe';pickModel.visible=equipped==='pickaxe';updateHud();
+loadGame();grantSuppliesOnce();axeModel.visible=equipped==='axe';pickModel.visible=equipped==='pickaxe';updateHud();
 function getNearest(){
   let best=3.0,winner=null;
   for(const r of resources){if(r.hits<=0)continue;const d=Math.hypot(r.x-player.position.x,r.z-player.position.z);if(d<best){best=d;winner=r;}}
@@ -647,6 +684,7 @@ $('closeBag').addEventListener('click',()=>setInventory(false));
 $('axeEquip').addEventListener('click',()=>equip('axe'));
 $('pickEquip').addEventListener('click',()=>equip('pickaxe'));
 $('exportBackup').addEventListener('click',exportSave);
+$('refillSupplies').addEventListener('click',()=>refillMaterials());
 $('restorePrevious').addEventListener('click',undoLastImport);
 $('importBackup').addEventListener('click',()=>$('backupFile').click());
 $('backupFile').addEventListener('change',async e=>{const file=e.target.files?.[0];e.target.value='';await importSave(file);});
@@ -735,9 +773,9 @@ function tick(){
     moveVZ=THREE.MathUtils.damp(moveVZ,dz*speed,12,dt);
     // Separately resolve X and Z to glide naturally along obstacles.
     const nextX=player.position.x+moveVX*dt;
-    if(!obstacleAt(nextX,player.position.z)&&groundHeightAt(nextX,player.position.z)-groundHeightAt(player.position.x,player.position.z)<.28)player.position.x=nextX;else moveVX=0;
+    if(!obstacleAt(nextX,player.position.z)&&groundHeightAt(nextX,player.position.z)-groundHeightAt(player.position.x,player.position.z)<.40)player.position.x=nextX;else moveVX=0;
     const nextZ=player.position.z+moveVZ*dt;
-    if(!obstacleAt(player.position.x,nextZ)&&groundHeightAt(player.position.x,nextZ)-groundHeightAt(player.position.x,player.position.z)<.28)player.position.z=nextZ;else moveVZ=0;
+    if(!obstacleAt(player.position.x,nextZ)&&groundHeightAt(player.position.x,nextZ)-groundHeightAt(player.position.x,player.position.z)<.40)player.position.z=nextZ;else moveVZ=0;
     const moving=Math.hypot(moveVX,moveVZ)>.17;
     if(moving&&swingTime<=0){
       const angle=Math.atan2(moveVX,moveVZ);
@@ -775,6 +813,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.5.1',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({version:'0.5.2',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 window.__gameReady=true;tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});
