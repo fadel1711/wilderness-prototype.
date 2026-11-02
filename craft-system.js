@@ -1,12 +1,12 @@
-// Wilderness v0.6 — pure crafting, storage and atomic cross-inventory transactions.
+// Wilderness v0.7 — pure crafting, storage and atomic cross-inventory transactions.
 // No DOM, engine or network dependencies.
 import {ITEM,count,addItem,payCosts} from './save-system.js';
 export const RECIPES=Object.freeze({
   workbench:Object.freeze([
     {id:'stone_axe',label:'Stone axe',icon:'🪓',needs:{wood:3,stone:4},output:{stone_axe:1},info:'Faster tree chopping'},
     {id:'iron_pickaxe',label:'Iron pickaxe',icon:'⛏️',needs:{wood:3,iron_bar:2},output:{iron_pickaxe:1},info:'Faster rock mining'},
-    {id:'sword',label:'Iron sword',icon:'⚔️',needs:{wood:2,iron_bar:3},output:{sword:1},info:'For the future combat update'},
-    {id:'shield',label:'Wooden shield',icon:'🛡️',needs:{wood:5,stone:2},output:{shield:1},info:'For the future combat update'},
+    {id:'sword',label:'Iron sword',icon:'⚔️',needs:{wood:2,iron_bar:3},output:{sword:1},info:'Used for v0.7 melee combat'},
+    {id:'shield',label:'Wooden shield',icon:'🛡️',needs:{wood:5,stone:2},output:{shield:1},info:'Used for v0.7 melee combat'},
     {id:'bow',label:'Hunting bow',icon:'🏹',needs:{wood:6,stone:1},output:{bow:1},info:'For the future combat update'}
   ]),
   furnace:Object.freeze([

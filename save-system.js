@@ -1,11 +1,12 @@
-// Wilderness v0.5. Old Safari keys are only READ, never overwritten by migration.
+// Wilderness v0.7. Old Safari keys are only READ, never overwritten by migration.
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
 export const V04_KEY='wilderness_v04_singleplayer';
 export const V05_KEY='wilderness_v05_singleplayer';
-export const SAVE_KEY='wilderness_v06_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v06_pre_import_recovery';
+export const V06_KEY='wilderness_v06_singleplayer';
+export const SAVE_KEY='wilderness_v07_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v07_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -54,7 +55,7 @@ function fields(s,version){
   if(!Array.isArray(s.builds)||s.builds.length>500)throw Error('Invalid building list.');
   const builds=s.builds.map((b,i)=>{
     if(!b||!types.includes(b.type)||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
-    const id=version===5?b.id:'b'+(i+1);
+    const id=version>=5?b.id:'b'+(i+1);
     if(!/^b[1-9][0-9]{0,5}$/.test(id))throw Error('Invalid building ID.');
     return {id,type:b.type,x:b.x,z:b.z,rot:b.rot};
   });
@@ -75,7 +76,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -88,12 +89,12 @@ export function normalizeSave(input){
       return {id:slot.id,qty:slot.qty};
     });
     if(count(inv,'axe')!==1||count(inv,'pickaxe')!==1)throw Error('Tools are missing or duplicated.');
-    equipped=['axe','pickaxe','stone_axe','iron_pickaxe'].includes(s.equipped)&&count(inv,s.equipped)?s.equipped:'axe';
+    equipped=['axe','pickaxe','stone_axe','iron_pickaxe','sword'].includes(s.equipped)&&count(inv,s.equipped)?s.equipped:'axe';
     while(inv.length<MIN_SLOTS)inv.push(null);
   }
   const chestIds=new Set(world.builds.filter(b=>b.type==='chest').map(b=>b.id));
   const storage={};
-  if(s.version===5){
+  if(s.version>=5){
     const raw=s.storage??{};
     if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid chest storage.');
     for(const [id,slots] of Object.entries(raw)){
@@ -106,7 +107,18 @@ export function normalizeSave(input){
     }
   }
   for(const id of chestIds)if(!storage[id])storage[id]=Array(16).fill(null);
-  return {version:5,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage};
+  let combat={hp:100,stamina:100,wolves:{}};
+  if(s.version===6){
+    const c=s.combat;
+    if(!c||typeof c!=='object'||Array.isArray(c)||!numberIn(c.hp,0,100)||!numberIn(c.stamina,0,100)||!c.wolves||typeof c.wolves!=='object'||Array.isArray(c.wolves))throw Error('Invalid combat save.');
+    const wolves={};
+    for(const [id,deadUntil] of Object.entries(c.wolves)){
+      if(!/^wolf[0-2]$/.test(id)||!integerIn(deadUntil,0,4102444800000))throw Error('Invalid wolf record.');
+      wolves[id]=deadUntil;
+    }
+    combat={hp:c.hp,stamina:c.stamina,wolves};
+  }
+  return {version:6,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={}})=>normalizeSave({version:5,inventory,equipped,px,pz,resources,builds,plans,storage});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}}})=>normalizeSave({version:6,inventory,equipped,px,pz,resources,builds,plans,storage,combat});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});
