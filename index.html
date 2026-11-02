@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.2 · Forest & Movement</title>
+<title>Wilderness — v0.3 · Backpack & Gathering</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -29,19 +29,40 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 #loaderror{display:none;position:fixed;z-index:30;inset:0;background:#26372e;color:#fff;align-items:center;justify-content:center;text-align:center;padding:30px}
 @media(max-width:375px){.brand{font-size:10px;padding:8px 7px}.stats{gap:6px;padding:8px 7px}.stats em{display:none}.task{top:calc(env(safe-area-inset-top) + 58px)}#stick{width:111px;height:111px}.actions button{min-width:83px;padding:10px 9px}.panel{bottom:calc(env(safe-area-inset-bottom) + 162px)}}
 @media (orientation:landscape) and (max-height:460px){.task{top:calc(env(safe-area-inset-top) + 46px);max-width:56vw}.hud-bottom{height:135px}#stick{width:99px;height:99px}.actions{bottom:0}.actions button{padding:8px 12px}.panel{max-width:360px;bottom:calc(env(safe-area-inset-bottom) + 5px);left:auto;right:140px}.small{display:none}.intro{max-width:540px;padding:12px}.intro p{margin:7px 0}.intro h1{font-size:22px}}
+
+.toolstrip{position:fixed;right:13px;bottom:calc(env(safe-area-inset-bottom) + 163px);z-index:6;background:#26342ce9;border:1px solid var(--line);border-radius:12px;padding:6px 8px;display:flex;flex-direction:column;gap:4px;align-items:flex-end;font-size:10px;pointer-events:auto;max-width:225px}
+.toolstrip span{color:#dfe1d4}.toolbuttons{display:flex;gap:5px}.toolbuttons button{padding:6px 9px;font-size:11px;min-width:78px}.toolbuttons button.active,#bagToggle.active{background:#a89d7b;color:#22271e;border-color:#e4cc98;font-weight:800}
+.primaryactions{display:flex;gap:7px}.actions #bagToggle{min-width:83px;background:#53624edb}
+.inventorypanel{position:fixed;z-index:13;top:calc(env(safe-area-inset-top) + 91px);bottom:calc(env(safe-area-inset-bottom) + 167px);right:11px;width:min(400px,calc(100vw - 22px));overflow-y:auto;overscroll-behavior:contain;display:none;background:#253229f8;border:1px solid #dfd9b938;border-radius:16px;padding:13px;box-shadow:0 14px 36px #0008;-webkit-overflow-scrolling:touch}
+.inventorypanel.show{display:block}.inventorypanel .panelheader{position:sticky;top:-13px;background:#253229;padding-top:5px;padding-bottom:9px;z-index:1}.bagsummary{font-size:11px;color:#d6dcca;margin:0 0 9px}
+.inventorygrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.itemslot{background:#344539;border:1px solid #7a86735a;border-radius:9px;min-height:72px;padding:5px 2px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:2px;min-width:0}
+.itemslot.empty{background:#1c2824a6;opacity:.70;border-style:dashed}.itemslot.equipped{border:2px solid #d7bd87;background:#455742}.sloticon{font-size:22px;line-height:1.15}.slotqty{font-size:10px;font-weight:850}.slotname{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;color:#dadfd3}
+.backuptools{border-top:1px solid var(--line);margin-top:12px;padding-top:10px}#restorePrevious{width:100%;margin-top:8px;padding:9px;font-size:11px;background:#3f4e44}.backuptools strong{font-size:13px}.backuptools p{font-size:11px;line-height:1.5;color:#c7d0c3;margin:6px 0 10px}.backupbuttons{display:flex;gap:7px}.backupbuttons button{flex:1;padding:10px 6px;font-size:11px;font-weight:700;background:#4d5d4e}
+@media (max-width:375px){.toolstrip{bottom:calc(env(safe-area-inset-bottom) + 150px);right:8px}.inventorypanel{top:calc(env(safe-area-inset-top) + 86px);bottom:calc(env(safe-area-inset-bottom) + 154px)}.actions #bagToggle{min-width:70px}.primaryactions{gap:4px}}
+@media (orientation:landscape) and (max-height:460px){.toolstrip{bottom:calc(env(safe-area-inset-bottom) + 90px);right:12px}.inventorypanel{top:calc(env(safe-area-inset-top) + 42px);bottom:calc(env(safe-area-inset-bottom) + 8px);right:12px;width:360px}.itemslot{min-height:60px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}</script>
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.2</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.3</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="interaction"></div><div id="toast" class="toast"></div>
-<div class="hud-bottom"><div id="stick" aria-label="Movement joystick"><div id="knob"></div></div><div class="actions"><button id="action">Gather</button><div class="subactions"><button id="save">Save</button><button id="buildToggle">🔨 Build</button></div></div></div>
+<div class="toolstrip" id="toolStrip"><span>Equipped: <b id="equippedLabel">Wooden axe</b></span><div class="toolbuttons"><button id="axeEquip" class="active" aria-label="Equip axe">🪓 Axe</button><button id="pickEquip" aria-label="Equip pickaxe">⛏ Pickaxe</button></div></div>
+<div class="hud-bottom"><div id="stick" aria-label="Movement joystick"><div id="knob"></div></div><div class="actions"><div class="primaryactions"><button id="action">Gather</button><button id="bagToggle">🎒 Bag</button></div><div class="subactions"><button id="save">Save</button><button id="buildToggle">🔨 Build</button></div></div></div>
 <div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Homestead building</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div><div class="buildchoices"><button data-type="cabin" class="active">🏠 Cabin<br><small>12 🪵 · 5 🪨</small></button><button data-type="floor">▦ Floor<br><small>2 🪵</small></button><button data-type="wall">▥ Wall<br><small>3 🪵</small></button></div><div class="buildcontrols"><button id="rotate">↻ Rotate</button><button id="place">✓ Place</button></div><div class="small">Walk to aim the transparent preview, rotate to align and place it. Completed cabins have a real doorway and solid walls. This is a starter building system, not full modular construction yet.</div></div>
-<div id="modal"><div class="intro"><div class="eyebrow">FOREST & MOVEMENT UPDATE</div><h1>Wilderness · v0.2</h1><p>A more natural woodland, smoother movement, solid trees and rocks, and cabin walls you can walk around. Your v0.1.1 saved world should load automatically.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Gather by a tree or rock · Build to construct.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · E gather · B build · F place · R rotate.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Keep your original save and use the same GitHub Pages URL. No account or server required.</p></div></div>
+<section id="inventoryPanel" class="inventorypanel" role="dialog" aria-label="Backpack and world backup">
+  <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
+  <p id="bagSummary" class="bagsummary">24 slots</p>
+  <div id="inventorySlots" class="inventorygrid"></div>
+  <div class="backuptools"><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.3 world after confirmation.</p>
+    <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button>
+    <input type="file" id="backupFile" accept=".json,application/json" hidden>
+  </div>
+</section>
+<div id="modal"><div class="intro"><div class="eyebrow">TOOLS & BACKPACK UPDATE</div><h1>Wilderness · v0.3</h1><p>Equip your axe for trees or pickaxe for rocks, gather supplies, and inspect your new backpack. Your v0.2 world and buildings will import automatically without deleting the original save.</p><div class="controls"><b>iPhone:</b> Left joystick moves · Push to the edge to jog · Swipe the open right side to turn the camera · Switch axe/pickaxe above the controls · Gather by a tree or rock · Bag for inventory and backups · Build to construct.<br><b>Keyboard:</b> WASD / arrows to move · Shift to run · Drag to look · 1/2 equip · E gather · I backpack · B build · F place · R rotate.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Saved locally in this browser. Use the same GitHub Pages URL. Export backups regularly from your backpack; do not clear Safari site data.</p></div></div>
 <div id="loaderror"><div><h2>3D engine couldn't load</h2><p>Open this page online in Safari. Wilderness currently loads Three.js from a public CDN.</p></div></div>
-<script type="module" src="./game.js?v=0.2.0"></script>
+<script type="module" src="./game.js?v=0.3.0"></script>
 <script>setTimeout(()=>{if(!window.__gameReady)document.getElementById('loaderror').style.display='flex'},18000)</script>
 </body>
 </html>
