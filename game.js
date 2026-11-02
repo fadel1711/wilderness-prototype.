@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js';
-import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js';
+import {LEGACY_KEY,V03_KEY,V04_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.5.1';
+import {BUILD_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.5.1';
 
-// Wilderness v0.5 — elevated cabins, floor/foundation stacking, blueprints and land development.
+// Wilderness v0.5.1 — startup and module-cache hotfix; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
@@ -775,6 +775,6 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({version:'0.5',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({version:'0.5.1',x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({type:b.type,x:b.x,z:b.z,rot:b.rot})),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 window.__gameReady=true;tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});

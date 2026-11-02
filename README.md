@@ -1,8 +1,20 @@
-# Wilderness v0.5 — Blueprints & Land Development
+## What's fixed in v0.5.1
+
+- **Versioned all local JavaScript imports:** Safari will no longer mix a cached v0.4.1 `save-system.js`/`construction.js` with the newly deployed game.
+- **Improved startup screen:** if startup fails, it checks for missing/mixed GitHub files and displays a readable message instead of blaming only the 3D engine.
+- **No gameplay or save schema changes:** v0.5 building features, existing v0.4 and v0.5 worlds, item totals and blueprints are preserved. No browser data clearing required.
+
+**If you currently cannot enter v0.5:** keep Safari website data intact, upload ALL FIVE files from THIS ZIP to the existing repository root, wait for a successful Pages deployment, and reopen the game. This does not delete or reset your saved worlds. `index.html`, `game.js`, `construction.js` and `save-system.js` must all be updated together.
+
+If the error screen still appears, screenshot the specific message shown on it and share that. If absolutely necessary, re-upload all five files from the working v0.4.1 ZIP to roll back; v0.4 save key is unchanged.
+
+---
+
+# Wilderness v0.5.1.1 — Startup Hotfix (full replacement)
 
 **Single-player 3D browser prototype · Full-file GitHub Pages release · November 2026**
 
-This is a complete replacement build based on Wilderness v0.4.1. It does not require Supabase, a database migration, a new repository, or a separate server. `index.html` loads Three.js from a public CDN, so the initial page load requires an internet connection.
+This is a complete v0.5.1 startup-reliability hotfix based on v0.5, which was based on Wilderness v0.4.1. No new game features or save migrations were introduced. It does not require Supabase, a database migration, a new repository, or a separate server. `index.html` loads Three.js from a public CDN, so the initial page load requires an internet connection.
 
 ## ZIP contents — upload all five files into your existing repository root
 
@@ -23,14 +35,14 @@ This is a complete replacement build based on Wilderness v0.4.1. It does not req
 
 ## Install using ONLY your iPhone
 
-1. Download `wilderness-prototype-v0.5.zip` from the ChatGPT message.
+1. Download `wilderness-prototype-v0.5.1.zip` from the ChatGPT message.
 2. Open **Files**, tap the downloaded ZIP to extract the folder `wilderness-prototype-v0.5`.
 3. In Safari, sign in to `github.com` and open **the same existing Wilderness repository** you used for v0.4.1.
 4. Use **Add file → Upload files** (or open each old file and replace its complete content with the new one if GitHub's mobile upload UI refuses overwrites).
 5. Replace these existing root files with the complete new versions: `index.html`, `game.js`, `construction.js`, `save-system.js`, and `README.md`. Ensure there is only one active file with each name and that case/spelling match exactly.
 6. **Commit changes** to `main`. The `index.html`, `game.js`, `construction.js`, and `save-system.js` files must all be from v0.5 — do not mix versions.
 7. Open **Actions** in the same repository and verify the GitHub Pages deployment has completed successfully.
-8. Return to **your existing game URL** in Safari; refresh. The upper-left title should say **Single-player · v0.5**. If the previous title remains, refresh again after the deployment completes.
+8. Return to **your existing game URL** in Safari; refresh. The upper-left title should say **Single-player · v0.5.1**. If the previous title remains, refresh again after the deployment completes.
 9. Open **Bag** and confirm the old inventory, equipped tool, cabins, paths, foundation pieces, wood and stone. Walk around to verify movement and camera controls.
 10. **Bag → Export world** again when you have confirmed v0.5 successfully migrated your world. This second JSON file protects your v0.5 progress.
 
@@ -50,7 +62,7 @@ If Safari shows "3D engine couldn't load", verify the four JavaScript/HTML file 
 
 ## v0.5 saved worlds and migration (IMPORTANT)
 
-v0.5 stores progress separately under the browser localStorage key `wilderness_v05_singleplayer`. On first load it reads, in order, the v0.5 key, the existing v0.4 key, v0.3, then earlier save data. It **does not overwrite** v0.4/v0.3/v0.2 keys as part of migration.
+v0.5.1 uses the **same v0.5** browser save key and stores progress separately under the browser localStorage key `wilderness_v05_singleplayer`. On first load it reads, in order, the v0.5 key, the existing v0.4 key, v0.3, then earlier save data. It **does not overwrite** v0.4/v0.3/v0.2 keys as part of migration.
 
 The new save format is version 4 and stores original character position, resource states, buildings, inventory, equipped tool, and any custom blueprints. Heights of raised structures are recalculated from supporting foundations on each load; older non-elevated buildings remain in their saved positions.
 
