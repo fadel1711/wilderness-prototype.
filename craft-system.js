@@ -11,7 +11,8 @@ export const RECIPES=Object.freeze({
   ]),
   furnace:Object.freeze([
     {id:'charcoal',label:'Charcoal ×2',icon:'🔥',needs:{wood:4},output:{charcoal:2},info:'Fuel for smelting'},
-    {id:'iron_bar',label:'Iron ingot',icon:'🔩',needs:{iron_ore:2,charcoal:1},output:{iron_bar:1},info:'Used to craft stronger equipment'}
+    {id:'iron_bar',label:'Iron ingot',icon:'🔩',needs:{iron_ore:2,charcoal:1},output:{iron_bar:1},info:'Used to craft stronger equipment'},
+    {id:'stew',label:'Vegetable stew',icon:'🍲',needs:{carrot:1,potato:1,wheat:1},output:{stew:1},info:'A relaxed meal that supports recovery'}
   ])
 });
 export const cloneSlots=slots=>slots.map(x=>x?{...x}:null);

@@ -1,5 +1,6 @@
 // Wilderness v0.8. Prior Safari save keys are READ only, never overwritten by migration.
 import {normalizeExploration} from './exploration-system.js';
+import {normalizeFarm} from './farm-system.js';
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
@@ -7,14 +8,17 @@ export const V04_KEY='wilderness_v04_singleplayer';
 export const V05_KEY='wilderness_v05_singleplayer';
 export const V06_KEY='wilderness_v06_singleplayer';
 export const V07_KEY='wilderness_v07_singleplayer';
-export const SAVE_KEY='wilderness_v08_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v08_pre_import_recovery';
+export const V08_KEY='wilderness_v08_singleplayer';
+export const SAVE_KEY='wilderness_v09_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v09_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
   pickaxe:{name:'Stone pickaxe',icon:'⛏️',max:1,tool:true},
   wood:{name:'Wood',icon:'🪵',max:99},stone:{name:'Stone',icon:'🪨',max:99},
   iron_ore:{name:'Iron ore',icon:'⛰️',max:99},charcoal:{name:'Charcoal',icon:'🔥',max:99},iron_bar:{name:'Iron ingot',icon:'🔩',max:99},
+  carrot_seed:{name:'Carrot seeds',icon:'🫘',max:99},potato_seed:{name:'Potato eyes',icon:'🫘',max:99},wheat_seed:{name:'Grain seeds',icon:'🫘',max:99},
+  carrot:{name:'Carrot',icon:'🥕',max:99},potato:{name:'Potato',icon:'🥔',max:99},wheat:{name:'Wheat',icon:'🌾',max:99},egg:{name:'Egg',icon:'🥚',max:99},stew:{name:'Vegetable stew',icon:'🍲',max:99},
   stone_axe:{name:'Stone axe',icon:'🪓',max:1,tool:true},iron_pickaxe:{name:'Iron pickaxe',icon:'⛏️',max:1,tool:true},
   sword:{name:'Iron sword',icon:'⚔️',max:1,tool:true},shield:{name:'Wooden shield',icon:'🛡️',max:1,tool:true},bow:{name:'Hunting bow',icon:'🏹',max:1,tool:true}
 });
@@ -78,7 +82,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -121,7 +125,8 @@ export function normalizeSave(input){
     combat={hp:c.hp,stamina:c.stamina,wolves};
   }
   const exploration=normalizeExploration(s.version>=7?s.exploration:null);
-  return {version:7,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration};
+  const farm=normalizeFarm(s.version>=8?s.farm:null);
+  return {version:8,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null}})=>normalizeSave({version:7,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0}})=>normalizeSave({version:8,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

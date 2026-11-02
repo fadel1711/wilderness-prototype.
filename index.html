@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.8 · Exploration & Discoveries</title>
+<title>Wilderness — v0.9 · Farming, Animals & Relaxed Survival</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -127,13 +127,13 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.8</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.9</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="damageOverlay"></div>
 <div class="vitals" aria-label="Survival status"><div class="vitalRow">❤ <span>HP</span><div class="vitalBar"><i id="healthFill"></i></div><b id="healthNumber">100</b></div><div class="vitalRow">⚡ <span>SP</span><div class="vitalBar"><i id="staminaFill"></i></div><b id="staminaNumber">100</b></div><span id="safeLabel" class="safeLabel">🛖 Homestead safe</span></div><button id="mapButton" class="mapquick" aria-label="Open map">🗺 Map</button><div id="waypointHud" class="waypointhud">🧭 Explore · 🗺 Map</div><div id="interaction"></div><div id="toast" class="toast"></div>
 <div class="toolstrip" id="toolStrip"><span>Equipped: <b id="equippedLabel">Wooden axe</b></span><div class="toolbuttons"><button id="axeEquip" class="active" aria-label="Equip axe">🪓 Axe</button><button id="pickEquip" aria-label="Equip pickaxe">⛏ Pickaxe</button><button id="swordEquip" aria-label="Equip sword">⚔ Sword</button></div></div>
 <div id="combatControls" class="combatcontrols" aria-label="Combat actions"><button id="attackButton">⚔ Attack</button><button id="blockButton">🛡 Block</button><button id="dodgeButton">↪ Dodge</button></div><div class="hud-bottom"><div id="stick" aria-label="Movement joystick"><div id="knob"></div></div><div class="actions"><div class="primaryactions"><button id="action">Gather</button><button id="bagToggle">🎒 Bag</button></div><div class="subactions"><button id="save">Save</button><button id="buildToggle">🔨 Build</button></div></div></div>
-<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Construction 3.0</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div>
+<div id="buildPanel" class="panel"><div class="panelheader"><strong>🔨 Construction 4.0</strong><button id="closeBuild" aria-label="Close build menu">✕</button></div>
   <div class="buildchoices">
     <button data-type="cabin" class="active">🏠 Cabin<small>12 🪵 + 5 🪨</small></button>
     <button data-type="foundation">▤ Foundation<small>2 🪵 + 2 🪨</small></button>
@@ -178,15 +178,15 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
   <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
   <p id="bagSummary" class="bagsummary">24 slots</p>
   <div id="inventorySlots" class="inventorygrid"></div>
-  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Enjoy building without farming. v0.8 retains your iron-ore supply. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ iron ore)</button></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.8 world after confirmation.</p>
+  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Enjoy building without farming. v0.9 also tops up seeds so you can test crops freely. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.9 world after confirmation.</p>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">EXPLORATION & DISCOVERIES</div><h1>Wilderness · v0.8</h1><p>Your v0.7 settlement is preserved. Explore a larger wilderness, discover a forgotten campsite and ridge, and enter a walkable cave with a hidden treasure chest. Three roaming wolves remain in the older forest. No raids, no equipment loss, and no payments.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. If defeated, recover at home with your buildings and inventory unchanged.</p></div></div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all eight files are in the same GitHub repository folder.</p></div></div>
+<div id="modal"><div class="intro"><div class="eyebrow">FARMING, ANIMALS & RELAXED SURVIVAL</div><h1>Wilderness · v0.9</h1><p>Your v0.8 settlement is preserved. Grow crops in planters, enjoy a slightly richer-looking world, watch peaceful animals roam your homestead, and cook simple meals while keeping all combat, exploration, and building features. No raids, no timers that punish you, and no payments.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using free starter seeds. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. If defeated, recover at home with your buildings and inventory unchanged.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all nine files are in the same GitHub repository folder.</p></div></div>
 <script>
-// v0.8 boot diagnostics do not touch browser storage or saves.
+// v0.9 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -204,20 +204,20 @@ button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
     box.style.display='flex';
     if(failure)reason.textContent='Startup error: '+failure;
     else reason.textContent='The game did not finish loading. Checking files…';
-    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js'];
+    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.8',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.9',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
-      if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all eight files to the repository root.';return;}
+      if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all nine files to the repository root.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
-      if(!contents[0].includes('v0.8')||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v08_singleplayer')){
-        reason.textContent='Mixed or outdated files detected. Replace index.html and all six JavaScript files together from the v0.8 ZIP.';return;
+      if(!contents[0].includes("version:'0.9'")||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v09_singleplayer')||!contents[6].includes('CROPS')){
+        reason.textContent='Mixed or outdated files detected. Replace index.html and all seven JavaScript files together from the v0.9 ZIP.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.8"></script>
+<script type="module" src="./game.js?v=0.9"></script>
 </body>
 </html>
