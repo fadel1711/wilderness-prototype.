@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// Wilderness v0.1: self-contained gameplay logic. No accounts, analytics or paid systems.
+// Wilderness v0.1.1: joystick horizontal direction fix; existing saves are preserved. No accounts, analytics or paid systems.
 const $ = id => document.getElementById(id);
 const WORLD = 46, SAVE_KEY='wilderness_v01_singleplayer';
 const cameraDistance = 7.6, clock = new THREE.Clock();
@@ -152,7 +152,8 @@ function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.
  const axisX=move.x+(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
  const axisZ=move.y+(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
  const len=Math.hypot(axisX,axisZ);if(len>.03){const vx=axisX/Math.max(1,len),vz=axisZ/Math.max(1,len);
- const dx=Math.cos(yaw)*vx+Math.sin(yaw)*vz,dz=-Math.sin(yaw)*vx+Math.cos(yaw)*vz;
+ // Camera faces forward along (sin(yaw), 0, cos(yaw)). Its screen-right is (-cos(yaw), 0, sin(yaw)).
+ const dx=-Math.cos(yaw)*vx+Math.sin(yaw)*vz,dz=Math.sin(yaw)*vx+Math.cos(yaw)*vz;
  const speed=keys.has('shift')?6.1:3.6;
  player.position.x=THREE.MathUtils.clamp(player.position.x+dx*speed*dt,-WORLD,WORLD);
  player.position.z=THREE.MathUtils.clamp(player.position.z+dz*speed*dt,-WORLD,WORLD);
