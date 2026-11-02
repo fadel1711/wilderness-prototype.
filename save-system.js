@@ -3,25 +3,30 @@
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
 export const V04_KEY='wilderness_v04_singleplayer';
-export const SAVE_KEY='wilderness_v05_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v05_pre_import_recovery';
+export const V05_KEY='wilderness_v05_singleplayer';
+export const SAVE_KEY='wilderness_v06_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v06_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
   pickaxe:{name:'Stone pickaxe',icon:'⛏️',max:1,tool:true},
-  wood:{name:'Wood',icon:'🪵',max:99},stone:{name:'Stone',icon:'🪨',max:99}
+  wood:{name:'Wood',icon:'🪵',max:99},stone:{name:'Stone',icon:'🪨',max:99},
+  iron_ore:{name:'Iron ore',icon:'⛰️',max:99},charcoal:{name:'Charcoal',icon:'🔥',max:99},iron_bar:{name:'Iron ingot',icon:'🔩',max:99},
+  stone_axe:{name:'Stone axe',icon:'🪓',max:1,tool:true},iron_pickaxe:{name:'Iron pickaxe',icon:'⛏️',max:1,tool:true},
+  sword:{name:'Iron sword',icon:'⚔️',max:1,tool:true},shield:{name:'Wooden shield',icon:'🛡️',max:1,tool:true},bow:{name:'Hunting bow',icon:'🏹',max:1,tool:true}
 });
 export const MIN_SLOTS=24,MAX_SLOTS=160;
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const numberIn=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const integerIn=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
-const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter'];
+const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf'];
+const oldTypes=types.slice(0,11);
 const earlier=['cabin','floor','wall','foundation','door','window','roof','stairs'];
 export function startingInventory(){const a=Array(MIN_SLOTS).fill(null);a[0]={id:'axe',qty:1};a[1]={id:'pickaxe',qty:1};return a;}
 export function count(inv,id){return inv.reduce((n,s)=>n+(s?.id===id?s.qty:0),0);}
 export function freeCapacity(inv,id){const d=ITEM[id];return d?inv.reduce((n,s)=>n+(s?.id===id?d.max-s.qty:!s?d.max:0),0):0;}
-export function addItem(inv,id,qty,{expand=false}={}){
-  const d=ITEM[id];if(!d||d.tool||!integerIn(qty,0,100000000))throw Error('Invalid item');
+export function addItem(inv,id,qty,{expand=false,allowTool=false}={}){
+  const d=ITEM[id];if(!d||(d.tool&&!allowTool)||!integerIn(qty,0,d.tool?1:100000000))throw Error('Invalid item');
   if(!expand&&freeCapacity(inv,id)<qty)return false;
   const clone=inv.map(s=>s?{...s}:null);let remaining=qty;
   for(const s of clone)if(remaining&&s?.id===id){const a=Math.min(remaining,d.max-s.qty);s.qty+=a;remaining-=a;}
@@ -47,10 +52,13 @@ function fields(s,version){
     resources[id]=hits;
   }
   if(!Array.isArray(s.builds)||s.builds.length>500)throw Error('Invalid building list.');
-  const builds=s.builds.map(b=>{
-    if(!b||!types.includes(b.type)||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
-    return {type:b.type,x:b.x,z:b.z,rot:b.rot};
+  const builds=s.builds.map((b,i)=>{
+    if(!b||!types.includes(b.type)||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
+    const id=version===5?b.id:'b'+(i+1);
+    if(!/^b[1-9][0-9]{0,5}$/.test(id))throw Error('Invalid building ID.');
+    return {id,type:b.type,x:b.x,z:b.z,rot:b.rot};
   });
+  if(new Set(builds.map(b=>b.id)).size!==builds.length)throw Error('Duplicate building ID.');
   return {px:s.px,pz:s.pz,resources,builds};
 }
 function blueprintsFrom(s){
@@ -67,7 +75,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -80,10 +88,25 @@ export function normalizeSave(input){
       return {id:slot.id,qty:slot.qty};
     });
     if(count(inv,'axe')!==1||count(inv,'pickaxe')!==1)throw Error('Tools are missing or duplicated.');
-    equipped=['axe','pickaxe'].includes(s.equipped)?s.equipped:'axe';
+    equipped=['axe','pickaxe','stone_axe','iron_pickaxe'].includes(s.equipped)&&count(inv,s.equipped)?s.equipped:'axe';
     while(inv.length<MIN_SLOTS)inv.push(null);
   }
-  return {version:4,inventory:inv,equipped,...world,plans:s.version===4?blueprintsFrom(s):[]};
+  const chestIds=new Set(world.builds.filter(b=>b.type==='chest').map(b=>b.id));
+  const storage={};
+  if(s.version===5){
+    const raw=s.storage??{};
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid chest storage.');
+    for(const [id,slots] of Object.entries(raw)){
+      if(!chestIds.has(id)||!Array.isArray(slots)||slots.length!==16)throw Error('Invalid chest record.');
+      storage[id]=slots.map(slot=>{
+        if(slot===null)return null;
+        if(!slot||!has(ITEM,slot.id)||ITEM[slot.id].tool||!integerIn(slot.qty,1,ITEM[slot.id].max))throw Error('Invalid chest item.');
+        return {id:slot.id,qty:slot.qty};
+      });
+    }
+  }
+  for(const id of chestIds)if(!storage[id])storage[id]=Array(16).fill(null);
+  return {version:5,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[]})=>normalizeSave({version:4,inventory,equipped,px,pz,resources,builds,plans});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={}})=>normalizeSave({version:5,inventory,equipped,px,pz,resources,builds,plans,storage});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

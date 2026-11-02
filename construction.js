@@ -1,12 +1,15 @@
 // Wilderness v0.5 — pure, renderer-independent construction, support and blueprint rules.
 // Existing v0.4 positions and types remain unchanged; elevated placements are derived.
-export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter']);
+export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf']);
+export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf']);
 export const WALL_TYPES=Object.freeze(['wall','door','window','fence']);
 export const COSTS=Object.freeze({
   cabin:{wood:12,stone:5},floor:{wood:2,stone:0},wall:{wood:3,stone:0},
   foundation:{wood:2,stone:2},door:{wood:3,stone:0},window:{wood:3,stone:1},
   roof:{wood:4,stone:0},stairs:{wood:3,stone:0},path:{wood:0,stone:1},
-  fence:{wood:2,stone:0},planter:{wood:2,stone:1}
+  fence:{wood:2,stone:0},planter:{wood:2,stone:1},
+  workbench:{wood:6,stone:2},chest:{wood:5,stone:0},furnace:{wood:3,stone:12},
+  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0}
 });
 const PI=Math.PI;
 const near=(a,b,r)=>Math.hypot(a.x-b.x,a.z-b.z)<r;
@@ -16,6 +19,7 @@ export const normalizedRotation=rot=>((Math.round(rot/(PI/2))%4)+4)%4*(PI/2);
 export function snappedPosition(type,x,z,rot){
   if(!BUILD_TYPES.includes(type)||![x,z,rot].every(Number.isFinite))throw Error('Invalid placement');
   const turn=Math.round(normalizedRotation(rot)/(PI/2));
+  if(FURNISH_TYPES.includes(type))return {x:Math.round(x),z:Math.round(z)};
   if(wallType(type))return turn%2===0?
     {x:Math.round(x/2)*2,z:Math.round((z-1)/2)*2+1}:
     {x:Math.round((x-1)/2)*2+1,z:Math.round(z/2)*2};
@@ -33,6 +37,14 @@ export const cabinFoundationCount=(candidate,builds)=>cabinFootprint(candidate).
 export const raisedCabin=(candidate,builds)=>cabinFoundationCount(candidate,builds)===9;
 export function supportHeight(candidate,builds){
   if(candidate.type==='cabin')return raisedCabin(candidate,builds)?.55:0;
+  if(FURNISH_TYPES.includes(candidate.type)){
+    const cab=builds.find(b=>b.type==='cabin'&&Math.abs(localXZ(candidate.x,candidate.z,b).x)<2.1&&Math.abs(localXZ(candidate.x,candidate.z,b).z)<2.1);
+    if(cab)return (raisedCabin(cab,builds)?.55:0)+.28;
+    const floor=builds.find(b=>b.type==='floor'&&near(b,candidate,1.08));
+    if(floor)return (hasFoundation(builds,floor.x,floor.z)?.55:0)+.24;
+    const found=hasFoundation(builds,candidate.x,candidate.z);
+    return found?.55:0;
+  }
   if(['floor','roof','planter'].includes(candidate.type))return hasFoundation(builds,candidate.x,candidate.z)?.55:0;
   if(['wall','door','window','fence'].includes(candidate.type)){
     const sn=Math.sin(candidate.rot),cs=Math.cos(candidate.rot);
@@ -48,9 +60,9 @@ function floorUnder(wall,b){
 export function placementVerdict(candidate,builds,resources,player,world=46){
   const {type,x,z,rot}=candidate;
   if(!BUILD_TYPES.includes(type)||![x,z,rot].every(Number.isFinite))return 'Invalid building';
-  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:1.30;
+  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:FURNISH_TYPES.includes(type)?.70:1.30;
   if(Math.abs(x)>world-radius-.4||Math.abs(z)>world-radius-.4)return 'Outside the map';
-  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:1.0))return 'Too close to your character';
+  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
   for(const r of resources){if(r.hits>0&&near(r,candidate,radius+r.radius+.28))return 'Resource in the way';}
   const footprintCount=type==='cabin'?cabinFoundationCount(candidate,builds):0;
   // Cabins are either completely on the ground or completely supported by a 3x3 pad.
@@ -60,13 +72,17 @@ export function placementVerdict(candidate,builds,resources,player,world=46){
       const q=localXZ(x,z,b);
       // Keep the interior solid, but allow new modular rooms next to the cabin.
       const clearance=type==='cabin'?5.1:wallType(type)?2.72:3.45;
-      if(Math.abs(q.x)<clearance&&Math.abs(q.z)<clearance)return 'Cabin already occupies this area';
+      if(Math.abs(q.x)<clearance&&Math.abs(q.z)<clearance){
+        if(!FURNISH_TYPES.includes(type)||Math.abs(q.x)>1.85||Math.abs(q.z)>1.85)return 'Cabin already occupies this area';
+      }
     }
     if(type==='cabin'){
       // Only the nine supporting foundation tiles are allowed underneath a cabin.
       if(b.type==='foundation'&&Math.abs(x-b.x)<3.01&&Math.abs(z-b.z)<3.01)continue;
       if(near(candidate,b,4.0))return 'Remove nearby pieces before placing cabin';
     }
+    if(FURNISH_TYPES.includes(type)&&FURNISH_TYPES.includes(b.type)&&near(candidate,b,1.10))return 'Another furnishing occupies this spot';
+    if(FURNISH_TYPES.includes(type)&&wallType(b.type)&&near(candidate,b,.7))return 'Too close to a wall';
     if(wallType(type)&&wallType(b.type)&&near(candidate,b,.35))return 'Edge already occupied';
     if(type===b.type&&['floor','foundation','path','planter'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
     if(type==='floor'&&b.type==='cabin'&&near(candidate,b,3))return 'Cabin already has a floor';
@@ -100,7 +116,7 @@ export const shiftPart=(part,x,z,rot)=>{
 };
 export function resolveBlueprint(plan,x,z,rot){return plan.parts.map(p=>shiftPart(p,x,z,rot));}
 export const sortParts=parts=>[...parts].sort((a,b)=>{
-  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,roof:7};
+  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,roof:7};
   return order[a.type]-order[b.type];
 });
 export function blueprintVerdict(parts,builds,resources,player,world=46){

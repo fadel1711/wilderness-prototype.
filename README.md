@@ -1,61 +1,93 @@
-# Wilderness v0.5.2 — Raised Cabin Door + 999/999 Creative Supplies
+# Wilderness v0.6 — Crafting, Storage & Interiors
 
-**Full five-file replacement for your existing GitHub Pages single-player project.**
+**Single-player • iPhone Safari / GitHub Pages • complete replacement release**
 
-## What's fixed
+This is a browser-based prototype using Three.js from a public CDN. It does not require Supabase, paid services, accounts, or multiplayer. It is intentionally a small indie-looking 3D prototype, not a finished game.
 
-1. **Raised cabin entry:** The prefab cabin has a wider visible doorway and corresponding wider collision opening. The movement controller tolerates the 0.28m height change from raised foundations/steps into the cabin floor; stairs, walls, and building logic remain active. Existing cabins are redrawn on load with the new doorway (no rebuilding required). The solid parts of walls still block walking.
-2. **999 wood + 999 stone automatically:** On first launch of v0.5.2 at the *same GitHub Pages address and Safari profile*, the game raises BOTH resource quantities to **at least 999** (without subtracting any you already had). This happens **once**, and the new totals are saved. You don't need to restart the world.
-3. **Refill any time:** Bag → **🪵 🪨 Refill to 999 each**. This brings each material back up to at least 999 whenever you need more. Spending resources still works normally. This is a convenient prototype building/testing feature, not an online admin action.
-4. **Save protection:** The previous v0.5 save is copied once to a separate pre-grant browser key, where possible, before resource changes. Older v0.4, v0.3 and v0.2 saves retain their keys. Building positions, blueprints, terrain resources, equipped tools, imported backups and inventory data use the SAME v0.5 save schema as before.
-5. **Cache consistency:** All module imports have matching v0.5.2 version parameters so Safari requests the new files, not old versions.
+## BEFORE INSTALLING — protect your v0.5.2 world
 
-## ZIP contents
+1. Open your existing v0.5.2 game from **the same Safari address** you have always used.
+2. Tap **Bag → Export world** and save the downloaded `.json` file in your iPhone's **Files** app.
+3. Confirm you can find the exported JSON. Keep the older `wilderness-prototype-v0.5.2.zip` too.
+4. Do **not** clear Safari website data, switch your GitHub Pages URL, or delete existing saves.
 
-- `index.html` — complete game page and buttons
-- `game.js` — complete game code, doorway collision, movement and creative refills
-- `construction.js` — original v0.5 construction and blueprint rules
-- `save-system.js` — original v0.5 inventory and save format
-- `README.md` — this guide
+v0.6 reads the old v0.5 world and migrates buildings, cabin positions, foundations, inventory, collected resource states, blueprints, and the player's position into a **new separate key** `wilderness_v06_singleplayer`. The original v0.5 key `wilderness_v05_singleplayer` is not overwritten by the upgrade. Browser storage is device/browser/URL-specific and can still be lost if cleared; the downloaded JSON is the additional safety net.
 
-Upload the five **extracted** files, NOT the ZIP itself. No Supabase, SQL, sign-in, or new repository is required.
+## Installation on iPhone (replace **all SIX** files)
 
-## Update using your iPhone
+Unzip the `wilderness-prototype-v0.6.zip` file with the Files app. It contains the six files listed below **at the ZIP root**, not inside an additional subfolder:
 
-1. **Before changing files:** Open your current working v0.5.1 game in Safari. Tap **Bag → Export world** and save the `.json` file to your iPhone's Files app. Confirm the file is there. Keep your previous v0.5.1 ZIP as an additional rollback copy.
-2. Download and extract `wilderness-prototype-v0.5.2.zip` from this chat in the iPhone Files app.
-3. Open your **existing Wilderness GitHub repository** in Safari. Use **Add file → Upload files** to replace all five files in your repository root: `index.html`, `game.js`, `construction.js`, `save-system.js`, `README.md` (if the GitHub mobile UI doesn't let you overwrite directly, open each existing file, choose Edit and replace its entire contents with the new version). Do not nest files in a subfolder.
-4. Commit everything to the existing `main` branch.
-5. Open the repository's **Actions** tab and verify that GitHub Pages finishes deploying successfully.
-6. Reopen your **same GitHub Pages game URL** in Safari and refresh. Confirm the top-left label says **Single-player · v0.5.2**. **Do not clear Safari website data or use a different Safari profile**, because your single-player save is stored locally per website.
-7. The HUD should show **at least 999 Wood and 999 Stone**. Open **Bag** to see the new **Refill to 999 each** button. You can click it again whenever building materials run low.
-8. Test your **existing raised cabin**: walk up the stairs, approach the *center* of the wider entrance and walk inside. Turn around and walk back out. Try the walls to verify you still cannot pass through them.
-9. Tap **Save**, refresh the page, and verify your cabin, progress and remaining wood/stone survive. Export a fresh v0.5.2 JSON backup from Bag after confirming everything works.
+- `index.html` — complete v0.6 page, mobile controls and diagnostics (REPLACE)
+- `game.js` — complete v0.6 game, world, furniture, crafting UI and save wiring (REPLACE)
+- `construction.js` — full new construction rules and furniture types (REPLACE)
+- `save-system.js` — full version 5 save format with legacy migration (REPLACE)
+- `craft-system.js` — new crafting, chest transfer and atomic material-cost module (ADD)
+- `README.md` — instructions (REPLACE)
 
-## Acceptance checklist
+1. Go to your **existing** public Wilderness GitHub repository on GitHub, in Safari (desktop site view if necessary).
+2. Use **Add file → Upload files** and upload all **six** files to the **repository root**, beside the existing `index.html`. Choose to replace existing filenames when GitHub prompts for duplicate names. You can also use GitHub's Edit file function when necessary, but use the full file contents, not snippets.
+3. Commit to branch **main**. Do not delete old unrelated files and do not create a new repository.
+4. In **Actions**, check that Pages completed successfully. GitHub Pages remains **Deploy from a branch / main / (root)**.
+5. Open the **same game URL** you used for v0.5.2 and refresh. Confirm the label **Single-player · v0.6** appears. If Safari shows an old version, close the page and reopen the same URL after deployment; do not clear browsing data.
+6. If you see a startup error, screenshot it and send it for diagnosis. Do not clear site data.
 
-- [ ] Game loads and HUD says `v0.5.2`.
-- [ ] The old cabin, foundation, stairs, blueprints and resources are still present.
-- [ ] 999+ wood and 999+ stone appear automatically on first launch.
-- [ ] Character enters the existing raised cabin, even when slightly off center, and can exit.
-- [ ] Walls remain solid; steps and doorway are walkable.
-- [ ] Constructing a piece deducts the correct resources.
-- [ ] Bag → Refill to 999 each works after spending resources.
-- [ ] Refresh preserves buildings and inventory; exported JSON backup is valid.
-- [ ] Movement, camera and compact Build/Pieces panel still work.
+## What's actually new
 
-**If the door still blocks movement:** take one screenshot showing the character and stairs from the side, and another with the character standing at the threshold. The screenshots help identify an incorrectly positioned/rotated stair or overlapping structure in that specific save. Avoid deleting or relocating buildings until the cause is clear.
+### Workbench and equipment
 
-## Rollback / save safety
+Go to **Build → Workbench**. Place it in a valid outdoor area or inside a cabin, leave Build mode, walk within about 2.75 m and tap **Use**. Craft:
 
-If v0.5.2 has a problem, **export its world** (if the game still opens), then upload the complete five-file v0.5.1 ZIP to the same GitHub Pages repository root. The v0.5 browser save schema and key (`wilderness_v05_singleplayer`) are unchanged, so rollback is structurally compatible. **Do not delete Safari site data**. The original v0.4 save key also remains separate.
+- **Stone axe** (3 wood, 4 stone), better tree chopping.
+- **Iron pickaxe** (3 wood, 2 iron bars), better rock mining.
+- **Iron sword**, **wooden shield**, **hunting bow** — these can be crafted and saved, but *combat use is reserved for v0.7*. The current tool buttons automatically select your stronger axe/pickaxe once you own one.
 
-One-time grant metadata is stored under `wilderness_v052_creative_grant` and a pre-grant snapshot (when possible) under `wilderness_v052_before_grant`. These are private local browser records and are not placed in your public GitHub repository.
+When a rock is fully mined, it now gives **1 iron ore** in addition to stone. No new rocks are spawned. Ore is also available via the free Creative Supplies refill.
 
-## Verification performed
+### Furnace
 
-- `node --check` on `game.js`, `construction.js`, `save-system.js`.
-- Simulated game runtime validated legacy save migration, 999/999 grant, one-time grant behavior, manual refill, resource consumption, blueprint/building preservation, backup export/import, and raised cabin entry from several sideways offsets.
-- The simulated collision tests also confirmed the remaining cabin walls stop the player.
-- Static mobile layout checks passed at 375×812, 390×844 and 844×390; the new refill button is available in the backpack.
-- **Still unverified:** full 3D rendering and physical touch controls on your actual iPhone Safari. Your acceptance test is needed before calling the hotfix fully stable.
+Place a **Furnace**, walk to it and tap **Use**. It has two recipes:
+
+- 4 wood → 2 charcoal.
+- 2 iron ore + 1 charcoal → 1 iron ingot.
+
+No paywalls, no cooldowns. One tap crafts one recipe batch.
+
+### Chests and nearby materials
+
+Build a **Chest**, walk within about 2.75 m and tap **Use**. Each chest provides **16 storage slots** and accepts resource stacks. Tap a backpack stack to store it or a chest stack to take it back. Tools/equipment stay in the backpack. If you build or craft **within 5 m of a chest**, the game can automatically draw required materials from that chest, without duplicating items.
+
+You must empty a chest before dismantling it. Chest contents save and export with your world. On v0.6 reload, your original v0.5.2 buildings retain their positions.
+
+### Interiors and furniture
+
+The existing Build menu adds **workbench, chest, furnace, table, chair, bed and shelf**. These are intentionally simple 3D models using the approved v0.5.2 coloring. Select a piece to dismiss the large menu; position/rotate it using the compact dock. Furniture moves in **one-metre steps** for easier placement inside a cabin. Roof behavior, stairs, existing walls, foundations, blueprints, fences and paths are retained. Bed is a rest-area placeholder; health/sleep gameplay comes later.
+
+### Creative Supplies
+
+Your **Bag → Refill supplies** still restores your wood and stone to at least **999 each**; it also ensures at least **99 iron ore** for experimentation. No farming is required for the prototype.
+
+## Test checklist
+
+1. **Legacy world:** The screenshot-worthy cabins, raised foundations, tools, resources and custom blueprints from v0.5.2 are still present.
+2. **Movement:** Joystick, camera, doorway, roof fade, stairs and collision still work.
+3. **Crafting:** Place a workbench, approach it, tap Use and craft a stone axe. Switch to it, chop a tree, verify fewer swings.
+4. **Furnace:** Place a furnace, make charcoal and an iron ingot. Reopen the station and check ingredient quantities.
+5. **Chest:** Place a chest; store and retrieve an entire wood stack. Check materials don't duplicate. Try building using resources stored in a chest within 5 m.
+6. **Interiors:** Place a table, chair, bed or shelf inside an existing cabin (nearby construction piece placement is used; try 1 m nudges). Walk around it and verify collision behaves reasonably.
+7. **Save:** Save and refresh; furniture, equipped tool, chest contents and inventory should persist.
+8. **Backup:** Export v0.6 JSON, import it, verify the same world loads. Export a new backup before testing any import. The old v0.5.2 JSON remains a separate recovery file.
+9. **Performance:** No freezes, missing startup modules, or serious performance regression on iPhone.
+
+## Emergency rollback without deleting your save
+
+If v0.6 fails: **do not clear Safari website data.** Re-upload all five complete source files from `wilderness-prototype-v0.5.2.zip` to your existing repository; the extra `craft-system.js` file can remain unused. Once Pages finishes deploying, refresh your **same URL**. v0.5.2 will read its own older save key, which v0.6 did not overwrite. Any newly placed v0.6 furniture/chest data will not exist in that older world, but a v0.6 JSON export will capture it separately. If a save is corrupted, stop and send the displayed error before importing anything.
+
+## Known limits
+
+- v0.6 is a **prototype**, not a completed survival game.
+- Sword, shield and bow are craftable *inventory items* but do not yet have combat behavior. v0.7 is planned for that.
+- Beds currently decorate/rest spaces but do not manage real health or sleep.
+- Furniture models are intentionally simple; they are not polished 3D assets.
+- Saves are local to Safari and the website URL; there is no cloud sync.
+- The HTML imports Three.js from an external CDN; first startup requires Internet access.
+- Simulated code/runtime tests and static phone-layout checks were performed. A full 3D-rendered iPhone Safari acceptance test is still required.
