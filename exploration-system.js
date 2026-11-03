@@ -1,3 +1,4 @@
+import {SEED_PATCHES} from './seed-system.js';
 // Wilderness v0.8: renderer-independent exploration rules.
 // These landmark IDs are permanent save identifiers. Never reuse an ID.
 export const EXPLORE_RADIUS=86;
@@ -9,6 +10,7 @@ export const LANDMARKS=Object.freeze([
 ]);
 export const LOOT=Object.freeze({camp:Object.freeze({wood:36,stone:22,iron_ore:8}),cache:Object.freeze({wood:24,stone:42,iron_ore:25})});
 const IDS=new Set(LANDMARKS.map(p=>p.id));
+const WAYPOINT_IDS=new Set([...IDS,...SEED_PATCHES.map(p=>'seed:'+p.id)]);
 export const distance2D=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
 export function nearbyLandmarks(position,range=0){return LANDMARKS.filter(l=>distance2D(position,l)<=l.range+range);}
 export function normalizeExploration(value){
@@ -18,7 +20,7 @@ export function normalizeExploration(value){
   const discovered=validate(value.discovered,'discovery list'),claimed=validate(value.claimed,'treasure list');
   if(claimed.some(id=>!Object.hasOwn(LOOT,id)))throw Error('Invalid claimed treasure.');
   const waypoint=value.waypoint==null?null:value.waypoint;
-  if(waypoint!==null&&waypoint!=='home'&&!IDS.has(waypoint))throw Error('Invalid waypoint.');
+  if(waypoint!==null&&waypoint!=='home'&&!WAYPOINT_IDS.has(waypoint))throw Error('Invalid waypoint.');
   return {discovered,claimed,waypoint};
 }
 export function claimLoot(exploration,id){
