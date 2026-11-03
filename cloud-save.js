@@ -1,7 +1,7 @@
-// Wilderness v0.19 — optional, conflict-safe cloud copies of the existing local world.
-// No remote request is made unless cloud-config.js is filled in. Local saves stay primary.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19';
+// Wilderness v0.19.1 — automatic account sync with conservative genuine-conflict protection.
+// A signed-in account syncs automatically. Unreadable saves or independent offline edits are never silently replaced.
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19.1';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19.1';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline';
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -12,11 +12,43 @@ export function worldFingerprint(value){
   for(let i=0;i<str.length;i++){h1=Math.imul(h1^str.charCodeAt(i),16777619);h2=Math.imul(h2^str.charCodeAt(i),2246822519);}
   return str.length+':'+(h1>>>0).toString(16)+':'+(h2>>>0).toString(16);
 }
-export function cloudDecision(local,remote,baseline,userId){
-  if(!remote)return 'empty';
+// Ambient clock, walking position, hunger drain and campfire burn-down are
+// not independent game progress. These differences must not create spurious
+// "pick a device" prompts when the account world has advanced elsewhere.
+export function progressFingerprint(value){
+  const s=normalizeSave(value);
+  s.px=0;s.pz=0;
+  if(s.atmosphere)s.atmosphere.elapsed=0;
+  if(s.survival){s.survival.hunger=0;s.survival.thirst=0;s.survival.energy=0;}
+  if(s.combat){s.combat.hp=0;s.combat.stamina=0;}
+  for(const fire of Object.values(s.campfires||{}))fire.fuel=0;
+  return worldFingerprint(s);
+}
+// Account-first behavior, without sacrificing a device's independent unsynced work.
+// "freshDevice" is captured BEFORE the game creates its first local save.
+export function cloudDecision(local,remote,baseline,userId,{freshDevice=false}={}){
+  if(!remote){
+    if(local==null)return 'invalid';
+    // Signing into a different account with an existing independent world is not
+    // permission to upload that world's data into the new account.
+    if(baseline?.userId&&baseline.userId!==userId&&!freshDevice)return 'empty';
+    return 'upload';
+  }
   if(local==null)return 'cloud-only';
-  if(worldFingerprint(local)===worldFingerprint(remote.save))return 'same';
-  if(baseline?.userId===userId&&baseline.revision===remote.revision&&baseline.hash===worldFingerprint(remote.save))return 'resume';
+  const localHash=worldFingerprint(local),remoteHash=worldFingerprint(remote.save);
+  if(localHash===remoteHash)return 'same';
+  if(baseline?.userId===userId){
+    const localUnchanged=baseline.hash===localHash||
+      (baseline.progressHash&&baseline.progressHash===progressFingerprint(local));
+    const remoteUnchanged=baseline.revision===remote.revision&&
+      (baseline.hash===remoteHash||
+       (baseline.progressHash&&baseline.progressHash===progressFingerprint(remote.save)));
+    if(localUnchanged&&!remoteUnchanged)return 'restore';
+    if(remoteUnchanged&&!localUnchanged)return 'upload';
+    if(localUnchanged&&remoteUnchanged)return 'upload'; // harmless ambient drift only
+  }
+  // A fresh browser has no independent progress: the account's world wins.
+  if(freshDevice&&!baseline?.userId)return 'restore';
   return 'conflict';
 }
 const message=e=>String(e?.message||e||'Unknown cloud error').slice(0,260);
@@ -41,16 +73,16 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
     el('cloudUseRemote').disabled=busy||!remote||mode==='invalid';
     el('cloudSyncNow').disabled=busy||mode!=='ready';
     if(user)el('cloudUserEmail').textContent=user.email||'Wilderness player';
-    el('cloudDetails').textContent=mode==='ready'?`Cloud revision ${revision}. Changes sync automatically when online; local saves continue instantly.`:
-      mode==='empty'?'This account has no cloud world yet. Choose to upload the world on this device.':
+    el('cloudDetails').textContent=mode==='ready'?`☁ Automatic sync on · Cloud revision ${revision}. Your account follows you between devices.`:
+      mode==='empty'?'This account has no cloud world, but the device belongs to a different account. Choose carefully before copying it.':
       mode==='cloud-only'?'Your local save cannot be read. You can restore the existing cloud world after reviewing the warning.':
-      mode==='conflict'?'Two different world copies exist. Compare your devices before choosing which one to keep.':
+      mode==='conflict'?'Different unsynced changes exist on this device and cloud. Choose once which world to keep.':
       mode==='invalid'?'The cloud copy failed validation. It has not been applied to your device.':
       'Your local world stays saved in Safari.';
-    el('cloudConflictText').textContent=mode==='empty'?'There is no existing cloud backup. Upload this device to begin automatic syncing.':
+    el('cloudConflictText').textContent=mode==='empty'?'This device previously synced with a different account. Upload it only if you really want to copy this world into your new account.':
       mode==='cloud-only'?'This device has no valid local world. Loading the cloud world will create a local recovery snapshot when possible.':
       mode==='invalid'?'Cloud data is damaged or from an unsupported version. You may upload a valid local world to replace it, but first export a JSON backup.':
-      'Your device and cloud have different progress. Using this device replaces the cloud copy; using cloud replaces the current local world. The old local version is backed up before a cloud restore.';
+      'Both copies have independent progress. Choose the correct one; the local world is backed up before a cloud restore. Normally this question will never appear.';
   }
   function getWorld(){try{
     if(window.__wildernessCloudSnapshot)return window.__wildernessCloudSnapshot()||null;
@@ -58,7 +90,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   }catch(e){return null;}}
   async function waitForGame(){for(let i=0;i<70&&!window.__gameReady;i++)await new Promise(r=>setTimeout(r,100));}
   function baselineWrite(world,rev){
-    try{localStorage.setItem(CLOUD_META_KEY,JSON.stringify({userId:user.id,revision:rev,hash:worldFingerprint(world)}));}
+    try{localStorage.setItem(CLOUD_META_KEY,JSON.stringify({userId:user.id,revision:rev,hash:worldFingerprint(world),progressHash:progressFingerprint(world)}));}
     catch(e){/* Failure simply means a manual choice may be required next login. */}
   }
   function cancelSchedule(){if(scheduled!==null){clearTimeout(scheduled);scheduled=null;}}
@@ -84,15 +116,31 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
         catch(e){mode='invalid';render();status('The cloud save is invalid. Your device has not been changed.');return;}
       }
       const local=getWorld(),baseline=safeMetaRead();
-      mode=cloudDecision(local,validRemote,baseline,owner);
-      if(mode==='same'||mode==='resume'){
-        mode='ready';baselineWrite(validRemote.save,revision);status('☁ Cloud connected. Your local world is protected and automatic syncing is active.');
-        render();if(local&&worldFingerprint(local)!==worldFingerprint(validRemote.save))scheduleSync();return;
+      const choice=cloudDecision(local,validRemote,baseline,owner,{freshDevice:!!window.__wildernessCloudDeviceFresh});
+      if(choice==='same'){
+        mode='ready';baselineWrite(validRemote.save,revision);
+        status('☁ Connected. Your account world syncs automatically.');render();return;
       }
-      render();
-      status(mode==='empty'?'No cloud world exists yet. Choose “Use this device’s world” to create one.':
-        mode==='cloud-only'?'Cloud world found, but this device has no valid save to upload.':
-        '⚠ Device and cloud differ. Choose one before automatic syncing can begin.');
+      if(choice==='upload'){
+        mode='loading';render();status('☁ Automatically backing up this device to your account…');
+        await writeWorld(local,revision);
+        return;
+      }
+      if(choice==='restore'){
+        mode='loading';render();status('☁ Loading your Wilderness world from your account…');
+        try{
+          if(typeof window.__wildernessCloudReplace!=='function')throw Error('Game restore is not ready');
+          window.__wildernessCloudReplace(validRemote.save);
+          baselineWrite(validRemote.save,revision);
+        }catch(e){mode='offline';render();status('Automatic restore stopped safely: '+message(e));}
+        return;
+      }
+      // Genuine conflict or invalid local data: do not silently discard work.
+      mode=choice;render();
+      status(choice==='empty'?'Different account detected. Choose whether to copy this device’s world into it.':
+        choice==='cloud-only'?'Cloud found, but this device save could not be read. Restore manually after reviewing.':
+        choice==='invalid'?'There is no valid local world to upload.':
+        '⚠ Two unsynced worlds have different progress. Choose the one to keep.');
     }catch(e){if(ticket!==generation)return;mode='offline';render();status('Cloud unavailable: '+message(e)+'. Your local world remains safe.');}
   }
   async function onSession(session){
@@ -149,7 +197,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   }
   function scheduleSync(){
     if(mode!=='ready'||!client||!user||busy||scheduled!==null)return;
-    const wait=Math.max(3500,35000-(Date.now()-lastSync));
+    const wait=Math.max(2500,10000-(Date.now()-lastSync));
     scheduled=setTimeout(()=>{scheduled=null;syncNow();},wait);
   }
   async function syncNow(){
@@ -175,7 +223,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   el('cloudSignout').addEventListener('click',async()=>{if(!client)return;cancelSchedule();try{await client.auth.signOut();resetAccount();}catch(e){status('Sign-out error: '+message(e));}});
   window.addEventListener('wilderness:local-save',scheduleSync);
   window.addEventListener('online',()=>{if(mode==='ready')scheduleSync();else if(user)inspectRemote();});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&mode==='ready')scheduleSync();});
+  document.addEventListener('visibilitychange',()=>{if(mode!=='ready')return;if(document.hidden)syncNow();else scheduleSync();});
   const controller={open,close,inspectRemote,syncNow};window.__wildernessCloudPanel=controller;
   if(!configured(url,key)){
     mode='setup';render();status('Cloud Save needs a dedicated Supabase project. Local saving still works normally.');
@@ -187,7 +235,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.19'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.19.1'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

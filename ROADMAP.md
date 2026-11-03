@@ -1,3 +1,7 @@
+# Wilderness v0.19.1 Cloud Save Usability Hotfix
+
+No changes to planned v0.20–v0.25 milestones or gameplay scope.
+
 ## CURRENT: v0.19 — Survivor Wardrobe (built, awaiting iPhone/cloud acceptance)
 
 Wardrobe with 5 jackets, 4 trousers, 3 boots, 4 hair choices, hood/scarf. Save and RPC version 18.
