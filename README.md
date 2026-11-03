@@ -1,61 +1,65 @@
-# Wilderness v0.12 — Visual Rebuild / Phase 1: Echo Cave
+# Wilderness v0.13 — Survival Foundation (Stage 1 of 3)
 
-**Full ready-to-upload GitHub Pages replacement.** This is the *first benchmark zone* of a serious art rebuild, not a complete professional-asset conversion of the entire game. Gameplay is unchanged. Existing Safari saves are not erased or overwritten during migration.
+**This is a complete, ready-to-upload GitHub Pages replacement**, based on Wilderness v0.12. It does not overwrite your older Safari saves. **v0.13 focuses on hunger, thirst, energy and sleep—not new graphics or a physics engine.** The cave, character, building, farming, combat, and map systems remain included, with no new paid content, accounts, or Supabase requirement.
 
-## What actually changed
+## The three-release upgrade
 
-- Replaced the previous rectangular cave floor/walls/roof with a faceted, naturally arched tunnel mesh and an irregular exterior stone hillside.
-- Created an integrated rocky mouth, rough cliff faces, graded approach trail, small stones, mossy vegetation, stalactites and two warm torch glows. New rock textures are generated locally from bundled code.
-- The roof and tunnel ceiling hide when the player is inside, while side walls remain visible. The camera can continue to follow the player.
-- Kept the cave entrance, interior, treasure coordinates, game interactions, compass discovery, collision constraints, and walking ground height unchanged.
-- Optional Low Effects setting hides most cave decorations and disables the cave point lights. Point lights also turn off when the player is away from the cave.
-- Existing v0.11 character, home/cabin visuals, crafting, farming, combat, map, day/night, sound and save features are included unchanged.
+1. **v0.13: Survival foundation (this ZIP).** Food, clean water, hunger, thirst, energy, spring, bed sleeping and Creative Comfort. Separate save and easy rollback.
+2. **v0.14: Movement + physical interactions (after acceptance).** Improve gravity/jumping, movement response, terrain contact, meaningful collisions, and object interactions. Keep existing homestead positioning and accessible controls.
+3. **v0.15: Art pipeline + visual benchmark.** Cohesive authored 3D models (e.g. licensed GLB assets), material quality, richer environment, improved lighting and animations, tested in one village/forest/cave benchmark before spreading to the whole world. The user-provided game image is *directional reference*, not a claim of equivalent output.
 
-This is **Phase 1**, a cave-focused visual quality benchmark. It does not claim photorealistic terrain, imported custom character animations or full AAA-quality art. These 3D shapes are still procedural. If you like the new cave direction, future phases can replace the wider forest, buildings and character assets using proper authored 3D models. One visually consistent benchmark is more useful than claiming the whole world is rebuilt prematurely.
+## v0.13 features
 
-## Exactly what is inside (12 files)
+- Compact **Hunger, Thirst, Energy** meters under existing Health and Stamina.
+- Slow need depletion **only while the game is actively playing**. No offline drain, no hunger/thirst deaths. Critically low needs make the character slightly slower and stamina recover a bit more slowly.
+- **Eat or drink:** open Bag and tap a carrot, potato, egg, vegetable stew, or bottled clean water. One item is consumed and the relevant meters recover. Wheat is a cooking ingredient, not eaten raw.
+- **Freshwater spring:** located southwest of the starting homestead around X=-5.6, Z=-6.2. Walk close until “Freshwater spring” appears and press **Drink**; instantly restore thirst and collect three water portions into the backpack if room permits. A blue pond ring marks it; it intentionally has no blocking collider. If an old building overlaps it visually, it does not prevent existing structures from loading.
+- **Starter supplies:** a new or freshly upgraded v0.13 world receives four water portions and four carrots *once*, added only in the new v0.13 save. Previous inventory/resources and older save keys stay untouched.
+- **Bed sleep:** walk up to any previously built or newly built bed, press Use, then **Sleep until 07:00**. This advances the existing day/night clock, replenishes energy, health and stamina, and adds a temporary comfort bonus. In survival mode sleeping slightly reduces hunger and thirst; in Creative Comfort this reduction is disabled.
+- **Creative Comfort:** open Bag → Game settings → toggle **Survival Needs: On / Creative Comfort: On**. In Creative Comfort needs do not drain; existing values are retained. The setting persists as part of the v0.13 save.
+- Simple low-resource water-source models; no new engine, external image assets, or cloud dependency. Existing Three.js CDN is still needed to run the game.
 
-- `index.html` — full HTML/UI and v0.12 startup diagnostics
-- `game.js` — complete game including v0.12 cave integration
-- `cave-art.js` — **NEW** cave geometry and detail module
-- `save-system.js` — separate v0.12 save and older version migration
-- `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js`, `visual-system.js` — complete compatible versions
+## Package contents (13 root-level files)
+
+- `index.html` — full game UI and v0.13 boot diagnostics
+- `game.js` — complete runtime including survival interactions and save flow
+- `save-system.js` — v0.13 save schema, item definition and old-save migration
+- `survival-system.js` — **NEW**, independently testable needs/food/sleep rules
+- `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js`, `visual-system.js`, `cave-art.js` — complete compatible files
 - `README.md` — this file
 
-No Supabase update, login, purchases, new repository, images or asset license files needed. The game continues to use Three.js from its existing CDN; internet is needed to load that library.
+## Beginner-friendly iPhone GitHub upload instructions
 
-## iPhone: upload all files safely
+1. Open your existing **v0.12** Wilderness site in the same non-private Safari tab you normally use. Go to **Bag → Export world** and save the downloaded JSON in iPhone **Files**. Keep your original `wilderness-prototype-v0.12.zip` available for rollback.
+2. Download the `wilderness-prototype-v0.13.zip` file from ChatGPT and **Uncompress** it in the iPhone Files app. You will see 13 files directly in the extracted folder.
+3. Open the **same** Wilderness GitHub repository. Go to the directory containing the existing `index.html` (usually the repository root; do not create a nested `v0.13` folder).
+4. **Replace all 12 existing files from your v0.12 deployment**, using the complete files from this archive: `index.html`, `game.js`, `save-system.js`, `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js`, `visual-system.js`, `cave-art.js`, and `README.md`.
+5. **Add** `survival-system.js` beside `game.js`. Confirm spelling exactly.
+6. Commit the files to the GitHub branch your site publishes (often `main`). Check **GitHub → Actions** for the successful Pages build/deploy.
+7. Open your existing GitHub Pages URL in Safari and refresh. The top-left header must read **Single-player · v0.13**. Do not delete website data, open a private tab, or change your Pages domain.
+8. If the game fails to start, do **not** clear Safari's data. Screenshot the error panel and confirm all 13 files are in the same directory and from the same ZIP.
 
-1. In your running **v0.11** game, tap **Bag → Export world** and save the `.json` file in your iPhone's Files app. Keep the v0.11 ZIP as a rollback copy.
-2. Download the v0.12 ZIP and tap **Uncompress** in Files.
-3. Open the **existing** Wilderness GitHub repository (the one serving your GitHub Pages game).
-4. In the folder that already contains `index.html` (usually the repository root), **replace these 10 files with the complete copies** from this package: `index.html`, `game.js`, `save-system.js`, `construction.js`, `craft-system.js`, `combat-system.js`, `exploration-system.js`, `farm-system.js`, `atmosphere-system.js`, `visual-system.js`.
-5. **Add** `cave-art.js` to that same folder (don't place it inside a separate version folder). Also replace `README.md`.
-6. Commit all changes to the branch deployed by GitHub Pages (normally `main`). Check the **Actions** tab for a successful GitHub Pages deployment.
-7. Open your **existing** website address in Safari and refresh. Header should read **Single-player · v0.12**. Avoid clearing Safari website data, changing domain, or opening the game in a private browsing tab.
-8. When the game starts, open the Map, choose **Echo Cave Entrance** as a waypoint, and travel to the cave. Enter and exit, view its walls from several camera angles, and open the cache only if it is still unclaimed.
+## Save migration and rollback
 
-## Save protection and rollback
+- **v0.13** stores data at `wilderness_v013_singleplayer`, schema version **12**.
+- The **v0.12** save remains under `wilderness_v012_singleplayer`, schema version **11**; migration reads it but never overwrites its key.
+- v0.13 imports older-world JSON backups and validates the new hunger/thirst/energy state. Invalid data is rejected rather than silently replacing your world.
+- v0.13 import undo has its own recovery key `wilderness_v013_pre_import_recovery`.
+- To roll back, first **export your latest v0.13 world**. Re-upload **all files from your complete v0.12 ZIP** to the same GitHub repo, commit, and refresh the same site. It will open your unchanged earlier v0.12 save. Changes made **only** in v0.13 cannot appear in v0.12; they remain saved under the separate v0.13 key for when you return to v0.13.
+- Browser storage is device/profile-specific. JSON export is the safest portable backup.
 
-- New v0.12 key: `wilderness_v012_singleplayer`, schema version `11`.
-- The earlier v0.11 key is **read-only on migration**: `wilderness_v011_singleplayer`, schema version `10`.
-- Earlier saves remain in Safari. v0.12 uses a separate pre-import recovery key: `wilderness_v012_pre_import_recovery`.
-- To roll back: keep/export the latest v0.12 JSON file, replace all GitHub files with your **complete v0.11 ZIP**, and refresh the **same** site. The old v0.11 save will be loaded; progress made only in v0.12 won't show in v0.11.
-- The game saves to the device/browser, not GitHub. Never clear website storage to solve a startup error. If a save is invalid, capture the exact error and don't overwrite it.
+## iPhone acceptance checklist
 
-## iPhone acceptance checks
+1. Existing v0.12 buildings, equipment, chests, crops, cave treasure, map markers and time of day persist.
+2. Hunger/thirst/energy meters appear without covering map, joystick, or build controls in portrait and landscape.
+3. Need meters drain slowly in Survival Needs mode, but stay fixed in Creative Comfort. No offline drain.
+4. Tap food/water stacks in Bag to consume one and restore the appropriate meters; food stock decreases correctly.
+5. Locate the freshwater spring southwest of home, drink and collect water.
+6. Walk up to a bed and Sleep until 07:00; clock advances, health/stamina/energy recover, save retains progress.
+7. Combat, crafting, construction, raising floors/stairs, farming, cave exploration and maps still work.
+8. Save, refresh, export/import and undo-import work. Preserve original v0.12 JSON and ZIP.
+9. iPhone performance remains acceptable with Standard and Low Effects settings.
 
-1. v0.11 buildings, character location, equipment, chests, farming, loot claims, discovered map locations, and settings survive the migration.
-2. Cave entrance looks more natural and you can walk **through** it (no hidden rock obstruction).
-3. Cave interior is navigable; walls block walking through them, and the third-person camera shows the survivor while indoors.
-4. Cave cache is still in its original location and cannot be collected twice.
-5. Standard vs Low Effects both work; compare FPS, heat and responsiveness near the cave.
-6. Original homestead, combat, farming, construction, map, day/night and sound still work.
-7. Saving, page refresh, world JSON export/import and rollback all work.
+## What was actually verified
 
-## Verification notes
-
-- JavaScript syntax and package consistency checks are performed before delivery.
-- Pure save-migration tests check older-world structures, inventory, chests, farming, exploration and atmosphere.
-- The new cave module is exercised under a fake Three.js runtime to verify geometry and quality toggles.
-- Full Three.js rendering on your actual iPhone/Safari is **not verified here**; visual quality and in-game collision/camera behavior require your acceptance test.
+Before packaging: JS syntax, pure survival rules, old-save migration (including structures/chests/crops/discoveries), strict save validation, exported-backup roundtrips, file/HTML references and ZIP contents. **Actual iPhone Safari/WebGL rendering, touch control layout, sound, frame rate, and whole-game behavior must be validated by the user.** This is a candidate, not a declared production-ready final release.

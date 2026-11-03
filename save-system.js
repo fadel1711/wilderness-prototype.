@@ -1,7 +1,8 @@
-// Wilderness v0.12. Earlier Safari save keys are read-only during migration.
+// Wilderness v0.13. Earlier Safari save keys are read-only during migration.
 import {normalizeExploration} from './exploration-system.js';
 import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
+import {normalizeSurvival} from './survival-system.js';
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
@@ -13,8 +14,9 @@ export const V08_KEY='wilderness_v08_singleplayer';
 export const V09_KEY='wilderness_v09_singleplayer';
 export const V10_KEY='wilderness_v010_singleplayer';
 export const V11_KEY='wilderness_v011_singleplayer';
-export const SAVE_KEY='wilderness_v012_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v012_pre_import_recovery';
+export const V12_KEY='wilderness_v012_singleplayer';
+export const SAVE_KEY='wilderness_v013_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v013_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -23,6 +25,7 @@ export const ITEM=Object.freeze({
   iron_ore:{name:'Iron ore',icon:'⛰️',max:99},charcoal:{name:'Charcoal',icon:'🔥',max:99},iron_bar:{name:'Iron ingot',icon:'🔩',max:99},
   carrot_seed:{name:'Carrot seeds',icon:'🫘',max:99},potato_seed:{name:'Potato eyes',icon:'🫘',max:99},wheat_seed:{name:'Grain seeds',icon:'🫘',max:99},
   carrot:{name:'Carrot',icon:'🥕',max:99},potato:{name:'Potato',icon:'🥔',max:99},wheat:{name:'Wheat',icon:'🌾',max:99},egg:{name:'Egg',icon:'🥚',max:99},stew:{name:'Vegetable stew',icon:'🍲',max:99},
+  water:{name:'Clean spring water',icon:'💧',max:99},
   stone_axe:{name:'Stone axe',icon:'🪓',max:1,tool:true},iron_pickaxe:{name:'Iron pickaxe',icon:'⛏️',max:1,tool:true},
   sword:{name:'Iron sword',icon:'⚔️',max:1,tool:true},shield:{name:'Wooden shield',icon:'🛡️',max:1,tool:true},bow:{name:'Hunting bow',icon:'🏹',max:1,tool:true}
 });
@@ -86,7 +89,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7,8,9,10,11].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -131,7 +134,8 @@ export function normalizeSave(input){
   const exploration=normalizeExploration(s.version>=7?s.exploration:null);
   const farm=normalizeFarm(s.version>=8?s.farm:null);
   const atmosphere=normalizeAtmosphere(s.version>=9?s.atmosphere:null);
-  return {version:11,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere};
+  const survival=normalizeSurvival(s.version>=12?s.survival:null);
+  return {version:12,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270}})=>normalizeSave({version:11,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null})=>normalizeSave({version:12,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival)});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});
