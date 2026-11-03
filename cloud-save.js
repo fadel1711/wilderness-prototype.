@@ -1,8 +1,8 @@
-// Wilderness v0.19.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
+// Wilderness v0.20 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19.2';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19.2';
-export const CLOUD_META_KEY='wilderness_v019_cloud_baseline';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.20';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.20';
+export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
 // Non-cryptographic change detector only; Postgres revision-CAS is the overwrite protection.
@@ -15,13 +15,14 @@ export function worldFingerprint(value){
 // Ambient clock, walking position, hunger drain and campfire burn-down are
 // not independent game progress. These differences must not create spurious
 // "pick a device" prompts when the account world has advanced elsewhere.
-export function progressFingerprint(value){
+export function progressFingerprint(value,{legacy=false}={}){
   const s=normalizeSave(value);
   s.px=0;s.pz=0;
   if(s.atmosphere)s.atmosphere.elapsed=0;
   if(s.survival){s.survival.hunger=0;s.survival.thirst=0;s.survival.energy=0;}
   if(s.combat){s.combat.hp=0;s.combat.stamina=0;}
   for(const fire of Object.values(s.campfires||{}))fire.fuel=0;
+  if(legacy){delete s.deepCave;s.version=18;}
   return worldFingerprint(s);
 }
 // Account-first behavior, without sacrificing a device's independent unsynced work.
@@ -34,6 +35,8 @@ export function cloudDecision(local,remote,baseline,userId,{freshDevice=false}={
     return 'upload';
   }
   if(local==null)return 'cloud-only'; // Possible corrupt local save: require review.
+  // An unrelated account must never silently reuse or overwrite this device's progress.
+  if(baseline?.userId&&baseline.userId!==userId)return 'conflict';
   const localHash=worldFingerprint(local),remoteHash=worldFingerprint(remote.save);
   if(localHash===remoteHash)return 'same';
   // Key fix: two worlds can have the same actual progress even without a
@@ -43,11 +46,14 @@ export function cloudDecision(local,remote,baseline,userId,{freshDevice=false}={
   // Different accounts must not silently copy or overwrite each other's progress.
   if(baseline?.userId&&baseline.userId!==userId)return 'conflict';
   if(baseline?.userId===userId){
-    const localUnchanged=baseline.hash===localHash||
-      (baseline.progressHash&&baseline.progressHash===progressFingerprint(local));
-    const remoteUnchanged=baseline.revision===remote.revision&&
-      (baseline.hash===remoteHash||
-       (baseline.progressHash&&baseline.progressHash===progressFingerprint(remote.save)));
+    const previousFormat=Number(remote.save?.version)===18;
+    const unchanged=(w,h)=>baseline.hash===h||!!baseline.progressHash&&
+      (baseline.progressHash===progressFingerprint(w)||
+       (previousFormat&&baseline.progressHash===progressFingerprint(w,{legacy:true})));
+    // Never discard newly mined ore progress when comparing against a pre-v0.20 baseline.
+    const noNewCaveProgress=Object.keys(normalizeSave(local).deepCave?.veins||{}).length===0;
+    const localUnchanged=unchanged(local,localHash)&&(!previousFormat||noNewCaveProgress);
+    const remoteUnchanged=baseline.revision===remote.revision&&unchanged(remote.save,remoteHash);
     if(localUnchanged&&!remoteUnchanged)return 'restore';
     if(remoteUnchanged&&!localUnchanged)return 'upload';
     if(localUnchanged&&remoteUnchanged)return 'restore';
@@ -208,7 +214,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   function applyCloud(){
     if(!user||busy||!remote||mode==='invalid')return;
     let normalized;try{normalized=normalizeSave(remote.save);}catch(e){status('Cloud world rejected by validation.');return;}
-    if(!window.confirm('Restore the cloud world to this device? Current v0.19 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
+    if(!window.confirm('Restore the cloud world to this device? Current v0.20 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
     cancelSchedule();
     try{window.__wildernessCloudReplace(normalized);baselineWrite(normalized,revision);}
     catch(e){status('Could not restore cloud world: '+message(e));}
@@ -253,7 +259,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.19.2'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.20'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

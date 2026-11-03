@@ -103,8 +103,8 @@ export function createEchoCave(THREE,scene,renderer){
   // and keeping the player/camera unobstructed as in v0.11.
   add(tunnelGeometry(THREE,true),archMaterial,cap,0,0,0);
   add(floorGeometry(THREE),pathMaterial,world,0,0,0);
-  // Rear wall seals the tunnel at the original map limit.
-  add(new THREE.IcosahedronGeometry(1,1),darkRock,world,.0,1.95,-11.5,4.1,2.2,.9);
+  // v0.20: the old rear wall has become a doorway into Echo Depths.
+  // Original tunnel, loot and entrance coordinates do not change.
   // Organic stone cap is removed from view indoors for camera visibility.
   for(let i=0;i<15;i++){
     const z=-10.5+i*1.47;

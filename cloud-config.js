@@ -1,4 +1,4 @@
-// Wilderness v0.19 public client configuration. Edit ONLY these two values.
+// Wilderness v0.20 — existing public client configuration (unchanged credentials).
 // Use a NEW dedicated Wilderness Supabase project. This file is public on GitHub Pages.
 // Paste the Project URL and the PUBLISHABLE key (sb_publishable_...) from Supabase.
 // Never put a secret/service_role key, password, JWT or database connection string here.

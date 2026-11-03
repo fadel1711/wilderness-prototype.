@@ -11,9 +11,9 @@ export function createPremiumArt(THREE,{resources,player,renderer,grassMat,pathM
     const x=player.position.x,z=player.position.z;
     for(const ent of entries){
       const dx=ent.r.x-x,dz=ent.r.z-z;
-      const show=!low&&dx*dx+dz*dz<60*60;
+      const show=!low&&!ent.r.deepHidden&&ent.r.hits>0&&dx*dx+dz*dz<60*60;
       ent.asset.visible=show;
-      for(const old of ent.original)old.visible=!show&&(!old.userData.forestDetail||(!low&&dx*dx+dz*dz<38*38));
+      for(const old of ent.original)old.visible=!show&&!ent.r.deepHidden&&ent.r.hits>0&&(!old.userData.forestDetail||(!low&&dx*dx+dz*dz<38*38));
     }
   }
   async function start(){

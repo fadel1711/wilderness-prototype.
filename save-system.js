@@ -1,4 +1,4 @@
-// Wilderness v0.19. Earlier Safari save keys are read-only during migration.
+// Wilderness v0.20. Earlier Safari save keys are read-only during migration.
 import {normalizeExploration} from './exploration-system.js';
 import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
@@ -6,6 +6,7 @@ import {normalizeSurvival} from './survival-system.js';
 import {normalizeForage} from './seed-system.js';
 import {normalizeCampfires} from './campfire-system.js';
 import {normalizeWardrobe} from './wardrobe-system.js';
+import {normalizeDeepCave} from './deep-cave-system.js';
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
@@ -24,8 +25,9 @@ export const V15_KEY='wilderness_v015_singleplayer';
 export const V16_KEY='wilderness_v016_singleplayer';
 export const V17_KEY='wilderness_v017_singleplayer';
 export const V18_KEY='wilderness_v018_singleplayer';
-export const SAVE_KEY='wilderness_v019_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v019_pre_import_recovery';
+export const V19_KEY='wilderness_v019_singleplayer';
+export const SAVE_KEY='wilderness_v020_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v020_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -98,7 +100,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -147,7 +149,8 @@ export function normalizeSave(input){
   const forage=normalizeForage(s.version>=13?s.forage:null);
   const campfires=normalizeCampfires(s.version>=17?s.campfires:null,world.builds);
   const wardrobe=normalizeWardrobe(s.version>=18?s.wardrobe:null);
-  return {version:18,inventory:inv,equipped,...world,wardrobe,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage,campfires};
+  const deepCave=normalizeDeepCave(s.version>=19?s.deepCave:null);
+  return {version:19,inventory:inv,equipped,...world,wardrobe,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage,campfires,deepCave};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null,campfires=null,wardrobe=null})=>normalizeSave({version:18,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage),campfires:normalizeCampfires(campfires,builds),wardrobe:normalizeWardrobe(wardrobe)});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null,campfires=null,wardrobe=null,deepCave=null})=>normalizeSave({version:19,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage),campfires:normalizeCampfires(campfires,builds),wardrobe:normalizeWardrobe(wardrobe),deepCave:normalizeDeepCave(deepCave)});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});
