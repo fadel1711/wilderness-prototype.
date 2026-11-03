@@ -1,3 +1,7 @@
+## CURRENT: v0.19 — Survivor Wardrobe (built, awaiting iPhone/cloud acceptance)
+
+Wardrobe with 5 jackets, 4 trousers, 3 boots, 4 hair choices, hood/scarf. Save and RPC version 18.
+
 # Wilderness expansion roadmap — v0.16 to v0.25
 
 **Principle:** One risk category per release. Preserve all previous local save keys, ship complete GitHub ZIPs and dedicated acceptance tests. Do not call a version stable before iPhone tests pass. No further steps require changing Dino Dominion.
@@ -20,8 +24,8 @@
 - Campfire state stored in save schema 17, with a new Safari key and small private Supabase RPC compatibility migration. Live backend is NOT changed automatically.
 - Acceptance: place/refuel/toggle/dismantle, smoke disappears when off, preserve all older structures, reasonable iPhone FPS, Safari and cloud save/restore. Campfire cooking intentionally not in this release.
 
-## v0.19 — Outfits and wardrobe
-- Change clothing appearance from an inventory wardrobe or bed. Start with a small consistent set of outfits (3).
+## v0.19 — Outfits and wardrobe (built, awaiting acceptance)
+- Change visible clothes from Bag → Survivor Wardrobe: 5 jackets, 4 pants, 3 boots, 4 hair colors, hood and scarf toggles.
 - Cosmetic first; never lose underlying equipment, inventory or character position. Save selected outfit in new save version.
 - Acceptance: shirt/pants/outfit switch persists, first/third-person render remains legible, no combat collisions changed.
 
@@ -68,5 +72,5 @@
 6. A risky backend change is never mixed with a new art/model/physics system. Separate cloud migration/schema delivery from public game ZIP.
 7. Feature scope can shrink if the current module fails stability/performance tests.
 
-## v0.18 cloud/save implementation note
-The existing v0.17 cloud client remains in the PUBLIC build with the previously configured Wilderness **publishable key**. The separate PRIVATE v0.18 ZIP upgrades the existing Wilderness RPC from version 16-only to accept versions 16 and 17. The remote database is **not modified automatically**. v0.17 Safari saves remain read-only migration sources. Safeguard local JSON exports and verify real cloud sync on your own device before depending on it.
+## v0.19 cloud/save implementation note
+The separate PRIVATE v0.19 ZIP upgrades the existing Wilderness RPC to admit formats 16, 17, **18**. The new PUBLIC client normalizes older cloud worlds safely. The live database is **not modified automatically**. Previous Safari slots and the v0.18 ZIP are rollback sources. Export JSON backups before choosing which device/cloud copy to keep.

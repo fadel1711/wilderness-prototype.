@@ -1,8 +1,8 @@
-// Wilderness v0.18 — optional, conflict-safe cloud copies of the existing local world.
+// Wilderness v0.19 — optional, conflict-safe cloud copies of the existing local world.
 // No remote request is made unless cloud-config.js is filled in. Local saves stay primary.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.18';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.18';
-export const CLOUD_META_KEY='wilderness_v018_cloud_baseline';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19';
+export const CLOUD_META_KEY='wilderness_v019_cloud_baseline';
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
 // Non-cryptographic change detector only; Postgres revision-CAS is the overwrite protection.
@@ -142,7 +142,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   function applyCloud(){
     if(!user||busy||!remote||mode==='invalid')return;
     let normalized;try{normalized=normalizeSave(remote.save);}catch(e){status('Cloud world rejected by validation.');return;}
-    if(!window.confirm('Restore the cloud world to this device? Current v0.18 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
+    if(!window.confirm('Restore the cloud world to this device? Current v0.19 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
     cancelSchedule();
     try{window.__wildernessCloudReplace(normalized);baselineWrite(normalized,revision);}
     catch(e){status('Could not restore cloud world: '+message(e));}
@@ -187,7 +187,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.18'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.19'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();
