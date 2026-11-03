@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.16 · Premium Art & Dual-Thumb Controls</title>
+<title>Wilderness — v0.17 · Premium Art & Dual-Thumb Controls</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -173,13 +173,29 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
 .zoomdock button{min-width:29px;min-height:32px;border-radius:8px;font-size:17px;font-weight:800;background:#435a49;padding:2px}
 .zoomdock span{font-size:10px;min-width:27px;text-align:center;font-weight:750;color:#e5dcc9;font-variant-numeric:tabular-nums}
 @media (orientation:landscape) and (max-height:460px){.zoomdock{top:calc(env(safe-area-inset-top) + 108px);right:10px}.zoomdock button{min-height:27px}}
+
+/* v0.17 optional cloud account; separate from game save. */
+.cloudQuick{margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#2c3d32}.cloudQuick p{margin:5px 0 9px}
+.cloudQuick button{padding:10px 12px;width:100%;background:#556b56;font-size:12px;font-weight:800}
+.cloudpanel{position:fixed;z-index:24;inset:auto 12px calc(env(safe-area-inset-bottom) + 11px);top:calc(env(safe-area-inset-top) + 12px);max-width:490px;margin:auto;display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:#253429f9;border:1px solid #e4dcb452;border-radius:17px;padding:15px;box-shadow:0 12px 44px #000b}
+.cloudpanel.show{display:block}.cloudpanel .panelheader{position:sticky;top:-15px;background:#253429;z-index:1;padding:4px 0 10px}
+.cloudStatus{background:#192820;border:1px solid var(--line);border-radius:11px;padding:11px;font-size:12px;line-height:1.5;color:#e3e8de}
+.cloudGroup{border-top:1px solid var(--line);padding-top:12px;font-size:12px;line-height:1.5}
+.cloudGroup[hidden],.cloudChoices[hidden]{display:none!important}.cloudGroup label{display:block;font-weight:700;margin-top:9px;margin-bottom:4px}
+.cloudGroup input{display:block;min-width:0;width:100%;background:#17291f;color:#f1ede6;border:1px solid #9caa8b6b;border-radius:10px;padding:12px;font:inherit;font-size:16px}
+.cloudActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.cloudActions button{flex:1;min-width:100px;padding:11px 7px;font-size:12px;background:#52634e;font-weight:750}
+.cloudActions button:first-child,#cloudKeepLocal{background:#d6bc86;color:#25291f}
+.cloudChoices{padding:10px;background:#17261e;border:1px solid #bfb58667;border-radius:12px;margin:9px 0}.cloudChoices button{display:block;width:100%;padding:12px 7px;margin:7px 0;font-size:12px;font-weight:750}
+.cloudHint{font-size:11px;color:#cbd5c6;line-height:1.55}
+@media(orientation:landscape) and (max-height:460px){.cloudpanel{max-width:520px;left:7px;right:7px;top:calc(env(safe-area-inset-top) + 4px);bottom:calc(env(safe-area-inset-bottom) + 4px);padding:10px}}
+
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
 </head>
 <body>
 <div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.16</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.17</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="damageOverlay"></div>
 <div class="vitals" aria-label="Survival status"><div class="vitalRow">❤ <span>HP</span><div class="vitalBar"><i id="healthFill"></i></div><b id="healthNumber">100</b></div><div class="vitalRow">⚡ <span>SP</span><div class="vitalBar"><i id="staminaFill"></i></div><b id="staminaNumber">100</b></div><div class="needsDivider"></div><div class="vitalRow">🍞 <span>H</span><div class="vitalBar"><i id="hungerFill"></i></div><b id="hungerNumber">88</b></div><div class="vitalRow">💧 <span>T</span><div class="vitalBar"><i id="thirstFill"></i></div><b id="thirstNumber">85</b></div><div class="vitalRow">🌙 <span>E</span><div class="vitalBar"><i id="energyFill"></i></div><b id="energyNumber">90</b></div><span id="safeLabel" class="safeLabel">🛖 Homestead safe</span></div><div id="timeHud" class="timehud" aria-label="Time of day">☀ Day 1 · 09:00</div><button id="mapButton" class="mapquick" aria-label="Open map">🗺 Map</button><div class="zoomdock" role="group" aria-label="Camera zoom"><button id="zoomIn" aria-label="Zoom camera in">＋</button><span id="zoomLevel">7.4m</span><button id="zoomOut" aria-label="Zoom camera out">−</button></div><div id="waypointHud" class="waypointhud">🧭 Explore · 🗺 Map</div><div id="interaction"></div><div id="toast" class="toast"></div>
@@ -230,15 +246,39 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
   <div class="panelheader"><strong>🎒 Backpack</strong><button id="closeBag" aria-label="Close backpack">✕ Close</button></div>
   <p id="bagSummary" class="bagsummary">24 slots</p>
   <div id="inventorySlots" class="inventorygrid"></div>
-  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.16 world after confirmation.</p>
-    <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button>
+  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress lives in Safari. Export a JSON file to keep a copy in Files. Import will replace this browser's current v0.17 world after confirmation.</p>
+<div class="cloudQuick"><strong>☁ Optional Cloud Save</strong><p>Local saves always remain available. Connect a separate Wilderness account to back up this world and play on another device.</p><button id="cloudOpen">☁ Account & Cloud Save</button></div>
+    <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button><button id="undoCloudRestore">↶ Undo last cloud restore</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">SKY & CAMERA CONTROLS · STAGE 1</div><h1>Wilderness · v0.16</h1><p>Your v0.15 settlement is preserved. This stage adds visible sun and moon, adjustable third-person camera zoom, and retains the previous premium nature artwork and dual-thumb controls. Hold the left joystick while tapping Jump, Attack or Gather on the right. Your survival, farming, combat, exploration, crafting and save systems stay intact.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Survival:</b> Watch the food, water and energy bars. Tap edible items in Bag to eat or drink; walk to the little spring southwest of home and tap Drink to refill water. Build or use a bed to sleep until morning. Switch off needs in Bag → Game settings using Creative Comfort. No offline penalties.<br><b>Two thumbs:</b> Keep one thumb on the left joystick while tapping Jump, Gather, Attack or Dodge with the right. Hold Block with the right while moving with the left. Tap Jump near the right-hand action controls or press Space. Gravity, raised cabins and steps remain accessible.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using seeds you forage from wild patches marked S on the Map. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · Space jump · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately. Tap + or − to zoom the view; scroll the mouse wheel on desktop.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. Audio starts only after pressing Enter. Adjust audio and effects inside Bag → Game settings.</p></div></div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all sixteen JavaScript files are in the same GitHub repository folder.</p></div></div>
+
+<section id="cloudPanel" class="cloudpanel" role="dialog" aria-label="Wilderness cloud save" aria-modal="true">
+  <div class="panelheader"><strong>☁ Wilderness Cloud Save</strong><button id="cloudClose" type="button">✕ Close</button></div>
+  <p id="cloudStatus" class="cloudStatus" role="status" aria-live="polite">Checking cloud connection…</p>
+  <div id="cloudSetup" class="cloudGroup" hidden><p>Cloud service not configured. Your local world works normally. Set up a separate Wilderness Supabase project and complete <code>cloud-config.js</code> using the private backend setup guide.</p></div>
+  <div id="cloudAuth" class="cloudGroup" hidden>
+    <label for="cloudEmail">Email</label><input id="cloudEmail" type="email" autocomplete="email" inputmode="email" placeholder="Your email" maxlength="254"/>
+    <label for="cloudPassword">Password</label><input id="cloudPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters" minlength="8"/>
+    <div class="cloudActions"><button id="cloudLogin" type="button">Sign in</button><button id="cloudSignup" type="button">Create account</button></div>
+    <p class="cloudHint">Email confirmation may be required before you can sign in. Passwords are handled by Supabase Auth, not stored in game saves.</p>
+  </div>
+  <div id="cloudSigned" class="cloudGroup" hidden>
+    <p>Signed in as <strong id="cloudUserEmail"></strong></p>
+    <p id="cloudDetails" class="cloudHint">Your local world is safe even when the cloud is unavailable.</p>
+    <div id="cloudChoices" class="cloudChoices" hidden>
+      <p id="cloudConflictText" class="cloudHint">Choose which world you want to keep. Your old local version is backed up before loading cloud data.</p>
+      <button id="cloudKeepLocal" type="button">⬆ Use this device's world</button>
+      <button id="cloudUseRemote" type="button">⬇ Use cloud world</button>
+    </div>
+    <div class="cloudActions"><button id="cloudSyncNow" type="button">↻ Sync now</button><button id="cloudSignout" type="button">Sign out</button></div>
+    <p class="cloudHint">A cloud save is not a substitute for an occasional Bag → Export world JSON backup.</p>
+  </div>
+</section>
+<div id="modal"><div class="intro"><div class="eyebrow">SECURE CLOUD SAVE · STAGE 2</div><h1>Wilderness · v0.17</h1><p>Your v0.16 settlement is preserved. This stage adds optional Wilderness cloud saving, secure sign-in, explicit conflict choices, and automatic online syncing. The previous sun/moon, camera zoom and premium nature artwork are unchanged. Hold the left joystick while tapping Jump, Attack or Gather on the right. Your survival, farming, combat, exploration, crafting and save systems stay intact.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain.<br><b>Survival:</b> Watch the food, water and energy bars. Tap edible items in Bag to eat or drink; walk to the little spring southwest of home and tap Drink to refill water. Build or use a bed to sleep until morning. Switch off needs in Bag → Game settings using Creative Comfort. No offline penalties.<br><b>Two thumbs:</b> Keep one thumb on the left joystick while tapping Jump, Gather, Attack or Dodge with the right. Hold Block with the right while moving with the left. Tap Jump near the right-hand action controls or press Space. Gravity, raised cabins and steps remain accessible.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using seeds you forage from wild patches marked S on the Map. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · Space jump · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately. Tap + or − to zoom the view; scroll the mouse wheel on desktop.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. Audio starts only after pressing Enter. For Cloud Save, open Bag → Account & Cloud Save. Sign in only after setting up a separate Wilderness Supabase project.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all eighteen JavaScript files are in the same GitHub repository folder.</p></div></div>
 <script>
-// v0.16 boot diagnostics do not touch browser storage or saves.
+// v0.17 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -256,20 +296,21 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
     box.style.display='flex';
     if(failure)reason.textContent='Startup error: '+failure;
     else reason.textContent='The game did not finish loading. Checking files…';
-    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js'];
+    const required=['game.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.16',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.17',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
       if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all JavaScript files plus assets/ to the repository root.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
-      if(!contents[0].includes("version:'0.16'")||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v016_singleplayer')||!contents[6].includes('CROPS')||!contents[7].includes('DAY_SECONDS')||!contents[8].includes('createSkyGradient')||!contents[9].includes('CAVE_ART_VERSION')||!contents[10].includes('advanceSurvival')||!contents[11].includes('stepVertical')||!contents[12].includes('SEED_PATCHES')||!contents[13].includes('createPremiumArt')||!contents[14].includes('DualInput')||!contents[15].includes('createSkyObjects')){
-        reason.textContent='Mixed or outdated files detected. Replace index.html and all sixteen JavaScript files together from the v0.16 ZIP.';return;
+      if(!contents[0].includes("version:'0.17'")||!contents[1].includes('Raised Deck')||!contents[2].includes('wilderness_v017_singleplayer')||!contents[6].includes('CROPS')||!contents[7].includes('DAY_SECONDS')||!contents[8].includes('createSkyGradient')||!contents[9].includes('CAVE_ART_VERSION')||!contents[10].includes('advanceSurvival')||!contents[11].includes('stepVertical')||!contents[12].includes('SEED_PATCHES')||!contents[13].includes('createPremiumArt')||!contents[14].includes('DualInput')||!contents[15].includes('createSkyObjects')||!contents[16].includes('mountCloudSave')||!contents[17].includes('CLOUD_URL')){
+        reason.textContent='Mixed or outdated files detected. Replace index.html and all eighteen JavaScript files together from the v0.17 ZIP.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.16"></script>
+<script type="module" src="./game.js?v=0.17"></script>
+<script type="module">import {mountCloudSave} from './cloud-save.js?v=0.17'; mountCloudSave();</script>
 </body>
 </html>

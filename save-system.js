@@ -1,4 +1,4 @@
-// Wilderness v0.16. Earlier Safari save keys are read-only during migration.
+// Wilderness v0.17. Earlier Safari save keys are read-only during migration.
 import {normalizeExploration} from './exploration-system.js';
 import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
@@ -19,8 +19,9 @@ export const V12_KEY='wilderness_v012_singleplayer';
 export const V13_KEY='wilderness_v013_singleplayer';
 export const V14_KEY='wilderness_v014_singleplayer';
 export const V15_KEY='wilderness_v015_singleplayer';
-export const SAVE_KEY='wilderness_v016_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v016_pre_import_recovery';
+export const V16_KEY='wilderness_v016_singleplayer';
+export const SAVE_KEY='wilderness_v017_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v017_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -93,7 +94,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -140,7 +141,7 @@ export function normalizeSave(input){
   const atmosphere=normalizeAtmosphere(s.version>=9?s.atmosphere:null);
   const survival=normalizeSurvival(s.version>=12?s.survival:null);
   const forage=normalizeForage(s.version>=13?s.forage:null);
-  return {version:15,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage};
+  return {version:16,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null})=>normalizeSave({version:15,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage)});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null})=>normalizeSave({version:16,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage)});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

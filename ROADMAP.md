@@ -66,3 +66,6 @@
 5. iPhone playtest is mandatory before marking a release accepted.
 6. A risky backend change is never mixed with a new art/model/physics system. Separate cloud migration/schema delivery from public game ZIP.
 7. Feature scope can shrink if the current module fails stability/performance tests.
+
+## v0.17 cloud-save implementation note
+Cloud UI, versioned local saves and safe sync conflict-handling are included in the PUBLIC build. The remote database is **not deployed automatically**. A NEW Wilderness Supabase project, SQL migration, account/email setup, and publishable client config are required before cloud saving works. Preserve the original v0.16 save and verify on two devices before depending on cloud backups.
