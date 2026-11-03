@@ -1,7 +1,7 @@
-// Wilderness v0.19.1 — automatic account sync with conservative genuine-conflict protection.
-// A signed-in account syncs automatically. Unreadable saves or independent offline edits are never silently replaced.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19.1';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19.1';
+// Wilderness v0.19.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
+// A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.19.2';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.19.2';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline';
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -29,14 +29,19 @@ export function progressFingerprint(value){
 export function cloudDecision(local,remote,baseline,userId,{freshDevice=false}={}){
   if(!remote){
     if(local==null)return 'invalid';
-    // Signing into a different account with an existing independent world is not
-    // permission to upload that world's data into the new account.
+    // A world last synced under another account must not be uploaded there automatically.
     if(baseline?.userId&&baseline.userId!==userId&&!freshDevice)return 'empty';
     return 'upload';
   }
-  if(local==null)return 'cloud-only';
+  if(local==null)return 'cloud-only'; // Possible corrupt local save: require review.
   const localHash=worldFingerprint(local),remoteHash=worldFingerprint(remote.save);
   if(localHash===remoteHash)return 'same';
+  // Key fix: two worlds can have the same actual progress even without a
+  // v0.19.1 baseline. The camera/player position, clock and need meters change
+  // all the time and must never trigger a world-choice screen.
+  if(progressFingerprint(local)===progressFingerprint(remote.save))return 'restore';
+  // Different accounts must not silently copy or overwrite each other's progress.
+  if(baseline?.userId&&baseline.userId!==userId)return 'conflict';
   if(baseline?.userId===userId){
     const localUnchanged=baseline.hash===localHash||
       (baseline.progressHash&&baseline.progressHash===progressFingerprint(local));
@@ -45,11 +50,17 @@ export function cloudDecision(local,remote,baseline,userId,{freshDevice=false}={
        (baseline.progressHash&&baseline.progressHash===progressFingerprint(remote.save)));
     if(localUnchanged&&!remoteUnchanged)return 'restore';
     if(remoteUnchanged&&!localUnchanged)return 'upload';
-    if(localUnchanged&&remoteUnchanged)return 'upload'; // harmless ambient drift only
+    if(localUnchanged&&remoteUnchanged)return 'restore';
+    // An old v0.19 baseline lacks progressHash. It cannot distinguish ordinary
+    // movement from independent offline edits. Restore the account world, keeping
+    // an undoable local recovery copy rather than falsely presenting a conflict.
+    if(!baseline.progressHash)return 'restore';
+    return 'conflict'; // Independently edited offline copies: do not lose either one.
   }
-  // A fresh browser has no independent progress: the account's world wins.
-  if(freshDevice&&!baseline?.userId)return 'restore';
-  return 'conflict';
+  // Signing into an established account from a browser without cloud metadata
+  // should load that account's world. The replaced local copy is preserved by
+  // __wildernessCloudReplace in the local recovery slot before reload.
+  return 'restore';
 }
 const message=e=>String(e?.message||e||'Unknown cloud error').slice(0,260);
 function safeMetaRead(){try{return JSON.parse(localStorage.getItem(CLOUD_META_KEY)||'null');}catch(e){return null;}}
@@ -127,12 +138,19 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
         return;
       }
       if(choice==='restore'){
-        mode='loading';render();status('☁ Loading your Wilderness world from your account…');
+        mode='loading';render();status('☁ Loading your account world; previous device world will be kept for recovery…');
+        let previousBaseline=null;
         try{
           if(typeof window.__wildernessCloudReplace!=='function')throw Error('Game restore is not ready');
-          window.__wildernessCloudReplace(validRemote.save);
+          previousBaseline=localStorage.getItem(CLOUD_META_KEY);
+          // Persist sync baseline BEFORE the game reloads the page.
           baselineWrite(validRemote.save,revision);
-        }catch(e){mode='offline';render();status('Automatic restore stopped safely: '+message(e));}
+          window.__wildernessCloudReplace(validRemote.save);
+        }catch(e){
+          try{if(previousBaseline===null)localStorage.removeItem(CLOUD_META_KEY);
+            else localStorage.setItem(CLOUD_META_KEY,previousBaseline);}catch(_){}
+          mode='offline';render();status('Automatic restore stopped safely: '+message(e));
+        }
         return;
       }
       // Genuine conflict or invalid local data: do not silently discard work.
@@ -235,7 +253,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.19.1'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.19.2'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

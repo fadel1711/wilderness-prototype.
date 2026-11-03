@@ -1,23 +1,23 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.19';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.19';
+import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.19.2';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.19.2';
 
-import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.19';
+import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.19.2';
 
-import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.19';
-import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.19';
-import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.19';
-import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.19';
-import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.19';
-import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.19';
-import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.19';
-import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.19';
-import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.19';
-import {createPremiumArt} from './premium-assets.js?v=0.19';
-import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.19';
-import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.19';
-import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.19';
-import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.19';
+import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.19.2';
+import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.19.2';
+import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.19.2';
+import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.19.2';
+import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.19.2';
+import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.19.2';
+import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.19.2';
+import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.19.2';
+import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.19.2';
+import {createPremiumArt} from './premium-assets.js?v=0.19.2';
+import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.19.2';
+import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.19.2';
+import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.19.2';
+import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.19.2';
 
 // Wilderness v0.7 — survival combat with v0.7 crafting, equipment, storage, and interiors; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
@@ -1773,7 +1773,7 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.19.1',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.19.2',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 // Cloud save never deletes or changes the old v0.16 key. Loading a remote world
 // first retains a local recovery snapshot, then reloads with autosave suppressed.
 window.__wildernessCloudSnapshot=()=>saveReadFailed?null:saveData();

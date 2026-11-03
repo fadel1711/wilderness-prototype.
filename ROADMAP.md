@@ -1,4 +1,8 @@
-# Wilderness v0.19.1 Cloud Save Usability Hotfix
+# Wilderness v0.19.2 — Cloud account-first usability hotfix
+
+No changes to planned v0.20–v0.25 features. This frontend-only hotfix does not change database schema.
+
+# Wilderness v0.19.2 Cloud Save Usability Hotfix
 
 No changes to planned v0.20–v0.25 milestones or gameplay scope.
 

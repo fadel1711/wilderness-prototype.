@@ -1,32 +1,44 @@
-# Wilderness v0.19.1 — Automatic Cloud Save Hotfix
+# Wilderness v0.19.2 — Cloud Save actually follows your account
 
-This is a **complete GitHub Pages ZIP**, not an individual patch. It contains all twenty JS files, index.html, six 3D assets, README and ROADMAP. This release fixes cloud-save usability and changes no gameplay/world schema.
+**Complete GitHub Pages replacement package. No Supabase migration.**
 
-## Fixes
+This release corrects the v0.19.1 cloud-login decision logic. It contains the whole playable game, twenty JavaScript files, index.html, and six original 3D assets inside `assets/`.
 
-- First sign-in to an account with no cloud world **automatically uploads** the existing device world.
-- A brand-new browser with no independent old save **automatically restores** the world for the signed-in account. A recovery copy is made before the restore/reload.
-- A returning device whose cloud copy changed but whose local world did not **automatically restores** the newer account world.
-- A returning device whose local save changed but whose cloud revision did not **automatically uploads** its progress.
-- Changes sync regularly while online; local saving works when offline. Sync retries on reconnection. Some very recent actions may remain only local until connectivity returns / next launch.
-- Ambient time, hunger drain, movement, and campfire fuel burn-down are ignored when deciding whether two worlds truly conflict (they are still saved normally). The choice prompt remains **only** where an independent, nontrivial local world conflicts with the cloud, an account switch could leak another account's progress, or local data is unreadable. No silent overwrites.
+## What is fixed
 
-## Installation on iPhone (same GitHub Pages URL)
+1. When local and cloud saves have the same meaningful progress but differ in time of day, position, hunger/thirst, etc., **load the account world automatically**. The comparison now works even if the newer sync-baseline metadata is missing.
+2. On an established Wilderness account with a cloud world, a device missing account-baseline metadata now loads the **cloud world automatically**. The old local world is stored in `wilderness_v019_pre_cloud_restore` for **Bag → Undo last cloud restore** before reload.
+3. On first sign-in with no cloud world, the current local world uploads automatically.
+4. Cloud uploads continue automatically during play and locally while offline. Only known simultaneous offline edits on two devices, a prior different-account world, or corrupt data can pause for a manual decision.
+5. A sync baseline is written *before* the automatic cloud-restore reload, avoiding repeated first-login decisions after Safari reloads.
 
-1. In Wilderness v0.19, go to **Bag → Export world** and keep the JSON file in Files. If using Cloud Save, ensure the latest world is backed up first.
-2. Extract `wilderness-prototype-v0.19.1.zip` in iPhone Files. The folder contains the complete game plus `assets/` (six GLB/WebP files).
-3. In your existing GitHub Wilderness repository, replace **all** existing game files in the repository root with the versions from this ZIP, and preserve/upload the exact `assets/` subfolder.
-4. Commit on the branch GitHub Pages publishes (commonly `main`). Confirm the deployment succeeded.
-5. Open the game at the same URL. The header should show **v0.19.1**. Open **Bag → Account & Cloud Save** and sign in once if needed. Your world should thereafter sync without routine device/cloud choices.
+## iPhone GitHub installation
 
-## Supabase / database
+1. **Before updating**, open v0.19.1 and choose **Bag → Export world**. Keep that JSON file in the Files app.
+2. Unzip `wilderness-prototype-v0.19.2.zip` in Files.
+3. In your Wilderness GitHub Pages repo, replace the existing root `index.html` and **all twenty `.js` files** with the complete files in this ZIP. Keep/replace the six original assets inside the `assets/` folder.
+4. Commit changes to the branch used by GitHub Pages, normally `main`. Confirm the deployment succeeded.
+5. Visit the same Wilderness game URL. It must clearly show **Single-player · v0.19.2** at the top, or the old version is still being served; close and reopen the Safari tab, or add `?check=0192` to the game URL.
+6. Use **Bag → Account & Cloud Save** to sign in if needed. The existing account world should load without a device/cloud choice. On successful sync you should see `Automatic sync on` and the cloud revision.
 
-**No SQL update is required.** This is solely a frontend sync-policy change and uses the existing v0.19 backend function and row-level security. Do not rerun prior migration or rollback SQL. The configured `cloud-config.js` contains only the previously supplied project URL and *publishable* key. Never put a service-role/secret key on GitHub.
+No Cloud Save setting needs to be reset. No new SQL, database update, rollback, or new account is required. **Do not clear Safari website data.**
 
-## Recovery / safety
+## Protection and rollback
 
-- This hotfix deliberately keeps the **same `wilderness_v019_singleplayer` Safari storage key** as v0.19. Your existing world is not migrated into a new slot.
-- Always export a JSON backup before uploading. To undo the website code, restore the complete v0.19 ZIP. Your existing local save should remain compatible.
-- Automatic cloud restore keeps a local copy at `wilderness_v019_pre_cloud_restore`; Bag → Undo last cloud restore can recover it. The recovery slot stores a single prior copy, so keep exported JSON backups when switching accounts/devices.
-- If **both devices were edited offline** or a different account's local world was present, the game deliberately stops and asks which to keep. This is the only responsible way to avoid data loss.
-- Actual sign-in and Safari cross-device performance need testing. Automated checks are not a substitute for a real two-device sync test.
+- Uses the SAME browser save slot `wilderness_v019_singleplayer` as v0.19 and v0.19.1.
+- When a remote world is restored, the previous local world is written into the recovery slot `wilderness_v019_pre_cloud_restore`. In Bag, **Undo last cloud restore** lets you recover it. Keep a manual JSON backup as an independent second copy.
+- A true fork (both your device and cloud changed independently from a known saved baseline) still asks you to choose; automatic deletion would be unsafe.
+- If you're signed in to a different Wilderness account than before, the game won't silently upload or overwrite the other account's world.
+- To revert frontend files, re-upload the complete v0.19.1 ZIP. Older world copies are preserved; if restoring from JSON, do it intentionally.
+
+## Acceptance checks
+
+- Header says v0.19.2, not v0.19.1.
+- Account login on a normal device auto-loads existing cloud world; no needless choice if only walking/clock/needs differ.
+- Back up local progress, then verify cross-device load, synced inventory, campfires and clothing.
+- Save offline, reconnect, wait for sync; confirm no data disappears.
+- A genuine two-device conflict still safely asks; do not ignore or randomly choose between two different settlements.
+
+### Tests
+
+Automated decision and simulated UI flow tests are included in release validation, but actual iPhone Safari rendering and your live Supabase environment still require testing.
