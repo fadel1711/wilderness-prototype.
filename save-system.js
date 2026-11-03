@@ -1,4 +1,4 @@
-// Wilderness v0.20. Earlier Safari save keys are read-only during migration.
+// Wilderness v0.21. Earlier Safari save keys are read-only during migration.
 import {normalizeExploration} from './exploration-system.js';
 import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
@@ -26,8 +26,9 @@ export const V16_KEY='wilderness_v016_singleplayer';
 export const V17_KEY='wilderness_v017_singleplayer';
 export const V18_KEY='wilderness_v018_singleplayer';
 export const V19_KEY='wilderness_v019_singleplayer';
-export const SAVE_KEY='wilderness_v020_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v020_pre_import_recovery';
+export const V20_KEY='wilderness_v020_singleplayer';
+export const SAVE_KEY='wilderness_v021_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v021_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -44,7 +45,7 @@ export const MIN_SLOTS=24,MAX_SLOTS=160;
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const numberIn=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const integerIn=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
-const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire'];
+const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire','loft_floor','loft_wall','loft_door','loft_window','loft_roof','loft_stairs'];
 const oldTypes=types.slice(0,11);
 const earlier=['cabin','floor','wall','foundation','door','window','roof','stairs'];
 export function startingInventory(){const a=Array(MIN_SLOTS).fill(null);a[0]={id:'axe',qty:1};a[1]={id:'pickaxe',qty:1};return a;}
@@ -78,13 +79,17 @@ function fields(s,version){
   }
   if(!Array.isArray(s.builds)||s.builds.length>500)throw Error('Invalid building list.');
   const builds=s.builds.map((b,i)=>{
-    if(!b||!types.includes(b.type)||(version<17&&b.type==='campfire')||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.z,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
+    if(!b||!types.includes(b.type)||(version<20&&b.type.startsWith('loft_'))||(version<17&&b.type==='campfire')||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.z,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
     const id=version>=5?b.id:'b'+(i+1);
     if(!/^b[1-9][0-9]{0,5}$/.test(id))throw Error('Invalid building ID.');
-    return {id,type:b.type,x:b.x,z:b.z,rot:b.rot};
+    const level=b.level??0;
+    if(![0,1].includes(level)||level===1&&(version<20||!['workbench','chest','table','chair','bed','shelf'].includes(b.type)))throw Error('Invalid upper furnishing level.');
+    return {id,type:b.type,x:b.x,z:b.z,rot:b.rot,...(level===1?{level:1}:{})};
   });
   if(new Set(builds.map(b=>b.id)).size!==builds.length)throw Error('Duplicate building ID.');
-  return {px:s.px,pz:s.pz,resources,builds};
+  const py=s.version>=20?(s.py??0):0;
+  if(!numberIn(py,0,7))throw Error('Invalid player height.');
+  return {px:s.px,pz:s.pz,py,resources,builds};
 }
 function blueprintsFrom(s){
   const plans=s.plans??[];
@@ -93,14 +98,15 @@ function blueprintsFrom(s){
     if(!plan||typeof plan.name!=='string'||plan.name.length>40||!/^[\w\s-]{1,40}$/.test(plan.name)||!Array.isArray(plan.parts)||!plan.parts.length||plan.parts.length>30)throw Error('Invalid custom blueprint.');
     const parts=plan.parts.map(p=>{
       if(!p||!types.includes(p.type)||!numberIn(p.dx,-12,12)||!numberIn(p.dz,-12,12)||!numberIn(p.rot,-1000,1000))throw Error('Invalid blueprint part.');
-      return {type:p.type,dx:p.dx,dz:p.dz,rot:p.rot};
+      if(p.level!==undefined&&(s.version<20||p.level!==1||!['workbench','chest','table','chair','bed','shelf'].includes(p.type)))throw Error('Invalid upstairs blueprint furniture.');
+      return {type:p.type,dx:p.dx,dz:p.dz,rot:p.rot,...(p.level===1?{level:1}:{})};
     });
     return {name:plan.name,parts};
   });
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -150,7 +156,7 @@ export function normalizeSave(input){
   const campfires=normalizeCampfires(s.version>=17?s.campfires:null,world.builds);
   const wardrobe=normalizeWardrobe(s.version>=18?s.wardrobe:null);
   const deepCave=normalizeDeepCave(s.version>=19?s.deepCave:null);
-  return {version:19,inventory:inv,equipped,...world,wardrobe,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage,campfires,deepCave};
+  return {version:20,inventory:inv,equipped,...world,wardrobe,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage,campfires,deepCave};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null,campfires=null,wardrobe=null,deepCave=null})=>normalizeSave({version:19,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage),campfires:normalizeCampfires(campfires,builds),wardrobe:normalizeWardrobe(wardrobe),deepCave:normalizeDeepCave(deepCave)});
+export const makeSave=({inventory,equipped,px,pz,py=0,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null,campfires=null,wardrobe=null,deepCave=null})=>normalizeSave({version:20,inventory,equipped,px,pz,py,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage),campfires:normalizeCampfires(campfires,builds),wardrobe:normalizeWardrobe(wardrobe),deepCave:normalizeDeepCave(deepCave)});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

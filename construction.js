@@ -1,15 +1,17 @@
-// Wilderness v0.5 — pure, renderer-independent construction, support and blueprint rules.
+// Wilderness v0.21 — new two-storey modular pieces; old v0.5 ground-level builds are preserved.
+import {UPPER_TYPES,LOFT_FURNISH_TYPES,isUpper,upperPlacementVerdict} from './second-story-system.js?v=0.21';
 // Existing v0.4 positions and types remain unchanged; elevated placements are derived.
-export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire']);
+export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire',...UPPER_TYPES]);
 export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf','campfire']);
-export const WALL_TYPES=Object.freeze(['wall','door','window','fence']);
+export const WALL_TYPES=Object.freeze(['wall','door','window','fence','loft_wall','loft_door','loft_window']);
 export const COSTS=Object.freeze({
   cabin:{wood:12,stone:5},floor:{wood:2,stone:0},wall:{wood:3,stone:0},
   foundation:{wood:2,stone:2},door:{wood:3,stone:0},window:{wood:3,stone:1},
   roof:{wood:4,stone:0},stairs:{wood:3,stone:0},path:{wood:0,stone:1},
   fence:{wood:2,stone:0},planter:{wood:2,stone:1},
   workbench:{wood:6,stone:2},chest:{wood:5,stone:0},furnace:{wood:3,stone:12},
-  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0},campfire:{wood:4,stone:5}
+  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0},campfire:{wood:4,stone:5},
+  loft_floor:{wood:5,stone:2},loft_wall:{wood:4,stone:1},loft_door:{wood:4,stone:1},loft_window:{wood:4,stone:2},loft_roof:{wood:5,stone:1},loft_stairs:{wood:12,stone:5}
 });
 const PI=Math.PI;
 const near=(a,b,r)=>Math.hypot(a.x-b.x,a.z-b.z)<r;
@@ -38,6 +40,7 @@ export const raisedCabin=(candidate,builds)=>cabinFoundationCount(candidate,buil
 export function supportHeight(candidate,builds){
   if(candidate.type==='cabin')return raisedCabin(candidate,builds)?.55:0;
   if(FURNISH_TYPES.includes(candidate.type)){
+    if(candidate.level===1)return 3.32;
     const cab=builds.find(b=>b.type==='cabin'&&Math.abs(localXZ(candidate.x,candidate.z,b).x)<2.1&&Math.abs(localXZ(candidate.x,candidate.z,b).z)<2.1);
     if(cab)return (raisedCabin(cab,builds)?.55:0)+.28;
     const floor=builds.find(b=>b.type==='floor'&&near(b,candidate,1.08));
@@ -60,6 +63,15 @@ function floorUnder(wall,b){
 export function placementVerdict(candidate,builds,resources,player,world=46){
   const {type,x,z,rot}=candidate;
   if(!BUILD_TYPES.includes(type)||![x,z,rot].every(Number.isFinite))return 'Invalid building';
+  if(isUpper(type))return upperPlacementVerdict(candidate,builds,resources,player,world);
+  if(FURNISH_TYPES.includes(type)&&candidate.level===1){
+    if(!LOFT_FURNISH_TYPES.includes(type))return 'This item must stay on the ground floor';
+    if(Math.abs(x)>world-2||Math.abs(z)>world-2)return 'Outside the map';
+    if(!builds.some(b=>b.type==='loft_floor'&&near(b,candidate,1.05)))return 'Upper furnishings need an upper floor underneath';
+    if(builds.some(b=>FURNISH_TYPES.includes(b.type)&&b.level===1&&near(b,candidate,1.10)))return 'Another upstairs furnishing occupies this spot';
+    if(builds.some(b=>['loft_wall','loft_window','loft_door'].includes(b.type)&&near(b,candidate,.68)))return 'Too close to an upstairs wall';
+    return '';
+  }
   const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:type==='campfire'?1.12:FURNISH_TYPES.includes(type)?.70:1.30;
   if(Math.abs(x)>world-radius-.4||Math.abs(z)>world-radius-.4)return 'Outside the map';
   if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:type==='campfire'?1.32:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
@@ -81,8 +93,8 @@ export function placementVerdict(candidate,builds,resources,player,world=46){
       if(b.type==='foundation'&&Math.abs(x-b.x)<3.01&&Math.abs(z-b.z)<3.01)continue;
       if(near(candidate,b,4.0))return 'Remove nearby pieces before placing cabin';
     }
-    if(FURNISH_TYPES.includes(type)&&FURNISH_TYPES.includes(b.type)&&near(candidate,b,1.10))return 'Another furnishing occupies this spot';
-    if(FURNISH_TYPES.includes(type)&&wallType(b.type)&&near(candidate,b,.7))return 'Too close to a wall';
+    if(FURNISH_TYPES.includes(type)&&FURNISH_TYPES.includes(b.type)&&(!b.level||b.level===0)&&near(candidate,b,1.10))return 'Another furnishing occupies this spot';
+    if(FURNISH_TYPES.includes(type)&&!isUpper(b.type)&&wallType(b.type)&&near(candidate,b,.7))return 'Too close to a wall';
     if(wallType(type)&&wallType(b.type)&&near(candidate,b,.35))return 'Edge already occupied';
     if(type===b.type&&['floor','foundation','path','planter','campfire'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
     if(type==='floor'&&b.type==='cabin'&&near(candidate,b,3))return 'Cabin already has a floor';
@@ -112,11 +124,11 @@ export const sumCosts=pieces=>pieces.reduce((out,p)=>{
 export const shiftPart=(part,x,z,rot)=>{
   const c=Math.cos(rot),s=Math.sin(rot);
   return {type:part.type,x:Math.round((x+c*part.dx+s*part.dz)*2)/2,
-    z:Math.round((z-s*part.dx+c*part.dz)*2)/2,rot:normalizedRotation(rot+part.rot)};
+    z:Math.round((z-s*part.dx+c*part.dz)*2)/2,rot:normalizedRotation(rot+part.rot),...(part.level===1?{level:1}:{})};
 };
 export function resolveBlueprint(plan,x,z,rot){return plan.parts.map(p=>shiftPart(p,x,z,rot));}
 export const sortParts=parts=>[...parts].sort((a,b)=>{
-  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,campfire:6,roof:7};
+  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,campfire:6,loft_floor:7,loft_stairs:8,loft_wall:9,loft_door:9,loft_window:9,loft_roof:10,roof:11};
   return order[a.type]-order[b.type];
 });
 export function blueprintVerdict(parts,builds,resources,player,world=46){
@@ -142,5 +154,15 @@ export const STOCK_BLUEPRINTS=Object.freeze([
     {type:'floor',dx:2,dz:0,rot:0},
     {type:'wall',dx:0,dz:-1,rot:0},
     {type:'wall',dx:-1,dz:0,rot:Math.PI/2},
-    {type:'roof',dx:0,dz:0,rot:0}]}
+    {type:'roof',dx:0,dz:0,rot:0}]},
+  {name:'Two-Storey Starter',parts:[
+    {type:'floor',dx:0,dz:0,rot:0},
+    {type:'wall',dx:0,dz:-1,rot:0},
+    {type:'wall',dx:1,dz:0,rot:Math.PI/2},
+    {type:'loft_floor',dx:0,dz:0,rot:0},
+    {type:'loft_stairs',dx:0,dz:4,rot:0},
+    {type:'loft_wall',dx:0,dz:-1,rot:0},
+    {type:'loft_wall',dx:1,dz:0,rot:Math.PI/2},
+    {type:'loft_roof',dx:0,dz:0,rot:0}
+  ]}
 ]);
