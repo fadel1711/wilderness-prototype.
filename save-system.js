@@ -4,6 +4,7 @@ import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
 import {normalizeSurvival} from './survival-system.js';
 import {normalizeForage} from './seed-system.js';
+import {normalizeCampfires} from './campfire-system.js';
 // The v0.5 key stores extended decorations and up to six custom building blueprints.
 export const LEGACY_KEY='wilderness_v01_singleplayer';
 export const V03_KEY='wilderness_v03_singleplayer';
@@ -20,8 +21,9 @@ export const V13_KEY='wilderness_v013_singleplayer';
 export const V14_KEY='wilderness_v014_singleplayer';
 export const V15_KEY='wilderness_v015_singleplayer';
 export const V16_KEY='wilderness_v016_singleplayer';
-export const SAVE_KEY='wilderness_v017_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v017_pre_import_recovery';
+export const V17_KEY='wilderness_v017_singleplayer';
+export const SAVE_KEY='wilderness_v018_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v018_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
@@ -38,7 +40,7 @@ export const MIN_SLOTS=24,MAX_SLOTS=160;
 const has=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const numberIn=(n,min,max)=>typeof n==='number'&&Number.isFinite(n)&&n>=min&&n<=max;
 const integerIn=(n,min,max)=>Number.isSafeInteger(n)&&n>=min&&n<=max;
-const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf'];
+const types=['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire'];
 const oldTypes=types.slice(0,11);
 const earlier=['cabin','floor','wall','foundation','door','window','roof','stairs'];
 export function startingInventory(){const a=Array(MIN_SLOTS).fill(null);a[0]={id:'axe',qty:1};a[1]={id:'pickaxe',qty:1};return a;}
@@ -72,7 +74,7 @@ function fields(s,version){
   }
   if(!Array.isArray(s.builds)||s.builds.length>500)throw Error('Invalid building list.');
   const builds=s.builds.map((b,i)=>{
-    if(!b||!types.includes(b.type)||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,-46,46)||!numberIn(b.z,-46,46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
+    if(!b||!types.includes(b.type)||(version<17&&b.type==='campfire')||(version<5&&!oldTypes.includes(b.type))||(version===1&&!['cabin','floor','wall'].includes(b.type))||(version===2&&!['cabin','floor','wall'].includes(b.type))||(version===3&&!earlier.includes(b.type))||!numberIn(b.x,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.z,version>=17?-86:-46,version>=17?86:46)||!numberIn(b.rot,-1000,1000))throw Error('Damaged or unsupported building.');
     const id=version>=5?b.id:'b'+(i+1);
     if(!/^b[1-9][0-9]{0,5}$/.test(id))throw Error('Invalid building ID.');
     return {id,type:b.type,x:b.x,z:b.z,rot:b.rot};
@@ -94,7 +96,7 @@ function blueprintsFrom(s){
 }
 export function normalizeSave(input){
   const s=input?.format===BACKUP_FORMAT?input.save:input;
-  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16].includes(s.version))throw Error('Not a supported Wilderness save.');
+  if(!s||![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].includes(s.version))throw Error('Not a supported Wilderness save.');
   const world=fields(s,s.version);let inv,equipped='axe';
   if(s.version===1){
     if(!integerIn(s.wood,0,1000000)||!integerIn(s.stone,0,1000000))throw Error('Invalid legacy resources.');
@@ -141,7 +143,8 @@ export function normalizeSave(input){
   const atmosphere=normalizeAtmosphere(s.version>=9?s.atmosphere:null);
   const survival=normalizeSurvival(s.version>=12?s.survival:null);
   const forage=normalizeForage(s.version>=13?s.forage:null);
-  return {version:16,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage};
+  const campfires=normalizeCampfires(s.version>=17?s.campfires:null,world.builds);
+  return {version:17,inventory:inv,equipped,...world,plans:s.version>=4?blueprintsFrom(s):[],storage,combat,exploration,farm,atmosphere,survival,forage,campfires};
 }
-export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null})=>normalizeSave({version:16,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage)});
+export const makeSave=({inventory,equipped,px,pz,resources,builds,plans=[],storage={},combat={hp:100,stamina:100,wolves:{}},exploration={discovered:[],claimed:[],waypoint:null},farm={plots:{},comfortUntil:0},atmosphere={elapsed:270},survival=null,forage=null,campfires=null})=>normalizeSave({version:17,inventory,equipped,px,pz,resources,builds,plans,storage,combat,exploration,farm,atmosphere,survival:normalizeSurvival(survival),forage:normalizeForage(forage),campfires:normalizeCampfires(campfires,builds)});
 export const exportWrapper=save=>({format:BACKUP_FORMAT,game:'Wilderness',exportedAt:new Date().toISOString(),save:makeSave(save)});

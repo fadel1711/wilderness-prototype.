@@ -1,7 +1,7 @@
 // Wilderness v0.5 — pure, renderer-independent construction, support and blueprint rules.
 // Existing v0.4 positions and types remain unchanged; elevated placements are derived.
-export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf']);
-export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf']);
+export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire']);
+export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf','campfire']);
 export const WALL_TYPES=Object.freeze(['wall','door','window','fence']);
 export const COSTS=Object.freeze({
   cabin:{wood:12,stone:5},floor:{wood:2,stone:0},wall:{wood:3,stone:0},
@@ -9,7 +9,7 @@ export const COSTS=Object.freeze({
   roof:{wood:4,stone:0},stairs:{wood:3,stone:0},path:{wood:0,stone:1},
   fence:{wood:2,stone:0},planter:{wood:2,stone:1},
   workbench:{wood:6,stone:2},chest:{wood:5,stone:0},furnace:{wood:3,stone:12},
-  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0}
+  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0},campfire:{wood:4,stone:5}
 });
 const PI=Math.PI;
 const near=(a,b,r)=>Math.hypot(a.x-b.x,a.z-b.z)<r;
@@ -60,9 +60,9 @@ function floorUnder(wall,b){
 export function placementVerdict(candidate,builds,resources,player,world=46){
   const {type,x,z,rot}=candidate;
   if(!BUILD_TYPES.includes(type)||![x,z,rot].every(Number.isFinite))return 'Invalid building';
-  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:FURNISH_TYPES.includes(type)?.70:1.30;
+  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:type==='campfire'?1.12:FURNISH_TYPES.includes(type)?.70:1.30;
   if(Math.abs(x)>world-radius-.4||Math.abs(z)>world-radius-.4)return 'Outside the map';
-  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
+  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:type==='campfire'?1.32:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
   for(const r of resources){if(r.hits>0&&near(r,candidate,radius+r.radius+.28))return 'Resource in the way';}
   const footprintCount=type==='cabin'?cabinFoundationCount(candidate,builds):0;
   // Cabins are either completely on the ground or completely supported by a 3x3 pad.
@@ -84,7 +84,7 @@ export function placementVerdict(candidate,builds,resources,player,world=46){
     if(FURNISH_TYPES.includes(type)&&FURNISH_TYPES.includes(b.type)&&near(candidate,b,1.10))return 'Another furnishing occupies this spot';
     if(FURNISH_TYPES.includes(type)&&wallType(b.type)&&near(candidate,b,.7))return 'Too close to a wall';
     if(wallType(type)&&wallType(b.type)&&near(candidate,b,.35))return 'Edge already occupied';
-    if(type===b.type&&['floor','foundation','path','planter'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
+    if(type===b.type&&['floor','foundation','path','planter','campfire'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
     if(type==='floor'&&b.type==='cabin'&&near(candidate,b,3))return 'Cabin already has a floor';
     if(type==='roof'&&b.type==='roof'&&near(candidate,b,.35))return 'Roof already occupied';
     if(type==='stairs'&&b.type==='stairs'&&near(candidate,b,.35))return 'Stairs already occupied';
@@ -116,7 +116,7 @@ export const shiftPart=(part,x,z,rot)=>{
 };
 export function resolveBlueprint(plan,x,z,rot){return plan.parts.map(p=>shiftPart(p,x,z,rot));}
 export const sortParts=parts=>[...parts].sort((a,b)=>{
-  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,roof:7};
+  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,campfire:6,roof:7};
   return order[a.type]-order[b.type];
 });
 export function blueprintVerdict(parts,builds,resources,player,world=46){

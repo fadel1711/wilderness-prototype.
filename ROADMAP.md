@@ -14,10 +14,11 @@
 - Provide a separate backend SQL/migration ZIP and verification instructions only when this stage is ready. User must connect/approve creating a backend, auth policies and project configuration. No credentials in GitHub ZIP.
 - Acceptance: new account, sign-in/out, offline play, download on second browser, conflicts, sign-out privacy, restore, and rollback all pass.
 
-## v0.18 — Campfires and smoke
-- Placeable campfire that uses existing build tool. Fuel and light can be optional. Fire toggled through interaction.
-- Wind-drifting GPU-lightweight smoke particles; smoke is **visual particle simulation**, not fluid-dynamics physics. Low Effects disables or reduces smoke.
-- Acceptance: build/cook beside fire, smoke disappears indoors/when off, no excessive battery or frame-rate cost, save/restore.
+## v0.18 — Campfires and smoke (implemented candidate)
+- Build campfires (4 wood, 5 stone), add 1 wood for 180 seconds of burning, extinguish/relight via Use interaction. No offline fuel depletion.
+- Warm flickering light (2 non-shadow point lights maximum), embers, lightweight rising smoke with animated wind drift. This is a **particle approximation**, not volumetric fluid dynamics; Low Effects reduces particle count and light intensity.
+- Campfire state stored in save schema 17, with a new Safari key and small private Supabase RPC compatibility migration. Live backend is NOT changed automatically.
+- Acceptance: place/refuel/toggle/dismantle, smoke disappears when off, preserve all older structures, reasonable iPhone FPS, Safari and cloud save/restore. Campfire cooking intentionally not in this release.
 
 ## v0.19 — Outfits and wardrobe
 - Change clothing appearance from an inventory wardrobe or bed. Start with a small consistent set of outfits (3).
@@ -67,5 +68,5 @@
 6. A risky backend change is never mixed with a new art/model/physics system. Separate cloud migration/schema delivery from public game ZIP.
 7. Feature scope can shrink if the current module fails stability/performance tests.
 
-## v0.17 cloud-save implementation note
-Cloud UI, versioned local saves and safe sync conflict-handling are included in the PUBLIC build. The remote database is **not deployed automatically**. A NEW Wilderness Supabase project, SQL migration, account/email setup, and publishable client config are required before cloud saving works. Preserve the original v0.16 save and verify on two devices before depending on cloud backups.
+## v0.18 cloud/save implementation note
+The existing v0.17 cloud client remains in the PUBLIC build with the previously configured Wilderness **publishable key**. The separate PRIVATE v0.18 ZIP upgrades the existing Wilderness RPC from version 16-only to accept versions 16 and 17. The remote database is **not modified automatically**. v0.17 Safari saves remain read-only migration sources. Safeguard local JSON exports and verify real cloud sync on your own device before depending on it.

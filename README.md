@@ -1,70 +1,64 @@
-# Wilderness v0.17 — Optional, Conflict-Safe Cloud Save
+# Wilderness v0.18 — Campfires, Firelight & Animated Smoke
 
-**Stage 2 of the expansion roadmap.** This update preserves all v0.16 gameplay (sun/moon, zoom, multitouch, combat, survival needs, seed gathering, crafting, cabins, cave and premium GLB art) and introduces optional account-based cloud backups. It does **not** add zombies, villages, clothing, campfires, or a larger map; those remain later independent milestones.
+**Standalone GitHub Pages game for iPhone and desktop.** Includes all previous Wilderness v0.17 features (existing premium nature models, zoom, sun/moon, multitouch, survival, farming, seeds, crafting, cave, combat, building, optional cloud saving), PLUS placeable campfires with a controllable fire, warm flickering lights and light wind-drifting smoke.
 
-## IMPORTANT: Two separate downloadable ZIPs
+## Two ZIPs: keep PUBLIC and PRIVATE apart
 
-1. **PUBLIC game ZIP** (this archive): all the ready-to-upload HTML, JavaScript, README, ROADMAP and existing binary art files. It includes `cloud-config.js` with EMPTY project values and `cloud-save.js` with the account/sync UI.
-2. **PRIVATE backend ZIP** (separately provided): a new Supabase Wilderness-only table migration, read-only verification SQL, detailed secure setup/rollback instructions. **Never upload this private ZIP to public GitHub Pages.**
+1. **PUBLIC — `wilderness-prototype-v0.18.zip`**: upload the extracted game files into your **existing** Wilderness GitHub Pages repository. Includes `index.html`, **19 complete JavaScript files**, six bundled art assets in `assets/`, `README.md`, and `ROADMAP.md` (28 files total). Your already-configured `cloud-config.js` is included, with **only** the Wilderness project URL and the publishable (public) key. No SQL, passwords or service-role keys.
+2. **PRIVATE — `wilderness-v018-private-backend.zip`**: contains the **single optional cloud format upgrade**, read-only verification, rollback SQL and security instructions. **Never upload its SQL to your GitHub Pages repository.** Cloud Save had to be expanded to accept save schema v17; the old v0.17 function accepts only schema v16. The private migration does **not** create a new project and does not rewrite saved cloud worlds.
 
-**No remote database changes were made automatically.** Until you create a new Supabase project, run the migration, and enter the project URL + publishable key in `cloud-config.js`, Wilderness v0.17 works **locally** exactly as before; Cloud Save displays the setup message instead of sending data to an unconfigured backend.
+## NEW — v0.18 campfires
 
-## What's new
+- Open **Build → Campfire**. Placement costs **4 wood + 5 stone**; use the existing nudge, rotate and Place controls. Campfires also work in custom building blueprints.
+- Walk to within ~2.75 m of a built fire and tap **Use** (the action button) to open its panel.
+- Tap **Add 1 wood and light (+3 minutes)**. Each log adds 180 seconds of **active gameplay** burn time, up to 15 minutes total. The game limits construction to 24 campfires to protect mobile performance. The fire can be extinguished and relit without consuming remaining fuel. The fire turns off when fuel reaches zero. Fuel does not burn offline.
+- Animated flames / glowing coals and **up to two flickering warm point lights** illuminate nearby ground, especially at night.
+- Wind-drifting, rising smoke uses a **bounded billboard particle simulation**, NOT costly fluid-dynamics simulation. Standard Effects uses at most 72 shared smoke particles near the camera, Low Effects at most 9. Offscreen fires are excluded, and extinguished fires have no smoke or light.
+- Dismantle via the existing **Build → Dismantle nearest** action (confirmation and material refund). Campfire state is removed with the building.
+- Fire state, amount of fuel and placement all persist in JSON, Safari saves and supported cloud saves.
+- **Not in this release:** cooking directly at a campfire, spreading forest fires, actual fluid/smoke physics, or any of the other v0.19–0.25 features. The existing furnace recipes remain unchanged.
 
-- Bag → **☁ Account & Cloud Save**: email/password signup, sign-in and sign-out via Supabase Auth.
-- Automatic cloud copying of local saves while **signed in, online and after choosing the correct initial world**. Change batching approximately every 35 seconds, plus **Sync now** for manual backup. Network failures don't delete local data.
-- First login on a new device: choose explicitly whether to use the cloud world or this device's local world. Divergent progress never silently overwrites another device.
-- Atomic server revision checks reject stale uploads rather than allowing a silent last-writer-wins race. The UI pauses and asks after a conflict.
-- Before loading the cloud world, the browser stores the current local world at `wilderness_v017_pre_cloud_restore`; **Bag → Undo last cloud restore** restores it and pauses cloud syncing until you choose a world again. Manual Bag → Export world JSON remains strongly recommended.
-- Separate `wilderness_v017_singleplayer` browser save slot. v0.16 `wilderness_v016_singleplayer` is **read-only migration input**, never overwritten by upgrade.
-- Credentials are not saved in world data, and `cloud-config.js` contains only public-safe project settings. Cloud JSON is **not end-to-end encrypted** and may be accessible to the administrator of your dedicated project.
+## REQUIRED setup order (iPhone)
 
-## Upload from your iPhone — first time
+**Before changing anything:** In v0.17 use **Bag → Export world** to save a `.json` backup to Files. Save your working v0.17 ZIP. **Do not clear Safari website data.** The old `wilderness_v017_singleplayer` Safari save stays untouched in v0.18.
 
-1. In the live **v0.16** game: **Bag → Export world**, then save the `.json` backup to your iPhone Files app. Don't clear website data.
-2. Save the complete v0.16 ZIP for rollback.
-3. Download and extract the PUBLIC v0.17 ZIP in iPhone Files.
-4. Open your **existing** Wilderness GitHub repository (same website address, same GitHub Pages branch). Replace **all** existing root `.html`, `.js`, `README.md`, and `ROADMAP.md` files using this complete package. **Do not upload a ZIP directly as a file; upload its extracted contents.**
-5. **NEW files:** `cloud-config.js` and `cloud-save.js`, placed directly beside `game.js`. Keep all six `.glb`/`.webp` files in the `assets/` folder. They are unchanged from v0.16 and needn't be re-uploaded if already present and identical.
-6. Commit to `main` or the branch actually used for GitHub Pages and check GitHub Actions / Pages deployment status.
-7. Refresh the existing site; confirm **Single-player · v0.17**. The game should load and save locally **even though the cloud isn't configured yet**.
-8. Separately, follow **PRIVATE backend ZIP → README_PRIVATE.md** to create a **NEW Wilderness Supabase project**, run the SQL, verify RLS, and configure email sign-in. **Do NOT reuse Dino Dominion's backend.**
-9. Open the public `cloud-config.js`, replace the two empty strings with your **Wilderness Project URL** and its **PUBLISHABLE key** (not a secret/service_role key), and commit that one file. GitHub Pages will redeploy.
-10. Open **Bag → Account & Cloud Save**, create an account, verify your email if required, sign in. On the first login, choose **Use this device's world** to upload your current settlement. Use **Sync now** and confirm the revision advances.
-11. For another device: open the same game URL, sign into the same account, and choose **Use cloud world** after considering whether its local world contains anything worth exporting.
+### A. Upgrade Supabase format first (only if you have v0.17 Cloud Save configured)
 
-## Acceptance checklist (requires actual connected project for cloud steps)
+1. Download the separate **PRIVATE** backend ZIP and extract it in Files. Open `README_PRIVATE.md` and review the instructions.
+2. Open **https://supabase.com/dashboard** → choose the existing **Wilderness** project, NOT Dino Dominion.
+3. Open **SQL Editor** and paste `wilderness_v018_cloud_format.sql`. Review and run. **This changes one existing RPC function only** to accept save versions `16` and `17` while keeping per-user security / revision checks. It neither clears cloud worlds nor adds tables.
+4. In SQL Editor run `verify_v018_readonly.sql`. Check that `accepts_both_save_versions = true`, `security_definer = false`, and `row_level_security_enabled = true`. If the results aren't right, stop here and do not depend on cloud sync yet.
+5. If your v0.17 project SQL has **not yet been installed**, do the **v0.17 private backend setup first** and only then this v0.18 migration. The v0.18 patch alone is not a complete cloud setup.
+6. If you don't use Cloud Save, **skip section A**. v0.18 local saves work with no database or sign-in.
 
-1. v0.16 settlement, stored chests, crops, exploration, hunger/thirst, sun/moon and building locations migrate unchanged.
-2. New v0.17 local save persists after Safari refresh, even **without** cloud configuration.
-3. Opening Cloud Save before setup shows a helpful message rather than breaking the game.
-4. With a dedicated backend configured, account creation, email confirmation and sign-in succeed.
-5. First **Use this device** creates a cloud record; manual Sync now reports it saved.
-6. Changing the world while signed in automatically syncs; refreshing on the same device preserves it.
-7. Sign in on another device. Choose **Use cloud world**, confirm buildings, inventory and progress match.
-8. Save different changes on two devices; an outdated revision requires an explicit choice, not a silent overwrite.
-9. Turn Wi-Fi off, make progress, continue local saving; reconnect and sync correctly.
-10. Sign out; the existing local world remains. Wrong login cannot access another player's saves.
-11. JSON Export and Import still work; v0.16 local save key remains intact.
-12. 3D game frame rate and touch controls remain acceptable on the iPhone.
+### B. Upload the full PUBLIC game ZIP
 
-## Recovery, rollback, and limitations
+1. Download and **extract** `wilderness-prototype-v0.18.zip` in iPhone Files.
+2. Open your **existing Wilderness GitHub repo**, on the branch used by GitHub Pages (usually `main`).
+3. **Replace all existing** root `.html` and `.js` files with the complete ones from the extracted ZIP. **Add new `campfire-system.js`** in the root next to `game.js` (not inside `assets/`). Include `README.md` and `ROADMAP.md` if desired.
+4. Keep your `assets/` folder with the same six `.glb` / `.webp` files. They are included in the ZIP and don't need uploading again if already identical.
+5. Commit changes, confirm GitHub Pages deployment succeeded, refresh the same Wilderness URL. Header: **Single-player · v0.18**.
+6. Reopen **Bag → Account & Cloud Save**. If an existing v0.17 cloud copy differs from your upgraded local v0.18 world, the game may ask you to choose **Use this device's world** or **Use cloud world**. **Export a JSON backup before choosing.** If your up-to-date settlement is on this phone, normally choose **Use this device's world**. The conflict is intentional and should not silently overwrite either copy.
+7. Test building/refueling/extinguishing a fire, refresh, and confirm its position/fuel survived. Test Low Effects and Standard Effects. If using Cloud Save, test **Sync Now**, then test restore on a second browser only after exporting backups.
 
-- If the cloud fails or the Supabase connection is unavailable, **the game still runs locally**. Cloud Save is an additional backup, not a replacement for Safari storage.
-- To return to v0.16, restore all v0.16 public files to GitHub Pages. Its old browser save remains untouched. v0.17-only progress will not appear in v0.16 unless migrated with a compatible backup.
-- Before cloud restore, the current v0.17 local world goes into `wilderness_v017_pre_cloud_restore`. Use **Bag → Undo last cloud restore** to recover it; restoring a JSON backup also pauses automatic cloud syncing until you choose the world again.
-- If an accidental remote overwrite or migration error occurs, **stop syncing** and recover from JSON exports / previous local save keys or Supabase database backups; do not clear Safari data.
-- A synced world has exactly one cloud copy per account. No automatic merging between two different worlds.
-- Cloud saves require internet when the transfer occurs. Offline progress is saved locally and uploaded when service resumes; immediate sync on tab close is not guaranteed.
-- Without an actual user-owned Supabase project and sign-in, the account, database policy enforcement, and real cross-device data path **cannot be verified in this package**. Only simulated local/client tests can run without it.
+## Acceptance checklist
 
-## Folder content
+- [ ] v0.17 settlement, cabins, raised floors, chests, crops, inventory, progress and stamina/hunger/water migrate unchanged.
+- [ ] Build → Campfire costs 4 wood and 5 stone, places only on valid spots.
+- [ ] Use at a fire opens the campfire panel; 1 wood adds 180 seconds of fuel and lights it.
+- [ ] Smoke drifts upward while burning; flame/firelight visibly respond at night.
+- [ ] Extinguish and relight preserve unused fuel; burn stops when the game is closed.
+- [ ] Low Effects reduces smoke and extra lighting overhead, without hiding the fire itself.
+- [ ] Dismantle removes the fire and refunds construction materials, without stale campfire records.
+- [ ] Safari save/refresh and JSON Export/Import restore campfires. Older v0.17 save is still present.
+- [ ] If online: Supabase upgrade verified, signed-in Sync Now works; conflict choice protects progress.
+- [ ] FPS and two-thumb movement / jump / combat remain comfortable on the actual iPhone.
 
-At ZIP root: `index.html`, `game.js`, 17 additional `.js` modules including **NEW `cloud-save.js`, `cloud-config.js`** (18 JavaScript files total), `README.md`, `ROADMAP.md`, and unchanged `assets/` with six `.glb` / `.webp` assets. No SQL or secrets in the public ZIP.
+## Recovery and constraints
 
-## References used for the backend design
-
-- Supabase RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
-- Supabase client: https://supabase.com/docs/reference/javascript/initializing
-- Email/password Auth: https://supabase.com/docs/guides/auth/passwords
-- Supabase JS client version pinned in `cloud-save.js`: `2.118.0`.
+- To roll back the **website**, upload all previous v0.17 public files again. Your `wilderness_v017_singleplayer` Safari save was not overwritten. Changes made only in v0.18 will not appear in v0.17. **Export them first.**
+- Cloud format v17 (campfires) cannot be restored by older v0.17 clients. If reverting the website, keep the v0.18 backend function (which accepts both versions) and explicitly choose / export a compatible local v0.17 world; avoid SQL rollback while newer cloud copies need to be preserved. The private ZIP includes emergency details.
+- A separate v0.18 `wilderness_v018_pre_import_recovery` and `wilderness_v018_pre_cloud_restore` snapshot support recovery, plus Bag → Export world.
+- Missing/Wrong `campfire-system.js` will trigger a visible startup file/version message. Upload **all nineteen** JavaScript modules together to avoid mixed releases.
+- No remote repository, Supabase project or database changes were made by the packaged build. SQL remains **manual and approval-controlled**.
+- Automated tests validate logic and file consistency; actual Safari WebGL smoke rendering, lighting and FPS are **not** verified until you test on the iPhone.
