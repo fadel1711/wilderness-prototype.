@@ -1,6 +1,7 @@
 import {SEED_PATCHES} from './seed-system.js';
 import {DEEP_CACHE,DEEP_ENTRANCE} from './deep-cave-system.js';
 import {OUTER_ZONES,WORLD_RADIUS} from './world-expansion-system.js';
+import {VILLAGE} from './village-system.js';
 // Wilderness v0.8: renderer-independent exploration rules.
 // These landmark IDs are permanent save identifiers. Never reuse an ID.
 export const EXPLORE_RADIUS=WORLD_RADIUS;
@@ -11,7 +12,8 @@ export const LANDMARKS=Object.freeze([
   {id:'cache',name:'Echo Cave Cache',x:66,z:-67,icon:'💎',range:5,loot:true,info:'The original supply chest remains where it was.'},
   {id:'deep',name:'Echo Depths Maze',x:DEEP_ENTRANCE.x,z:DEEP_ENTRANCE.z,icon:'🪨',range:3.5,loot:false,info:'The passage beyond Echo Cave opens into a branching labyrinth.'},
   {id:'deep_cache',name:'Echo Depths Reliquary',x:DEEP_CACHE.x,z:DEEP_CACHE.z,icon:'💠',range:2.3,loot:true,info:'An old mineral cache in the far end of Echo Depths.'},
-  ...OUTER_ZONES
+  ...OUTER_ZONES,
+  VILLAGE
 ]);
 export const LOOT=Object.freeze({camp:Object.freeze({wood:36,stone:22,iron_ore:8}),cache:Object.freeze({wood:24,stone:42,iron_ore:25}),deep_cache:Object.freeze({stone:36,iron_ore:30,iron_bar:5})});
 const IDS=new Set(LANDMARKS.map(p=>p.id));

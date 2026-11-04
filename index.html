@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.22 · Expanded World & Control Recovery</title>
+<title>Wilderness — v0.23 · Landscape & Living Village</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -203,19 +203,77 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
 .wardrobeOptions.accessories{grid-template-columns:repeat(2,minmax(0,1fr))}
 .wardrobeHint{font-size:10px!important;color:#bfcbbb!important;line-height:1.5!important;margin:8px 0 0!important}
 
-/* v0.22 iPhone emergency touch release, intentionally away from the action buttons */
+/* v0.23 iPhone emergency touch release, intentionally away from the action buttons */
 .resetcontrols{position:absolute;left:149px;bottom:33px;z-index:8;pointer-events:auto;
   min-height:34px;padding:7px 9px;background:#31463ae8;border:1px solid #e4d6aa66;
   border-radius:10px;font-size:10px;font-weight:800;touch-action:manipulation}
 @media(max-width:375px){.resetcontrols{left:133px;bottom:22px;font-size:9px;padding:7px}}
 @media(orientation:landscape) and (max-height:460px){.resetcontrols{left:118px;bottom:21px}}
+
+/* v0.23 landscape-first HUD; DO NOT replace pointer / joystick listeners. */
+#landscapeTip{animation:landscapeHint 9s ease-out forwards;position:fixed;z-index:6;top:calc(env(safe-area-inset-top) + 49px);left:50%;transform:translateX(-50%);max-width:80%;pointer-events:none;background:#293e32e9;border:1px solid #dac99869;border-radius:30px;padding:6px 13px;color:#f5ead6;font-size:10px;font-weight:700;text-align:center}
+@keyframes landscapeHint{0%,65%{opacity:1}100%{opacity:0}}
+@media(orientation:landscape){#landscapeTip{display:none}}
+@media(orientation:landscape) and (max-height:560px){
+  .top{top:calc(env(safe-area-inset-top) + 4px);left:calc(env(safe-area-inset-left) + 9px);right:calc(env(safe-area-inset-right) + 9px)}
+  .brand{font-size:10px;letter-spacing:1.4px;padding:5px 8px;line-height:1.15}
+  .brand span{font-size:9px}
+  .stats{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 5px);transform:translateX(-50%);gap:8px;padding:5px 9px;font-size:10px}
+  .stats em{display:none}
+  .task{display:none}
+  .vitals{top:calc(env(safe-area-inset-top) + 44px);left:calc(env(safe-area-inset-left) + 9px);width:157px;padding:5px 8px;border-radius:10px}
+  .vitalRow{height:15px;margin-bottom:0;font-size:10px}
+  .vitalRow b{font-size:9px}
+  .needsDivider{margin:3px 0}
+  .safeLabel{font-size:9px}
+  .waypointhud{left:calc(env(safe-area-inset-left) + 179px);top:calc(env(safe-area-inset-top) + 49px);max-width:calc(100vw - 430px);font-size:10px}
+  .timehud{top:calc(env(safe-area-inset-top) + 5px);right:calc(env(safe-area-inset-right) + 88px);font-size:10px;padding:5px 7px}
+  .mapquick{top:calc(env(safe-area-inset-top) + 5px);right:calc(env(safe-area-inset-right) + 9px);font-size:10px;padding:5px 8px}
+  .zoomdock{top:calc(env(safe-area-inset-top) + 45px);right:calc(env(safe-area-inset-right) + 9px);padding:3px}
+  .zoomdock button{min-width:31px;min-height:30px}
+  .hud-bottom{bottom:calc(env(safe-area-inset-bottom) + 4px);height:126px}
+  #stick{bottom:5px;left:calc(env(safe-area-inset-left) + 10px);width:103px;height:103px}
+  #knob{width:42px;height:42px}
+  .resetcontrols{bottom:9px;left:calc(env(safe-area-inset-left) + 122px);min-height:36px;font-size:9px;padding:6px}
+  .actions{right:calc(env(safe-area-inset-right) + 9px);bottom:5px;gap:5px}
+  .actions button{min-width:69px;padding:8px 7px;font-size:10px;min-height:36px}
+  .actions #action{min-width:79px}
+  .actions #bagToggle{min-width:70px}
+  .subactions button{min-width:74px}
+  .jumpbutton{right:calc(env(safe-area-inset-right) + 177px);bottom:9px;min-width:75px;min-height:44px;font-size:11px;padding:9px}
+  .toolstrip{bottom:calc(env(safe-area-inset-bottom) + 112px);right:calc(env(safe-area-inset-right) + 9px);max-width:none;flex-direction:row;gap:6px;padding:5px 6px;font-size:9px}
+  .toolstrip .toolbuttons button{min-width:53px;min-height:30px;padding:5px;font-size:10px}
+  .combatcontrols{bottom:calc(env(safe-area-inset-bottom) + 61px);right:calc(env(safe-area-inset-right) + 166px);flex-direction:row;padding:4px;gap:4px}
+  .combatcontrols button{min-width:57px;min-height:36px;font-size:10px;padding:6px 5px}
+  #interaction{top:auto;bottom:calc(env(safe-area-inset-bottom) + 122px);left:50%;font-size:10px;padding:5px 9px;max-width:45vw;white-space:normal}
+  .toast{top:calc(env(safe-area-inset-top) + 67px);max-width:45vw}
+  .panel.show{left:50%;right:auto;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 5px);width:min(530px,78vw);max-width:none;max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 14px);padding:9px}
+  .inventorypanel{left:auto;right:calc(env(safe-area-inset-right) + 7px);top:calc(env(safe-area-inset-top) + 5px);bottom:calc(env(safe-area-inset-bottom) + 5px);width:min(480px,70vw);padding:9px}
+  .inventorygrid{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+  .itemslot{min-height:53px}
+  .mappanel{left:auto;right:calc(env(safe-area-inset-right) + 8px);top:calc(env(safe-area-inset-top) + 5px);bottom:calc(env(safe-area-inset-bottom) + 5px);max-width:none;width:min(520px,73vw);padding:9px}
+  #mapCanvas{width:min(190px,44vh);float:left;margin:0 12px 7px 0}
+  .stationpanel{left:auto;right:calc(env(safe-area-inset-right) + 10px);bottom:calc(env(safe-area-inset-bottom) + 5px);width:min(520px,75vw);max-width:none;max-height:calc(100dvh - 14px)}
+  .placementdock{right:calc(env(safe-area-inset-right) + 167px);bottom:calc(env(safe-area-inset-bottom) + 7px);width:220px;padding:6px}
+  .placementdock .nudgecontrols button,.placementdock .buildcontrols button{padding:5px 2px}
+  .cloudpanel{max-width:min(560px,78vw);top:calc(env(safe-area-inset-top) + 5px);bottom:calc(env(safe-area-inset-bottom) + 5px)}
+  .intro{width:min(630px,92vw);max-width:none;max-height:calc(100dvh - 14px);overflow-y:auto;padding:12px}
+  .intro h1{font-size:21px}
+  .intro .controls{font-size:10px;line-height:1.3;margin:7px 0}
+  .intro p{font-size:11px;margin:6px 0}
+}
+@media(orientation:landscape) and (max-height:340px){
+  .stats{display:none}.vitals{top:calc(env(safe-area-inset-top) + 35px);transform:scale(.86);transform-origin:top left}
+  .waypointhud{display:none}.toolstrip>span{display:none}.toolstrip{bottom:calc(env(safe-area-inset-bottom) + 93px)}
+  .combatcontrols{bottom:calc(env(safe-area-inset-bottom) + 55px)}
+}
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
 </head>
 <body>
-<div id="world"></div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.22</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div id="world"></div><div id="landscapeTip" role="status" aria-live="polite">↻ Rotate sideways for the best Wilderness view · Portrait still works</div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.23</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="damageOverlay"></div>
 <div class="vitals" aria-label="Survival status"><div class="vitalRow">❤ <span>HP</span><div class="vitalBar"><i id="healthFill"></i></div><b id="healthNumber">100</b></div><div class="vitalRow">⚡ <span>SP</span><div class="vitalBar"><i id="staminaFill"></i></div><b id="staminaNumber">100</b></div><div class="needsDivider"></div><div class="vitalRow">🍞 <span>H</span><div class="vitalBar"><i id="hungerFill"></i></div><b id="hungerNumber">88</b></div><div class="vitalRow">💧 <span>T</span><div class="vitalBar"><i id="thirstFill"></i></div><b id="thirstNumber">85</b></div><div class="vitalRow">🌙 <span>E</span><div class="vitalBar"><i id="energyFill"></i></div><b id="energyNumber">90</b></div><span id="safeLabel" class="safeLabel">🛖 Homestead safe</span></div><div id="timeHud" class="timehud" aria-label="Time of day">☀ Day 1 · 09:00</div><button id="mapButton" class="mapquick" aria-label="Open map">🗺 Map</button><div class="zoomdock" role="group" aria-label="Camera zoom"><button id="zoomIn" aria-label="Zoom camera in">＋</button><span id="zoomLevel">7.4m</span><button id="zoomOut" aria-label="Zoom camera out">−</button></div><div id="waypointHud" class="waypointhud">🧭 Explore · 🗺 Map</div><div id="interaction"></div><div id="toast" class="toast"></div>
@@ -313,7 +371,7 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
     </div>
     <p class="wardrobeHint">All styles are unlocked. Tap an option, then close Bag to see it on your character. Colors, hood and scarf persist in local and cloud saves. No combat advantage.</p>
   </section>
-  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress is saved locally and optionally to Wilderness Cloud. Export a JSON backup before changing releases. Import replaces this browser's current v0.22 world after confirmation.</p>
+  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress is saved locally and optionally to Wilderness Cloud. Export a JSON backup before changing releases. Import replaces this browser's current v0.23 world after confirmation.</p>
 <div class="cloudQuick"><strong>☁ Automatic Account Save</strong><p>Sign in once. Your account world loads and saves automatically; local recovery remains available.</p><button id="cloudOpen">☁ Account & Cloud Save</button></div>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button><button id="undoCloudRestore">↶ Undo last cloud restore</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
@@ -342,10 +400,14 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
     <p class="cloudHint">A cloud save is not a substitute for an occasional Bag → Export world JSON backup.</p>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">DOUBLE WORLD · CONTROL RECOVERY</div><h1>Wilderness · v0.22</h1><p>Explore a world twice as wide and twice as long, with four new discoverable regions, new mineable stone and harvestable trees. Touch controls automatically recover from interrupted gestures, and the new Unstick button releases stuck movement or camera controls. Your existing second floors and original world remain unchanged. Build larger modular houses with truly walkable second floors, upper-level walls, windows, doors, roofs and a tall staircase you can climb. Existing single-storey cabins and the Echo Depths cave remain intact. In Build, place a ground floor plus two supporting walls, then place an Upper Floor. Rotate Tall Stairs so the high end reaches an Upper Floor four metres ahead. Cloud Save stays automatic; no additional login prompts.</p><div class="controls"><b>iPhone:</b> Tap Bag → <b>Claim free sword + shield</b>, then equip Sword. Use <b>Attack</b> to strike when close and facing a wolf, <b>hold Block</b> when it bites, and tap <b>Dodge</b> to avoid damage. Watch health (HP) and stamina (SP). Rest near a bed or return home to recover health. Wolves remain outside your homestead zone and cannot damage structures. Tap axe/pickaxe to return to gathering. All original build and save features remain. New build types: Upper Floor, Upper Wall, Upper Door, Upper Window, Upper Roof and Tall Stairs.<br><b>Survival:</b> Watch the food, water and energy bars. Tap edible items in Bag to eat or drink; walk to the little spring southwest of home and tap Drink to refill water. Build or use a bed to sleep until morning. Switch off needs in Bag → Game settings using Creative Comfort. No offline penalties.<br><b>Two thumbs:</b> Keep one thumb on the left joystick while tapping Jump, Gather, Attack or Dodge with the right. Hold Block with the right while moving with the left. Tap Jump near the right-hand action controls or press Space. Gravity, raised cabins and steps remain accessible.<br><b>Wardrobe:</b> Open Bag → Survivor Wardrobe; select jacket, trousers, boots, hair, hood and scarf. Close Bag to see your outfit. Choices save locally and through Cloud Save after the private SQL update.<br><b>Campfires:</b> Build a campfire (4 wood + 5 stone), walk up and tap Use. Add 1 wood for three minutes of burning, or extinguish and relight. Smoke is animated while you play, and Low Effects reduces particles.<br><b>Farming:</b> Build a planter, walk up to it and tap <b>Use</b> to plant carrots, potatoes, or wheat using seeds you forage from wild patches marked S on the Map. When crops finish growing, harvest them for ingredients and seeds. Peaceful chickens and rabbits now wander the homestead. Furnace crafting includes a simple vegetable stew for recovery. <br><b>Map:</b> Tap 🗺 Map to find your position, choose waypoints, and track discovered places. Open treasure chests when you reach them. Claim the Forgotten Camp cache to unlock the Ranger Rest blueprint.<br><b>Keyboard:</b> WASD move · Space jump · M map · Shift jog · Drag camera · 1/2 tools · 3 sword · X attack · hold Q block · C dodge · E gather / Use · I Bag · B build. Your original save is kept separately. Tap + or − to zoom the view; scroll the mouse wheel on desktop.</div><button id="start">Enter the forest</button><p style="font-size:11px;margin:10px 0 0">Save locally in Safari and export JSON backups. Audio starts only after pressing Enter. For Cloud Save, sign in once from Bag → Account & Cloud Save. The account world will follow you automatically; back up your existing progress before switching accounts.</p></div></div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify all twenty-one JavaScript files are in the same GitHub repository folder.</p></div></div>
+<div id="modal"><div class="intro"><div class="eyebrow">LANDSCAPE · LIVING VILLAGE</div><h1>Wilderness · v0.23</h1>
+<p><b>Turn your iPhone sideways!</b> The new landscape layout gives more room to explore, fight, and build. Portrait still works.</p>
+<p><b>Explore Amberfall Village:</b> Find eight timber houses, a village square and six residents in the northwestern outer wilderness. Visit by day to talk with villagers and watch their routines.</p>
+<div class="controls"><b>Two thumbs:</b> Hold the left joystick to walk. Use Jump, Attack, Dodge or Talk on the right without letting go. Drag empty scenery to look around. Tap <b>↻ Unstick</b> if a gesture gets stuck.<br><b>Explore:</b> Open Map and select the unexplored northwest village waypoint. Your original world, cabins, maze and cloud progress are preserved.<br><b>Keyboard:</b> WASD move · Space jump · E interact · M map · I bag · B build · drag camera.</div>
+<button id="start">Enter the forest</button><p style="font-size:11px;margin:9px 0 0">Your progress saves automatically. Back up your world from Bag → Export world before updating.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the complete v0.23 JavaScript package, including village-system.js, is at the repository root.</p></div></div>
 <script>
-// v0.22 boot diagnostics do not touch browser storage or saves.
+// v0.23 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -363,16 +425,16 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
     box.style.display='flex';
     if(failure)reason.textContent='Startup error: '+failure;
     else reason.textContent='The game did not finish loading. Checking files…';
-    const required=['game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js'];
+    const required=['game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js','village-system.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.22',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.23',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
       if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all JavaScript files plus assets/ to the repository root.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
       const byName=Object.fromEntries(required.map((n,i)=>[n,contents[i]]));
-      if(!byName['game.js'].includes("version:'0.22'")||
+      if(!byName['game.js'].includes("version:'0.23'")||
          !byName['deep-cave-system.js'].includes('DEEP_CAVE_VERSION')||
-         !byName['save-system.js'].includes('wilderness_v022_singleplayer')||
+         !byName['save-system.js'].includes('wilderness_v023_singleplayer')||
          !byName['construction.js'].includes('loft_floor')||
          !byName['second-story-system.js'].includes('LOFT_WALK_Y')||
          !byName['exploration-system.js'].includes('deep_cache')||
@@ -381,15 +443,16 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
          !byName['campfire-system.js'].includes('CAMPFIRE_FUEL_SECONDS')||
          !byName['wardrobe-system.js'].includes('normalizeWardrobe')||
          !byName['world-expansion-system.js'].includes('WORLD_RADIUS=172')||
-         !byName['input-recovery.js'].includes('InputRecovery')){
-        reason.textContent='Mixed or outdated v0.22 files detected. Replace index.html and all game modules together from the complete ZIP.';return;
+         !byName['input-recovery.js'].includes('InputRecovery')||
+         !byName['village-system.js'].includes('createLivingVillage')){
+        reason.textContent='Mixed or outdated v0.23 files detected. Replace index.html and all game modules, including village-system.js, together from the complete ZIP.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.22"></script>
-<script type="module">import {mountCloudSave} from './cloud-save.js?v=0.22'; mountCloudSave();</script>
+<script type="module" src="./game.js?v=0.23"></script>
+<script type="module">import {mountCloudSave} from './cloud-save.js?v=0.23'; mountCloudSave();</script>
 </body>
 </html>

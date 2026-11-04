@@ -1,8 +1,8 @@
-# Wilderness road map after v0.22
+# Wilderness — Next Steps After v0.23
 
-- **v0.22 — This release:** fix stuck joystick/camera and double horizontal world dimensions, four new discoverable outer areas, new tree/rock resources, backwards-compatible saves.
-- **v0.23 — Village life:** expanded discovered villages, several houses, NPCs limited to settlement areas, meaningful interactions and mobile NPC count/performance budgets.
-- **v0.24 — Night threats:** limited night zombies that avoid safe home and village zones, daylight despawn, low-chore controls.
-- **v0.25 — Tameable dog:** bone/meat resources, training, follow/stay, save-persistent companion.
+- **v0.23 — Landscape-first + first living village:** One 8-house village, six NPCs, safe landscape HUD, conversations and clock-driven routines. Keep portrait fallback and cloud compatibility.
+- **v0.24 — Night zombies:** Safe regions around homes and villages, simple enemies only outside protected areas at night, no offline raids or structure damage. Profile FPS on iPhone before expanding spawn counts.
+- **v0.25 — Dog companion:** Collect bones/meat, tame one dog, make it follow, rest and assist during exploration. Persist its tame state with a new, separately verified save format and private cloud migration if required.
+- **After v0.25:** Decide whether to improve NPC navigation, open village house interiors, add trading, and upgrade character/animation assets. Prioritize quality over adding more systems without testing.
 
-No new milestone begins until the prior iPhone acceptance tests pass. Preserve all previous save keys, export JSON before each update, validate live Supabase SQL separately, and keep two ZIPs when a backend migration is required.
+Rule for every release: export JSON backup, preserve prior Safari save keys, test joystick/camera recovery and cloud autosave, run iPhone performance acceptance before proceeding.
