@@ -1,7 +1,7 @@
-// Wilderness v0.21 — account-first automatic sync: compare meaningful progress and protect local recovery.
+// Wilderness v0.22 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.21';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.21';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.22';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.22';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -19,6 +19,10 @@ export function progressFingerprint(value,{legacy=false,legacyVersion=null}={}){
   const s=normalizeSave(value);
   s.px=0;s.pz=0;s.py=0;
   if(s.atmosphere)s.atmosphere.elapsed=0;
+  // Newly generated outer-region trees/rocks do not count as independent edits.
+  for(const [id,hits] of Object.entries(s.resources||{})){
+    if(/^et\d+$/.test(id)&&hits===3||/^er\d+$/.test(id)&&hits===2)delete s.resources[id];
+  }
   if(s.survival){s.survival.hunger=0;s.survival.thirst=0;s.survival.energy=0;}
   if(s.combat){s.combat.hp=0;s.combat.stamina=0;}
   for(const fire of Object.values(s.campfires||{}))fire.fuel=0;
@@ -217,7 +221,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   function applyCloud(){
     if(!user||busy||!remote||mode==='invalid')return;
     let normalized;try{normalized=normalizeSave(remote.save);}catch(e){status('Cloud world rejected by validation.');return;}
-    if(!window.confirm('Restore the cloud world to this device? Current v0.21 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
+    if(!window.confirm('Restore the cloud world to this device? Current v0.22 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
     cancelSchedule();
     try{window.__wildernessCloudReplace(normalized);baselineWrite(normalized,revision);}
     catch(e){status('Could not restore cloud world: '+message(e));}
@@ -262,7 +266,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.21'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.22'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

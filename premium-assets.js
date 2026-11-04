@@ -39,7 +39,7 @@ export function createPremiumArt(THREE,{resources,player,renderer,grassMat,pathM
   }
   async function loadTextures(){
     const tl=new THREE.TextureLoader();
-    const maps=[['assets/forest-ground.webp',grassMat,38,38],
+    const maps=[['assets/forest-ground.webp',grassMat,76,76],
       ['assets/stone-path.webp',pathMat,1,1],
       ['assets/timber-planks.webp',timber,1,1],
       ['assets/timber-planks.webp',timberDark,1,1]];

@@ -76,7 +76,7 @@ export function createSkyGradient(THREE,scene){
     vertexShader:'varying vec3 vPos; void main(){vPos=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
     fragmentShader:'uniform vec3 zenith;uniform vec3 horizon;varying vec3 vPos;void main(){float h=clamp((normalize(vPos).y+0.08)*1.35,0.0,1.0);h=smoothstep(0.0,1.0,h);gl_FragColor=vec4(mix(horizon,zenith,h),1.0);}'
   });
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(205,24,12),material);
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(680,24,12),material);
   sky.frustumCulled=false;sky.renderOrder=-900;
   scene.add(sky);
   return {sky,material};

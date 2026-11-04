@@ -1,37 +1,39 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,V19_KEY,V20_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.21';
-import {isUpper,LOFT_FURNISH_TYPES,LOFT_BASE_Y,LOFT_WALK_Y,stairRise,stairTop,canRemoveSupport} from './second-story-system.js?v=0.21';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.21';
+import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,V19_KEY,V20_KEY,V21_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.22';
+import {isUpper,LOFT_FURNISH_TYPES,LOFT_BASE_Y,LOFT_WALK_Y,stairRise,stairTop,canRemoveSupport} from './second-story-system.js?v=0.22';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.22';
 
-import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.21';
+import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.22';
 
-import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.21';
-import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.21';
-import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.21';
-import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.21';
-import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.21';
-import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.21';
-import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.21';
-import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.21';
-import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.21';
-import {createPremiumArt} from './premium-assets.js?v=0.21';
-import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.21';
-import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.21';
-import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.21';
-import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.21';
-import {MAZE_WALLS,deepCaveWallAt,insideDeepCave,caveRockZone,ORE_VEINS,DEEP_CACHE,normalizeDeepCave,veinStatus,mineVein,nearestVein,createDeepCave} from './deep-cave-system.js?v=0.21';
+import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.22';
+import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.22';
+import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.22';
+import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.22';
+import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.22';
+import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.22';
+import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.22';
+import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.22';
+import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.22';
+import {createPremiumArt} from './premium-assets.js?v=0.22';
+import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.22';
+import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.22';
+import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.22';
+import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.22';
+import {MAZE_WALLS,deepCaveWallAt,insideDeepCave,caveRockZone,ORE_VEINS,DEEP_CACHE,normalizeDeepCave,veinStatus,mineVein,nearestVein,createDeepCave} from './deep-cave-system.js?v=0.22';
+import {WORLD_RADIUS,OLD_WORLD_RADIUS,outerResourcePlan,outerScatterPlan,OUTER_ZONES} from './world-expansion-system.js?v=0.22';
+import {InputRecovery,installInputRecovery} from './input-recovery.js?v=0.22';
 
 // Wilderness v0.7 — survival combat with v0.7 crafting, equipment, storage, and interiors; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
 // No accounts, analytics, microtransactions, or online save requests.
 const $ = id => document.getElementById(id);
-const WORLD = EXPLORE_RADIUS;
+const WORLD = WORLD_RADIUS;
 const clock = new THREE.Clock(), PLAYER_RADIUS = 0.32;
 let cameraDistance=DEFAULT_ZOOM;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#bcc8c3');
-scene.fog = new THREE.Fog('#bcc8c3', 54, 185);
-const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 245);
+scene.fog = new THREE.Fog('#bcc8c3', 58, 195);
+const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 1100);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'low-power', alpha: false });
 renderer.setSize(innerWidth, innerHeight);
 renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
@@ -48,7 +50,7 @@ const celestial=createSkyObjects(THREE,scene);
 // v0.11 textured materials are generated by visual-system.js.
 function makeTexture(kind, seed){return makeArtTexture(THREE,renderer,kind,seed);}
 const grassTexture = makeTexture('grass', 906), woodTexture=makeTexture('wood',317),stoneTexture=makeTexture('stone',44),roofTexture=makeTexture('roof',72);
-if(grassTexture)grassTexture.repeat.set(42,42);
+if(grassTexture)grassTexture.repeat.set(84,84);
 const mat=(color,texture=null,roughness=1)=>new THREE.MeshStandardMaterial({color, map:texture||null, roughness});
 const grassMat=mat('#e0e4c4',grassTexture), earth=mat('#7b6650'), pathMat=mat('#a28b6a');
 const trunk=mat('#80705c',woodTexture), foliage=[mat('#426554'),mat('#58755b'),mat('#375c4b'),mat('#6b8460')];
@@ -67,7 +69,7 @@ const campfireFlames=[new THREE.MeshBasicMaterial({color:'#ffb449',transparent:t
 function mesh(geometry,material,parent,x=0,y=0,z=0){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);parent.add(m);return m;}
 const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
 function disk(parent,x,z,r,material=shadowMat,y=-.052){const m=mesh(new THREE.CircleGeometry(r,16),material,parent,x,y,z);m.rotation.x=-Math.PI/2;return m;}
-mesh(new THREE.PlaneGeometry(194,194),grassMat,scene,0,-.09,0).rotation.x=-Math.PI/2;
+mesh(new THREE.PlaneGeometry(WORLD*2+16,WORLD*2+16),grassMat,scene,0,-.09,0).rotation.x=-Math.PI/2;
 
 // Old deterministic RNG consumption is preserved so previously collected resource IDs
 // stay in their original positions after upgrading a saved v0.1.1 world.
@@ -90,7 +92,7 @@ for(let i=0;i<95;i++){
 }
 const distantHill=mat('#758779');
 for(let i=0;i<17;i++){
-  const a=i/17*Math.PI*2,r=115+random()*20,rr=7+random()*9,h=12+random()*17;
+  const a=i/17*Math.PI*2,r=225+random()*20,rr=7+random()*9,h=12+random()*17;
   const hill=mesh(new THREE.IcosahedronGeometry(1,1),distantHill,scene,Math.sin(a)*r,1.0,Math.cos(a)*r);hill.scale.set(rr,h*.60,rr*.85);hill.rotation.y=random()*6;
 }
 
@@ -173,7 +175,18 @@ function refreshForestLOD(low){for(const d of forestDetails){const dist2=(player
 function addTree(id,x,z,s){
   const g=new THREE.Group();g.position.set(x,0,z);resourceRoot.add(g);
   const trunkMesh=mesh(new THREE.CylinderGeometry(.21*s,.36*s,2.42*s,9),trunk,g,0,1.21*s,0);cameraOccluders.push(trunkMesh);
-  const index=Number(id.slice(1));
+  const index=Number(id.replace(/^\D+/,''));
+  // Low-poly outer resource proxies. Premium GLB art replaces them nearby in
+  // Standard Effects; mobile doesn't pay the old ~18-mesh/tree cost fourfold.
+  if(id.startsWith('et')){
+    for(let tier=0;tier<3;tier++){
+      const h=(1.9+tier*.68)*s;
+      const canopy=mesh(new THREE.ConeGeometry((1.37-tier*.24)*s,(1.7-tier*.12)*s,7),foliage[(tier+index)%foliage.length],g,0,h,0);
+      canopy.rotation.y=tier*.41;
+    }
+    disk(g,0,0,.64*s);resources.push({id,type:'tree',x,z,hits:3,group:g,radius:.38*s});
+    return;
+  }
   // Broadleaf canopy has offset layered clusters rather than a ball or a geometric cone.
   if(index%5===0){
     for(let j=0;j<8;j++){
@@ -204,7 +217,7 @@ function addTree(id,x,z,s){
 }
 function addRock(id,x,z,s){
   const g=new THREE.Group();g.position.set(x,0,z);resourceRoot.add(g);
-  const m=mesh(new THREE.DodecahedronGeometry(.93*s,0),Number(id.slice(1))%2?rockMat:rockDark,g,0,.51*s,0);
+  const m=mesh(new THREE.DodecahedronGeometry(.93*s,0),Number(id.replace(/^\D+/,''))%2?rockMat:rockDark,g,0,.51*s,0);
   m.scale.set(1.26,.66,1.0);m.rotation.set(.15,random()*4,.13);cameraOccluders.push(m);
   disk(g,0,0,.81*s);resources.push({id,type:'rock',x,z,hits:2,group:g,radius:.70*s});
 }
@@ -231,6 +244,28 @@ for(let i=27;i<=50;i++){
   if(Math.abs(x)>WORLD-5||Math.abs(z)>WORLD-5||!distantFromLandmarks(x,z,8))continue;
   addRock('r'+i,x,z,.65+outerRand()*.65);
 }
+// v0.22: independently seeded outer resources (et*/er*). Existing resource
+// IDs, coordinates and historical RNG calls above are unchanged.
+const expandedResources=outerResourcePlan();
+for(const r of expandedResources){
+  if(r.type==='tree')addTree(r.id,r.x,r.z,r.scale);
+  else addRock(r.id,r.x,r.z,r.scale);
+}
+// Outer biome textures and occasional broad clearings use a small material pool.
+const outerBiomeMaterials=[mat('#708a6e'),mat('#79816c'),mat('#939375')];
+for(const p of outerScatterPlan(145)){
+  const accent=mesh(new THREE.CircleGeometry(p.scale,9),outerBiomeMaterials[p.kind],scene,p.x,-.077,p.z);
+  accent.rotation.x=-Math.PI/2;accent.rotation.z=p.rot;
+}
+// Landmark glades stay open, preserving clear approaches to the new regions.
+for(const zone of OUTER_ZONES){
+  const glade=mesh(new THREE.CircleGeometry(5.5,22),pathMat,scene,zone.x,-.071,zone.z);
+  glade.rotation.x=-Math.PI/2;glade.material=clearingMarkerMaterial(zone.id);
+}
+function clearingMarkerMaterial(id){
+  return new THREE.MeshBasicMaterial({color:id==='sunstone'?'#a8a48b':'#81917b',transparent:true,opacity:.28,depthWrite:false});
+}
+
 // Low-cost terrain accents give the new outer map different recognizable regions.
 const outerGrasses=[mat('#72866e'),mat('#85886c'),mat('#777d67')];
 for(let i=0;i<60;i++){
@@ -239,7 +274,7 @@ for(let i=0;i<60;i++){
   const patch=mesh(new THREE.CircleGeometry(1.5+outerRand()*2.4,10),outerGrasses[i%3],scene,x,-.076,z);
   patch.rotation.x=-Math.PI/2;
 }
-const premiumGround=createGroundScatter(THREE,scene,{world:WORLD,resources,count:780});
+const premiumGround=createGroundScatter(THREE,scene,{world:WORLD,resources,count:1080});
 const premiumArt=createPremiumArt(THREE,{resources,player,renderer,grassMat,pathMat,timber,timberDark});
 // Decorative shrubs use an independent RNG, so v0.1 resource locations never shift.
 let detailSeed=48112;function detailRand(){detailSeed=(Math.imul(detailSeed,1664525)+1013904223)>>>0;return detailSeed/4294967296;}
@@ -789,6 +824,7 @@ let combatMode=false,respawning=false,damageFlash=0;
 let physics={y:0,vy:0,grounded:true,justLanded:false};let jumpQueued=false;
 
 const inputs=new DualInput();
+let resetInputControls=()=>{};
 const move={x:0,y:0},keys=new Set();let joystickPointer=null,lookPointer=null,lastLookX=0,lastLookY=0,paused=true;
 let toastTimeout=null,loadMessage='',suppressUnloadSave=false,saveReadFailed=false;
 const amount=id=>count(inventory,id);
@@ -888,7 +924,7 @@ function loadGame(){
   // Read the newest available save. Never overwrite a corrupt newer save with older data.
   try{
     const candidates=[
-      [SAVE_KEY,'v0.21'],[V20_KEY,'v0.20'],[V19_KEY,'v0.19'],[V18_KEY,'v0.18'],[V17_KEY,'v0.17'],[V16_KEY,'v0.16'],[V15_KEY,'v0.15'],[V14_KEY,'v0.14'],[V13_KEY,'v0.13'],[V12_KEY,'v0.12'],[V11_KEY,'v0.11'],[V10_KEY,'v0.10'],[V09_KEY,'v0.9'],[V08_KEY,'v0.8'],[V07_KEY,'v0.7'],
+      [SAVE_KEY,'v0.22'],[V21_KEY,'v0.21'],[V20_KEY,'v0.20'],[V19_KEY,'v0.19'],[V18_KEY,'v0.18'],[V17_KEY,'v0.17'],[V16_KEY,'v0.16'],[V15_KEY,'v0.15'],[V14_KEY,'v0.14'],[V13_KEY,'v0.13'],[V12_KEY,'v0.12'],[V11_KEY,'v0.11'],[V10_KEY,'v0.10'],[V09_KEY,'v0.9'],[V08_KEY,'v0.8'],[V07_KEY,'v0.7'],
       [V06_KEY,'v0.6'],[V05_KEY,'v0.5'],[V04_KEY,'v0.4'],
       [V03_KEY,'v0.3'],[LEGACY_KEY,'v0.2']
     ];
@@ -911,11 +947,11 @@ function loadGame(){
   }
   for(const b of data.builds){const group=createBuild(b.type,b.x,b.z,b.rot);builds.push({...b,group});}
   nextBuildId=Math.max(0,...builds.map(b=>Number(b.id.slice(1))))+1;
-  if(!['v0.13','v0.14','v0.15','v0.16','v0.17','v0.18','v0.19','v0.20','v0.21'].includes(origin))try{addItem(inventory,'water',4,{expand:true});addItem(inventory,'carrot',4,{expand:true});}catch(e){console.warn('Starter supplies could not fit; freshwater spring remains available.');}
+  if(!['v0.13','v0.14','v0.15','v0.16','v0.17','v0.18','v0.19','v0.20','v0.21','v0.22'].includes(origin))try{addItem(inventory,'water',4,{expand:true});addItem(inventory,'carrot',4,{expand:true});}catch(e){console.warn('Starter supplies could not fit; freshwater spring remains available.');}
   refreshElevations();physics.y=data.py??0;findSafePosition();physics={y:groundHeightAt(player.position.x,player.position.z,physics.y),vy:0,grounded:true,justLanded:false};player.position.y=physics.y;
   axeModel.visible=['axe','stone_axe'].includes(equipped);pickModel.visible=['pickaxe','iron_pickaxe'].includes(equipped);swordModel.visible=equipped==='sword';combatMode=equipped==='sword';
-  if(origin!=='v0.21')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
-  else loadMessage='v0.21 world loaded.';
+  if(origin!=='v0.22')loadMessage=saveGame(true)?`Existing ${origin} world upgraded; older save preserved.`:'Old world loaded; export a backup.';
+  else loadMessage='v0.22 world loaded.';
   refreshLootVisuals();updateSeedVisuals();syncCampfireMeshes();
 }
 
@@ -1002,7 +1038,7 @@ function renderInventory(){
   $('restorePrevious').disabled=!localStorage.getItem(PRE_IMPORT_KEY);renderWardrobe();
 }
 function syncCombatDock(){const show=equipped==='sword'&&!buildMode&&!inventoryOpen&&!stationOpen&&!mapOpen&&!paused;$('combatControls').classList.toggle('show',show);if(!show)blockHeld=false;}
-function setInventory(open){inventoryOpen=open;$('inventoryPanel').classList.toggle('show',open);
+function setInventory(open){if(open)resetInputControls();inventoryOpen=open;$('inventoryPanel').classList.toggle('show',open);
   if(open){if(buildMode)setBuildMode(false);if(stationOpen)closeStation();renderInventory();}
   $('bagToggle').classList.toggle('active',open);syncCombatDock();
 }
@@ -1019,7 +1055,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.21-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.22-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -1031,7 +1067,7 @@ async function importSave(file){
   let imported;
   try{imported=normalizeSave(JSON.parse(await file.text()));}
   catch(e){toast('Import rejected: '+e.message);return;}
-  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.21 world will be replaced. Export it first if needed.`;
+  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.22 world will be replaced. Export it first if needed.`;
   if(!window.confirm(question))return;
   try{
     const previous=localStorage.getItem(SAVE_KEY);
@@ -1046,7 +1082,7 @@ function undoLastImport(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem(PRE_IMPORT_KEY)||'null'));}
   catch(e){toast('No valid pre-import recovery found');return;}
-  if(!window.confirm('Undo the last world import? This replaces your current v0.21 world with the previous version. Export your current world first if needed.'))return;
+  if(!window.confirm('Undo the last world import? This replaces your current v0.22 world with the previous version. Export your current world first if needed.'))return;
   try{
     const current=localStorage.getItem(SAVE_KEY);
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
@@ -1057,13 +1093,13 @@ function undoLastImport(){
 }
 function undoCloudRestore(){
   let previous;
-  try{previous=normalizeSave(JSON.parse(localStorage.getItem('wilderness_v021_pre_cloud_restore')||'null'));}
+  try{previous=normalizeSave(JSON.parse(localStorage.getItem('wilderness_v022_pre_cloud_restore')||'null'));}
   catch(e){toast('No valid cloud recovery snapshot exists');return;}
-  if(!window.confirm('Restore the world that was on this device before the last cloud download? Export your current v0.21 world first. Cloud sync will pause until you choose which world to keep.'))return;
+  if(!window.confirm('Restore the world that was on this device before the last cloud download? Export your current v0.22 world first. Cloud sync will pause until you choose which world to keep.'))return;
   try{
     const current=saveReadFailed?localStorage.getItem(SAVE_KEY):JSON.stringify(saveData());
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
-    if(current!==null)localStorage.setItem('wilderness_v021_pre_cloud_restore',current);
+    if(current!==null)localStorage.setItem('wilderness_v022_pre_cloud_restore',current);
     localStorage.removeItem('wilderness_v019_cloud_baseline');
     suppressUnloadSave=true;location.reload();
   }catch(e){toast('Cloud recovery failed — no data was intentionally cleared');console.error(e);}
@@ -1213,7 +1249,7 @@ function openBuildPicker(){
   if(!buildMode)return;
   buildPickerOpen=true;disposeGhost();renderSavedBlueprints();syncBuildUi();
 }
-function setBuildMode(enabled){
+function setBuildMode(enabled){if(enabled)resetInputControls();
   if(enabled&&inventoryOpen)setInventory(false);if(enabled&&stationOpen)closeStation();
   buildMode=enabled;buildPickerOpen=enabled;renderSavedBlueprints();$('rangerRest').hidden=!exploration.claimed.includes('camp');syncBuildUi();
   $('toolStrip').style.display=enabled?'none':'flex';
@@ -1379,7 +1415,7 @@ function renderMap(){
   }
   drawMap();
 }
-function openMap(){if(paused)return;
+function openMap(){if(paused)return;resetInputControls();
   if(inventoryOpen)setInventory(false);if(stationOpen)closeStation();if(buildMode)setBuildMode(false);
   mapOpen=true;$('mapPanel').classList.add('show');syncCombatDock();renderMap();
 }
@@ -1654,7 +1690,7 @@ function jump(){
 }
 
 $('closeStation').addEventListener('click',closeStation);
-$('start').addEventListener('click',()=>{$('modal').classList.add('hidden');paused=false;sound.unlock();syncCombatDock();toast(loadMessage||'Explore, build and survive!');});
+$('start').addEventListener('click',()=>{resetInputControls();$('modal').classList.add('hidden');paused=false;sound.unlock();syncCombatDock();toast(loadMessage||'Explore, build and survive!');});
 $('bagToggle').addEventListener('click',()=>setInventory(!inventoryOpen));
 $('closeBag').addEventListener('click',()=>setInventory(false));
 $('axeEquip').addEventListener('click',()=>equip(amount('stone_axe')?'stone_axe':'axe'));
@@ -1706,22 +1742,51 @@ function joy(e){
   move.x=dx*scale/max;move.y=-dy*scale/max;
   knob.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;
 }
-stick.addEventListener('pointerdown',e=>{e.preventDefault();if(paused||!inputs.begin(e.pointerId,'move'))return;joystickPointer=e.pointerId;stick.setPointerCapture(e.pointerId);joy(e);});
-stick.addEventListener('pointermove',e=>{if(e.pointerId===joystickPointer)joy(e);});
-function releaseJoy(e){if(e.pointerId===joystickPointer){inputs.finish(e.pointerId);joystickPointer=null;move.x=move.y=0;knob.style.transform='translate(0,0)';}}
+function stopJoystick(){
+  if(joystickPointer!==null)inputs.finish(joystickPointer);
+  joystickPointer=null;move.x=move.y=0;moveVX=moveVZ=0;
+  knob.style.transform='translate(0,0)';
+}
+function stopCameraLook(){lookPointer=null;lastLookX=lastLookY=0;}
+const recovery=new InputRecovery(kind=>{
+  if(kind==='move')stopJoystick();
+  if(kind==='look')stopCameraLook();
+});
+resetInputControls=installInputRecovery(recovery,{onGlobalReset:()=>{
+  stopJoystick();stopCameraLook();inputs.clear();keys.clear();jumpQueued=false;setBlock(false);
+}});
+// A visible one-tap recovery prevents stuck movement without refreshing the game.
+$('resetControls').addEventListener('click',()=>{resetInputControls();toast('Controls reset ✓');});
+stick.addEventListener('pointerdown',e=>{
+  e.preventDefault();e.stopPropagation();
+  if(paused||inventoryOpen||mapOpen||stationOpen||!inputs.begin(e.pointerId,'move'))return;
+  if(!recovery.start('move',e.pointerId)){inputs.finish(e.pointerId);return;}
+  joystickPointer=e.pointerId;
+  try{stick.setPointerCapture(e.pointerId);}catch(_){/* global release still works */}
+  joy(e);
+},{passive:false});
+stick.addEventListener('pointermove',e=>{if(recovery.owns('move',e.pointerId))joy(e);});
+function releaseJoy(e){recovery.finish(e.pointerId);}
 for(const ev of ['pointerup','pointercancel','lostpointercapture'])stick.addEventListener(ev,releaseJoy);
 $('zoomIn').addEventListener('click',()=>changeZoom(-1.3));
 $('zoomOut').addEventListener('click',()=>changeZoom(1.3));
 refreshZoomUi();
 const canvas=renderer.domElement;
 canvas.addEventListener('wheel',e=>{if(paused)return;e.preventDefault();changeZoom(e.deltaY>0?1.1:-1.1);},{passive:false});
-canvas.addEventListener('pointerdown',e=>{if(paused||e.clientX<innerWidth*.31||lookPointer!==null)return;lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;canvas.setPointerCapture(e.pointerId);});
-canvas.addEventListener('pointermove',e=>{if(e.pointerId!==lookPointer)return;
+canvas.addEventListener('pointerdown',e=>{
+  if(paused||inventoryOpen||stationOpen||mapOpen||buildMode||e.clientX<innerWidth*.31||lookPointer!==null)return;
+  e.preventDefault();
+  if(!recovery.start('look',e.pointerId))return;
+  lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;
+  try{canvas.setPointerCapture(e.pointerId);}catch(_){/* global release still works */}
+},{passive:false});
+canvas.addEventListener('pointermove',e=>{
+  if(!recovery.owns('look',e.pointerId))return;
   yaw-=(e.clientX-lastLookX)*.0055;
   pitch=THREE.MathUtils.clamp(pitch+(lastLookY-e.clientY)*.004,.17,.94);
   lastLookX=e.clientX;lastLookY=e.clientY;
 });
-for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{if(e.pointerId===lookPointer)lookPointer=null;});
+for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>recovery.finish(e.pointerId));
 addEventListener('keydown',e=>{
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
   keys.add(e.key.toLowerCase());if(e.repeat||paused)return;
@@ -1738,7 +1803,9 @@ addEventListener('keydown',e=>{
   if(buildMode&&['h','j','k','l'].includes(e.key.toLowerCase())){const dirs={h:[-1,0],l:[1,0],k:[0,1],j:[0,-1]};nudgeRelative(...dirs[e.key.toLowerCase()]);}
 });
 addEventListener('keyup',e=>{keys.delete(e.key.toLowerCase());if(e.key.toLowerCase()==='q')setBlock(false);});
-addEventListener('blur',()=>{inputs.clear();jumpQueued=false;setBlock(false);keys.clear();move.x=move.y=0;joystickPointer=null;knob.style.transform='translate(0,0)';});
+// InputRecovery handles blur, pagehide, orientation changes and iOS touch cancellation.
+addEventListener('pointerup',e=>{if(inputs.finish(e.pointerId)==='block')setBlock(false);},true);
+addEventListener('pointercancel',e=>{if(inputs.finish(e.pointerId)==='block')setBlock(false);},true);
 addEventListener('resize',()=>{
   camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
   applyQuality();
@@ -1882,7 +1949,7 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.21',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
+window.__wildernessDebug=()=>({deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.22',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,paused});
 // Cloud save never deletes or changes the old v0.16 key. Loading a remote world
 // first retains a local recovery snapshot, then reloads with autosave suppressed.
 window.__wildernessCloudSnapshot=()=>saveReadFailed?null:saveData();

@@ -1,55 +1,53 @@
-# Wilderness v0.21 — Second Floors & Bigger Modular Homes
+# Wilderness v0.22 — Double World + Joystick / Camera Recovery
 
-A full, ready-to-upload **GitHub Pages** game update. Includes **every HTML/JS file** plus all six existing assets. This is the complete game, **not** an incremental patch, generator, or code snippet.
+**Full GitHub Pages game replacement.** Every .js/.html file and all six original GLB/WebP assets are included. Cloud SQL is in a **separate private ZIP**; do not put SQL on GitHub Pages.
 
 ## What changed
 
-- **Actual second-floor platforms**, built with `Upper Floor` pieces at roughly 3.32 m above ground, with collision that lets your survivor stand upstairs and still walk underneath.
-- **Upper Wall, Upper Door, Upper Window and Upper Roof** pieces to create enclosed rooms above your existing modular construction.
-- **Tall Stairs**, a 12-step ramp reaching a second-floor landing, with character gravity, walkable rise and proper collision.
-- **Bigger modular homes**: extend ground/upper rooms across 2×2-metre tiles rather than being restricted to a single prefab cabin.
-- **Two-Storey Starter** blueprint: a complete, small two-level structure costing **38 wood and 10 stone**. Find it in Build → Ready-made blueprints. You can continue expanding it afterward.
-- **Upstairs interior furniture**: workbench, storage chest, table, chair, bed and shelf can be placed on the upper floor. Choose one, then use the **Ground/Upstairs** toggle in placement controls; default switches to upstairs when you are already on that level. Fires and furnaces stay downstairs.
-- **Structural safety**: upper floors require underlying floors and wall support. Removing supports is blocked if a loft, staircase, roof or upstairs furniture still depends on them.
-- **Saved second-floor positions**: if you save while upstairs, you reload upstairs. Old v0.20 building IDs, storage, farmland, campfires, deep cave progress, wardrobe and local/cloud worlds are preserved by the v0.21 migration.
-- **Automatic account sync** follows the v0.19.2 design, including actual conflict protection, local fallback, and cloud restoration. No extra cloud/device choice added.
+### 1) Fix for stuck joystick and frozen camera gestures (priority)
+- Joystick and camera gesture use an explicit pointer owner and are released on global `pointerup`, `pointercancel`, `lostpointercapture`, browser blur, pagehide, orientation change, and interrupted iOS touch sequences.
+- Movement zeroes out immediately when a gesture stops; moving the same finger on the joystick and tapping Jump with another still works.
+- Opening Bag, Map or Build clears stale control state before the panel opens.
+- New unobtrusive **↻ Unstick** button just to the right of the joystick: one tap resets joystick, camera-drag ownership, held block, queued jump and keyboard input **without refreshing and without touching your saved world**.
+- Added `input-recovery.js`; existing `dual-input.js` is retained. This addresses stuck input state; it is not a guarantee against hardware freezes, Safari crashing or WebGL GPU context loss.
 
-### Limitations
+### 2) World expands x2 in each horizontal dimension
+- World half-width is now **172m versus 86m**, a traversable **344×344m** square compared with **172×172m** before: **4× the total land area**. The homestead remains at (0,0).
+- **Four new map discoveries:** Westwood Thicket, Northreach Pines, Sunstone Flats, Willowmere Fields. The areas have deterministic, collectable outer trees and mineable rocks, additional ground vegetation, and recognizable clearings.
+- New, stable outer resource IDs are `et0..et101` and `er0..er53`. All existing `t0..t73`, `r0..r50`, buildings, cave treasures, campfires, seed patches, furniture, and two-storey homes remain at their historical coordinates. New scenery doesn't consume the historical random placement sequence.
+- Optimized low-cost outer tree proxies and distance-dependent 3D models on Standard Effects; the original low graphics option remains available.
+- Building placement now reaches the new world edges, still with the 500-piece total safety limit. Fog/sky/ground resized so the camera remains inside a consistent environment.
 
-- **Prefab cabins cannot be stacked** because their existing pitched roofs occupy the space. Make two-storey houses using the modular building pieces or the Two-Storey Starter.
-- Buildings still have a **500-piece world limit** for mobile performance.
-- This is a lightweight custom character physics system, not a full rigid-body simulation. Multi-level traversal requires iPhone testing.
-- Existing models and graphical fidelity are unchanged in this construction-focused release.
+### Save and cloud
+- Separate Safari key **`wilderness_v022_singleplayer`**, previous **`wilderness_v021_singleplayer`** remains untouched.
+- JSON backup save `version:21` (v0.21 JSON was `version:20`). JSON import/export, upstairs height, closets, chests, existing mining progress and discovery list remain supported.
+- Account-first automatic cloud sync stays. Newly generated full-health outer resources do not count as independent progress for the cloud conflict comparison.
+- If Cloud Save is enabled, apply **the separate v0.22 Supabase migration first**, then the game ZIP. The SQL only adds admission for JSON version 21; no new tables or account changes.
 
-## Exact manual installation on iPhone
+## Exact iPhone upload steps
 
-1. In **working v0.20**, open **Bag → Export world** and save the JSON backup in iPhone Files. Keep your working v0.20 ZIP for fallback. Don't clear Safari website data.
-2. **If Cloud Save is enabled**, first download the **separate v0.21 private Supabase ZIP** and follow `README_PRIVATE.md`. Run the **forward** `wilderness_v021_cloud_format.sql`, then `verify_v021_readonly.sql` in your Wilderness Supabase project. **Do not run emergency rollback SQL.** If you aren't using Cloud Save, skip SQL entirely.
-3. Download this **complete public v0.21 ZIP**, open it in iPhone **Files**, and extract the folder.
-4. Open your existing Wilderness repository in GitHub Safari. Upload and **replace the existing `index.html`, `game.js`, every other `.js`, plus `README.md`/`ROADMAP.md`** with all same-named files in this ZIP. Add the new file **`second-story-system.js` beside `game.js`**. GitHub uses one file per path; do not create a nested `wilderness-prototype-v0.21/` folder inside the repository.
-5. Keep an `assets/` folder in the **repository root**, with all six `.glb`/`.webp` files from this ZIP. Do not rename them or place them beside `index.html`.
-6. Commit your changes to your GitHub Pages deployment branch (often `main`). Wait until GitHub Pages/Actions has finished deploying, and reload the **same game URL** in Safari.
-7. Confirm the header says **Single-player · v0.21**. If it says v0.20, verify the deployment and hard refresh; do not delete browser storage. A built-in startup check also warns when mixed old/new JavaScript modules are detected.
-8. Open Build → Ready-made blueprints → **Two-Storey Starter**, find a clear area and tap Place. You may need Bag → refill creative supplies if short of materials. Walk up the staircase, build extra upper-floor rooms, and try a bed/chest upstairs.
-9. Verify Bag → Account & Cloud Save says **Automatic sync on** (if connected), and test saving/reloading and a second device only after the first cloud sync succeeds.
+1. In the **working v0.21**, Bag → Export world. Keep its JSON backup AND the old v0.21 ZIP. Do not clear Safari website data.
+2. If you use Cloud Save, **first** open the **private Supabase v0.22 ZIP** and follow `README_PRIVATE.md`: run `wilderness_v022_cloud_format.sql`, then the read-only verification. **Do not run emergency rollback.** If you don't use Cloud Save, skip SQL.
+3. Download the complete public **Wilderness v0.22 GitHub ZIP**. In iPhone Files, tap the ZIP to extract it.
+4. In your existing Wilderness GitHub repository, replace **all** existing root HTML/JavaScript files with the matching new files. Add **`world-expansion-system.js` and `input-recovery.js`** at the root next to `game.js`. Do not upload a nested `wilderness-prototype-v0.22` folder inside your repository.
+5. Keep `assets/` at the repository root containing all six `.glb` and `.webp` files from the ZIP; upload missing ones into that folder only.
+6. Commit on your GitHub Pages branch (usually `main`), confirm deployment, and refresh the SAME game URL in Safari. Header must read **Single-player · v0.22**. The startup version checker is also updated to verify the new modules.
+7. Move and rotate the camera with two thumbs, try Jump/Attack while moving, and test **↻ Unstick** while walking. Open/close Bag and Map; the controls should be fresh each time.
+8. Open Map → select the four new locations; walk into each region, harvest a tree/mine a rock and check the map markers. Build near an outer edge and save/refresh.
+9. Open Bag → Account & Cloud Save, ensure it automatically backs up. If an actual conflict appears, export before choosing; don't overwrite independent worlds without review.
 
-## Suggested iPhone acceptance test
+## Required iPhone acceptance tests
 
-1. Existing v0.20 settlement, chests, crops, cave mining, clothing, campfires and survival needs all load unchanged.
-2. Two-Storey Starter places without an error, in a clear space.
-3. Joystick + Jump still works, and you can **walk all the way up the tall stairs** without teleporting, hitting invisible walls, or falling through a gap.
-4. You can stand on the upper floor, walk underneath it on the ground, and descend the stairs.
-5. You can make a wider upper room, add upper windows and a roof, and place a chest and bed upstairs.
-6. Upper furniture, its contents, and your upstairs position survive Save → Safari refresh and JSON export/import.
-7. Removing a supporting floor/wall while a loft depends on it is correctly blocked. Removing an unrelated piece refunds its resources.
-8. Cloud autosaves and restores without a routine cloud/device prompt; iPhone frame rate remains usable in Standard and Low Effects.
+1. Old v0.21 homestead, upstairs furniture, campfires, maze, mining, crops, clothing and inventory are unchanged.
+2. Hold movement and Jump/Attack simultaneously, release either finger in either order, repeat; no stuck axis or frozen camera.
+3. Open Map/Bag mid-movement: the joystick recenters and movement stops. Tap **↻ Unstick** when needed.
+4. Background Safari mid-gesture, then return: controls are released, not held forever.
+5. Four new outer landmarks appear on the full map and can be discovered, and outer resources can be gathered.
+6. Walk the original perimeter (~86m) without hitting a wall; the new boundary is ~172m.
+7. Build and save beyond the old map; refresh restores the same coordinates and buildings.
+8. If cloud enabled: auto-sync and a second-device restore work without routine manual selection.
+9. Test both Standard and Low Effects for acceptable iPhone performance.
 
-## Save and backup details
+## Testing limitations
 
-v0.21 local save slot: `wilderness_v021_singleplayer`, JSON format `version:20`. The previous `wilderness_v020_singleplayer` slot is read-only during migration and remains for rollback. Before a cloud restore, the existing local copy gets a separate recovery snapshot. Imported backups are validated before replacing a save; keep an exported JSON before upgrading.
-
-## Code notes
-
-New `second-story-system.js` contains structural rules, stair rise/profile and upper-floor support checks. Existing ground-piece geometry and v0.20 save semantics remain. Cloud Save's established baseline key is deliberately unchanged to avoid introducing another login/sync conflict.
-
-**Verification performed:** automated unit tests for placement/support, ramp ascent, migration, upstairs furniture, legacy-world preservation and automatic-sync decisions; syntax and package integrity. **Not verified:** actual rendered graphics, iOS Safari touch/camera physics or live Supabase database writes (manual acceptance required).
+Automated unit/integration tests cover deterministic outer resource placement, old-save migration, resource IDs, new world bounds, input release, cloud-conflict classification, import references, syntax, and archive integrity. Actual touch and WebGL performance must be tested in Safari. The new outer regions are deliberately exploratory landscapes, not yet NPC villages or dungeons; v0.23 is the village milestone.

@@ -1,10 +1,8 @@
-# Wilderness release roadmap — updated after v0.21
+# Wilderness road map after v0.22
 
-**v0.21 (this release):** second-floor modular construction, supporting walls, stair ascent, upstairs furnishings and a new Two-Storey Starter blueprint. v0.20 world and v0.19.2 account-first sync remain protected.
+- **v0.22 — This release:** fix stuck joystick/camera and double horizontal world dimensions, four new discoverable outer areas, new tree/rock resources, backwards-compatible saves.
+- **v0.23 — Village life:** expanded discovered villages, several houses, NPCs limited to settlement areas, meaningful interactions and mobile NPC count/performance budgets.
+- **v0.24 — Night threats:** limited night zombies that avoid safe home and village zones, daylight despawn, low-chore controls.
+- **v0.25 — Tameable dog:** bone/meat resources, training, follow/stay, save-persistent companion.
 
-- **v0.22 — Expand the world:** grow dimensions in a controlled way (doubling each axis means 4× area), add low-cost scenery and distance-based visibility, avoid changing historical tree/rock IDs, ensure safe migration.
-- **v0.23 — Villages & villagers:** discoverable inhabited settlements with larger houses, believable local NPC routines restricted to their village, and social interaction hooks.
-- **v0.24 — Night zombies:** night-only spawning beyond safe settlements, fair combat and movement, no offline homestead destruction.
-- **v0.25 — Dog companion:** taming with bones/meat, follow/guard behavior, safe persistence, and simple care.
-
-Each version is its own full GitHub ZIP and, only when required, separate private Supabase migration. Player saves, cloud security, controls and iPhone performance gate progression. Never blindly combine all future features into one build.
+No new milestone begins until the prior iPhone acceptance tests pass. Preserve all previous save keys, export JSON before each update, validate live Supabase SQL separately, and keep two ZIPs when a backend migration is required.
