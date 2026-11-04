@@ -1,163 +1,221 @@
-// Wilderness v0.23 — compact, deterministic living settlement.
-// Village graphics / NPC routines are regenerated from the existing game clock.
-// No personal information, network activity, new save fields or random resources.
-export const VILLAGE={id:'amberfall',name:'Amberfall Village',x:-112,z:113,icon:'🏘️',range:14,info:'A small inhabited woodland settlement. Six residents work by day and return home at night.'};
-export const VILLAGE_RADIUS=23;
-const homes=[
-  {x:-14,z:-10,roof:'#695347'},{x:-5,z:-14,roof:'#735b48'},
-  {x:6,z:-14,roof:'#675443'},{x:15,z:-10,roof:'#79614b'},
-  {x:-15,z:11,roof:'#73554a'},{x:-5,z:15,roof:'#67564a'},
-  {x:7,z:15,roof:'#7d624b'},{x:16,z:10,roof:'#675245'}
-];
-export const VILLAGE_HOMES=Object.freeze(homes.map((h,i)=>Object.freeze({...h,id:'house'+i})));
-export const VILLAGERS=Object.freeze([
-  {id:'eda',name:'Eda',job:'Farmer',home:0,work:{x:-16,z:2},color:'#687d55',dialog:'The fields need tending every morning.'},
-  {id:'osric',name:'Osric',job:'Woodcutter',home:1,work:{x:-19,z:-1},color:'#806047',dialog:'A sturdy axe is worth its weight in timber.'},
-  {id:'nela',name:'Nela',job:'Baker',home:2,work:{x:5,z:-2},color:'#987a5c',dialog:'A hot meal after an expedition makes everything better.'},
-  {id:'bryn',name:'Bryn',job:'Village Guard',home:3,work:{x:17,z:0},color:'#586a70',dialog:'The village is peaceful, but the woods are unpredictable.'},
-  {id:'toma',name:'Toma',job:'Gardener',home:4,work:{x:-10,z:2},color:'#6b8170',dialog:'Plants grow better with water, patience, and sunlight.'},
-  {id:'mara',name:'Mara',job:'Resident',home:7,work:{x:11,z:3},color:'#8c6571',dialog:'Welcome to Amberfall. You can rest here before heading east.'}
+// Wilderness 0.23.1 — four living settlements, accessible interiors and deterministic barter/loot.
+// Villager schedules, chest contents and locations are reproducible. No backend secrets.
+const village=(id,name,x,z,accent,homes,people,info)=>Object.freeze({
+  id,name,x,z,accent,icon:'🏘️',range:17,info,homes:Object.freeze(homes.map((p,i)=>Object.freeze({id:`${id}:house${i}`,x:p[0],z:p[1],roof:p[2]??accent,front:p[1]<0?1:-1}))),
+  people:Object.freeze(people.map((p,i)=>Object.freeze({id:`${id}:${p[0]}`,name:p[1],job:p[2],home:p[3],work:{x:p[4],z:p[5]},dialog:p[6],color:p[7]||accent})))
+});
+export const VILLAGES=Object.freeze([
+  village('amberfall','Amberfall Village',-112,113,'#735847',
+    [[-14,-10],[-5,-14],[6,-14],[15,-10],[-15,11],[-5,15],[7,15],[16,10]],
+    [['eda','Eda','Farmer',0,-16,2,'The fields need tending every morning.','#687d55'],['osric','Osric','Woodcutter',1,-19,-1,'Trade a little ore for a stack of timber.'],['nela','Nela','Baker',2,5,-2,'The oven is hot, and the stew is fresh.'],['bryn','Bryn','Guard',3,17,0,'Keep an eye on the woods after sunset.'],['toma','Toma','Gardener',4,-10,2,'Plant seeds and make yourself at home.'],['mara','Mara','Merchant',7,11,3,'A traveler always needs supplies.']],
+    'Woodland houses, an open square and a busy market.'),
+  village('stonebrook','Stonebrook Hamlet',112,110,'#777063',
+    [[-14,-12],[0,-15],[14,-12],[-15,13],[0,16],[15,13]],
+    [['orin','Orin','Mason',0,-16,1,'Stone from the cliffs makes strong foundations.'],['lina','Lina','Farmer',1,-7,-2,'A handful of grain can start a whole harvest.'],['tess','Tess','Merchant',2,10,-1,'Bring me stone and I can swap you useful goods.'],['garr','Garr','Guard',3,16,1,'The hamlet is safer when we watch the roads.'],['roan','Roan','Baker',4,2,3,'A bowl of stew keeps the cold away.']],
+    'A stoneworkers settlement with larger homes and a market.'),
+  village('briarhaven','Briarhaven',-113,-112,'#665a49',
+    [[-14,-12],[0,-15],[14,-12],[-15,13],[0,16],[15,13]],
+    [['iara','Iara','Gardener',0,-18,1,'These roots thrive in the damp soil.'],['fenn','Fenn','Woodcutter',1,-5,-1,'The old grove grows strong timber.'],['suri','Suri','Merchant',2,11,-2,'A good bargain beats a long expedition.'],['joss','Joss','Farmer',3,-13,3,'Take care not to trample the seedlings.'],['vale','Vale','Guard',5,17,2,'Stay close to the lanterns at night.']],
+    'A secluded garden village among the southern woods.'),
+  village('sunridge','Sunridge Crossing',113,-111,'#84634e',
+    [[-14,-12],[0,-15],[14,-12],[-15,13],[0,16],[15,13]],
+    [['pax','Pax','Merchant',0,-15,0,'Iron, wood, grain — I can find a buyer.'],['mina','Mina','Baker',1,-4,-2,'Warm food after the ridge trail?'],['evan','Evan','Mason',2,13,-2,'You can never have too much good stone.'],['rhea','Rhea','Gardener',4,1,3,'Every garden starts with a few seeds.'],['kell','Kell','Guard',5,16,1,'The hills seem quieter from our watchpost.']],
+    'Hillside houses and a crossroads trading stop.')
 ]);
-export const villageDistance=(x,z)=>Math.hypot(x-VILLAGE.x,z-VILLAGE.z);
-// Keep geometric footprints separate from purely visual props and editable world saves.
-export function villageHouseAt(x,z,padding=.28,disabled=null){
-  const dx=x-VILLAGE.x,dz=z-VILLAGE.z;
-  for(const h of VILLAGE_HOMES){if(disabled?.has(h.id))continue;
-    const xx=dx-h.x,zz=dz-h.z;
-    if(Math.abs(xx)<2.75+padding&&Math.abs(zz)<2.55+padding)return true;
-  }
-  return false;
-}
+// Backward compatibility with v0.23 imports and stable historical Amberfall landmark.
+export const VILLAGE=VILLAGES[0];
+export const VILLAGE_RADIUS=37;
+export const VILLAGE_HOMES=VILLAGE.homes;
+export const VILLAGERS=VILLAGE.people;
+export const HOUSE_WIDTH=7.2, HOUSE_DEPTH=6.8;
+const HX=HOUSE_WIDTH/2, HZ=HOUSE_DEPTH/2, WALL=.22, DOOR_HALF=.72;
 const lerp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
-function travel(a,b,t){return {x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t)};}
-// Schedules derive solely from the existing day/night clock; no NPC save data.
-export function villagerSchedule(def,elapsed){
+const near=(x,z,p,d=VILLAGE_RADIUS)=>Math.hypot(x-p.x,z-p.z)<d;
+export const villageDistance=(x,z)=>Math.min(...VILLAGES.map(v=>Math.hypot(x-v.x,z-v.z)));
+export function villageAt(x,z,range=VILLAGE_RADIUS){return VILLAGES.find(v=>Math.hypot(x-v.x,z-v.z)<range)||null;}
+export const VILLAGE_CHESTS=Object.freeze(VILLAGES.flatMap(v=>v.homes.filter((_,i)=>i%2===0).map(h=>Object.freeze({id:`vloot:${h.id}`,village:v.id,house:h.id,x:v.x+h.x,z:v.z+h.z}))));
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619)>>>0;return h;}
+const rewards=Object.freeze([{wood:7,stone:5},{carrot:3,wheat_seed:3},{iron_ore:4,stone:3},{potato:3,water:2},{charcoal:3,wood:5},{wheat:4,carrot_seed:2},{iron_bar:1,stone:7}]);
+export function villageChestRewards(id){if(!VILLAGE_CHESTS.some(c=>c.id===id))return null;return {...rewards[hash(id)%rewards.length]};}
+export const VILLAGE_TRADES=Object.freeze({
+ Farmer:Object.freeze([{cost:{wood:4},reward:{carrot:3},label:'Fresh carrots'},{cost:{stone:5},reward:{wheat_seed:3},label:'Grain seeds'}]),
+ Gardener:Object.freeze([{cost:{wood:3},reward:{carrot_seed:3},label:'Carrot seeds'},{cost:{stone:4},reward:{potato_seed:3},label:'Potato eyes'}]),
+ Woodcutter:Object.freeze([{cost:{iron_ore:2},reward:{wood:12},label:'Timber bundle'},{cost:{wheat:3},reward:{charcoal:3},label:'Charcoal'}]),
+ Baker:Object.freeze([{cost:{wheat:4,carrot:1},reward:{stew:2},label:'Hearty stew'},{cost:{wood:4},reward:{potato:4},label:'Roasting potatoes'}]),
+ Mason:Object.freeze([{cost:{wood:6},reward:{stone:9},label:'Cut stone'},{cost:{iron_ore:3},reward:{iron_bar:1},label:'Refined iron'}]),
+ Merchant:Object.freeze([{cost:{stone:6},reward:{water:3},label:'Travel water'},{cost:{wood:14},reward:{iron_ore:1},label:'Iron prospecting bundle'},{cost:{carrot:3},reward:{wheat:5},label:'Grain bundle'}]),
+ Guard:Object.freeze([{cost:{wheat:4},reward:{iron_ore:2},label:'Salvaged ore'}])
+});
+export const offersForVillager=(person)=>VILLAGE_TRADES[person?.job]||[];
+export function villagerSchedule(def,elapsed,village=VILLAGES.find(v=>v.people.includes(def))||VILLAGE){
   const hour=((elapsed%720+720)%720)/30;
-  const home=VILLAGE_HOMES[def.home],work=def.work;
-  const bed={x:home.x+(home.x<0?2.0:-2.0),z:home.z+(home.z<0?3.1:-3.1)};
+  const home=village.homes[def.home],work=def.work;
+  const step={x:home.x,z:home.z+home.front*(HZ+2.4)};
   const plaza={x:(def.home%3-1)*2,z:0};
-  if(hour<6.5||hour>=21)return {...bed,active:false,walking:false,place:'home'};
-  if(hour<7.8)return {...travel(bed,plaza,(hour-6.5)/1.3),active:true,walking:true,place:'walk'};
-  if(hour<8.5)return {...travel(plaza,work,(hour-7.8)/.7),active:true,walking:true,place:'walk'};
-  if(hour<12.0)return {...work,active:true,walking:false,place:'work'};
-  if(hour<12.8)return {...travel(work,plaza,(hour-12)/.8),active:true,walking:true,place:'walk'};
-  if(hour<14.0)return {...plaza,active:true,walking:false,place:'square'};
+  const travel=(a,b,t)=>({x:lerp(a.x,b.x,t),z:lerp(a.z,b.z,t)});
+  if(hour<6.6||hour>=20.8)return {...step,active:false,walking:false,place:'home'};
+  if(hour<8)return {...travel(step,plaza,(hour-6.6)/1.4),active:true,walking:true,place:'walk'};
+  if(hour<8.8)return {...travel(plaza,work,(hour-8)/.8),active:true,walking:true,place:'walk'};
+  if(hour<12)return {...work,active:true,walking:false,place:'work'};
+  if(hour<12.7)return {...travel(work,plaza,(hour-12)/.7),active:true,walking:true,place:'walk'};
+  if(hour<14)return {...plaza,active:true,walking:false,place:'square'};
   if(hour<14.8)return {...travel(plaza,work,(hour-14)/.8),active:true,walking:true,place:'walk'};
-  if(hour<18.0)return {...work,active:true,walking:false,place:'work'};
-  if(hour<19.7)return {...travel(work,plaza,(hour-18)/1.7),active:true,walking:true,place:'walk'};
-  if(hour<20.1)return {...plaza,active:true,walking:false,place:'square'};
-  return {...travel(plaza,bed,(hour-20.1)/.9),active:true,walking:true,place:'walk'};
+  if(hour<18.5)return {...work,active:true,walking:false,place:'work'};
+  if(hour<19.1)return {...travel(work,plaza,(hour-18.5)/.6),active:true,walking:true,place:'walk'};
+  if(hour<19.8)return {...plaza,active:true,walking:false,place:'square'};
+  return {...travel(plaza,step,(hour-19.8)),active:true,walking:true,place:'walk'};
 }
-export function nearbyVillager(position,elapsed,range=2.7){
-  if(villageDistance(position.x,position.z)>VILLAGE_RADIUS+3)return null;
+export function nearbyVillager(position,elapsed,range=2.8){
   let best=null,d=range;
-  for(const person of VILLAGERS){const p=villagerSchedule(person,elapsed);if(!p.active)continue;
-    const dist=Math.hypot(VILLAGE.x+p.x-position.x,VILLAGE.z+p.z-position.z);
-    if(dist<d){best={...person,...p,distance:dist};d=dist;}
-  }
-  return best;
+  for(const v of VILLAGES){if(!near(position.x,position.z,v,55))continue;
+    for(const def of v.people){const p=villagerSchedule(def,elapsed,v);if(!p.active)continue;
+      const dist=Math.hypot(v.x+p.x-position.x,v.z+p.z-position.z);
+      if(dist<d){best={...def,...p,villageId:v.id,villageName:v.name,distance:dist};d=dist;}
+    }
+  }return best;
+}
+export function localHousePoint(x,z,v,h){const a=(h.front===-1)?-1:1;return {x:(x-(v.x+h.x))*a,z:(z-(v.z+h.z))*a};}
+export function villageHouseAt(x,z,padding=.28,blocked=null,openedDoors=null){
+  for(const v of VILLAGES){if(!near(x,z,v,46))continue;
+    for(const h of v.homes){if(blocked?.has(h.id))continue;
+      const p=localHousePoint(x,z,v,h);if(Math.abs(p.x)>HX+padding||Math.abs(p.z)>HZ+padding)continue;
+      // Solid walls are only around the perimeter, not throughout the interiors.
+      const rear=Math.abs(p.z+HZ)<WALL+padding;
+      const sides=Math.abs(Math.abs(p.x)-HX)<WALL+padding;
+      const front=Math.abs(p.z-HZ)<WALL+padding;
+      if(rear||sides||(front&&(Math.abs(p.x)>DOOR_HALF-padding||!openedDoors?.has(h.id))))return true;
+    }
+  }return false;
+}
+export function houseContaining(x,z,blocked=null){
+  for(const v of VILLAGES){if(!near(x,z,v,45))continue;
+    for(const h of v.homes){if(blocked?.has(h.id))continue;const p=localHousePoint(x,z,v,h);
+      if(Math.abs(p.x)<HX-.26&&Math.abs(p.z)<HZ-.26)return {village:v,house:h,local:p};
+    }
+  }return null;
+}
+export function nearestVillageDoor(position,blocked=null,range=2.4){
+  let best=null,d=range;
+  for(const v of VILLAGES){if(!near(position.x,position.z,v,46))continue;
+    for(const h of v.homes){if(blocked?.has(h.id))continue;
+      const x=v.x+h.x,z=v.z+h.z+h.front*HZ;
+      const ds=Math.hypot(position.x-x,position.z-z);
+      if(ds<d){best={id:h.id,village:v.id,house:h,x,z,distance:ds};d=ds;}
+    }
+  }return best;
+}
+export function nearestVillageChest(position,blocked=null,range=2.1){
+  const inside=houseContaining(position.x,position.z,blocked);if(!inside)return null;
+  const chest=VILLAGE_CHESTS.find(c=>c.house===inside.house.id);if(!chest)return null;
+  const p=localHousePoint(position.x,position.z,inside.village,inside.house);
+  const dist=Math.hypot(p.x+1.9,p.z+1.1);
+  return dist<=range?{...chest,distance:dist}:null;
 }
 export function createLivingVillage(THREE,scene){
-  const root=new THREE.Group();root.position.set(VILLAGE.x,0,VILLAGE.z);scene.add(root);
-  const matte=(color)=>new THREE.MeshStandardMaterial({color,roughness:1});
-  const materials={wood:matte('#94775b'),timber:matte('#6b5140'),stone:matte('#9b9b8a'),
-    path:matte('#928671'),roof:matte('#72594b'),grass:matte('#65805d'),leaf:matte('#678d62'),
-    skin:matte('#d5b08b'),hair:matte('#47392e'),fire:new THREE.MeshBasicMaterial({color:'#ecb266'})};
-  const cube=(group,w,h,d,x,y,z,material)=>{
-    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);group.add(m);return m;
+  const root=new THREE.Group();scene.add(root);
+  const unitBox=new THREE.BoxGeometry(1,1,1),unitCone=new THREE.ConeGeometry(1,1,6);
+  const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.92});
+  const materials={wall:mat('#ae987b'),wood:mat('#695345'),stone:mat('#b5aba0'),path:mat('#9d907a'),leaf:mat('#6e946b'),skin:mat('#cfaa8b'),hair:mat('#594739'),water:mat('#71a6ae'),torch:new THREE.MeshBasicMaterial({color:'#ffc77c'})};
+  function box(parent,w,h,d,x,y,z,m){const o=new THREE.Mesh(unitBox,m);o.scale.set(w,h,d);o.position.set(x,y,z);parent.add(o);return o;}
+  const villageNodes=[],houseNodes=new Map(),actors=[];
+  const blockedHomes=new Set(),openedDoors=new Set(),chestLids=new Map();
+  for(const v of VILLAGES){
+    const group=new THREE.Group();group.position.set(v.x,0,v.z);root.add(group);villageNodes.push({v,group});
+    const roofmat=mat(v.accent);
+    box(group,48,.055,3.2,0,-.048,0,materials.path);
+    box(group,2.8,.055,42,0,-.05,0,materials.path);
+    const plaza=new THREE.Mesh(new THREE.CircleGeometry(6.2,16),materials.path);plaza.rotation.x=-Math.PI/2;plaza.position.y=-.048;group.add(plaza);
+    for(const h of v.homes){
+      const houseGroup=new THREE.Group();houseGroup.position.set(h.x,0,h.z);houseGroup.rotation.y=h.front===-1?Math.PI:0;group.add(houseGroup);
+      houseNodes.set(h.id,{v,h,group:houseGroup});
+      const roofGroup=new THREE.Group();houseGroup.add(roofGroup);
+      box(houseGroup,HOUSE_WIDTH,.14,HOUSE_DEPTH,0,-.03,0,materials.wood);
+      // Four separate walls leave a proper doorway, rather than a solid block interior.
+      box(houseGroup,HOUSE_WIDTH,2.9,.24,0,1.55,-HZ,materials.wall);
+      for(const side of [-1,1])box(houseGroup,.24,2.9,HOUSE_DEPTH,side*HX,1.55,0,materials.wall);
+      const wing=(HOUSE_WIDTH-2*DOOR_HALF)/2;
+      for(const side of [-1,1])box(houseGroup,wing,2.9,.25,side*(DOOR_HALF+wing/2),1.55,HZ,materials.wall);
+      box(houseGroup,2*DOOR_HALF,.70,.26,0,2.63,HZ,materials.wood);
+      for(const side of [-1,1]){
+        box(houseGroup,.64,.64,.08,side*1.98,1.8,HZ+.16,materials.stone);
+        box(houseGroup,.08,.70,.12,side*1.98,1.8,HZ+.22,materials.wood);
+      }
+      // Openable hinged door: 3D swing updates with the collision state.
+      const pivot=new THREE.Group();pivot.position.set(-DOOR_HALF,.1,HZ);houseGroup.add(pivot);
+      box(pivot,DOOR_HALF*2,2.35,.14,DOOR_HALF,1.15,0,materials.wood);
+      box(pivot,.12,.12,.17,DOOR_HALF*1.85,1.20,.16,materials.stone);
+      const roofA=box(roofGroup,4.3,.3,HOUSE_DEPTH+.64,-1.68,3.7,0,roofmat);roofA.rotation.z=.48;
+      const roofB=box(roofGroup,4.3,.3,HOUSE_DEPTH+.64,1.68,3.7,0,roofmat);roofB.rotation.z=-.48;
+      box(roofGroup,.65,.9,.7,2.0,4.15,-1.1,materials.stone);
+      // Visible interiors: bed, rug, table, and a few houses contain a loot chest.
+      box(houseGroup,1.65,.24,2.35,1.72,.30,-1.65,materials.wood);
+      box(houseGroup,1.55,.14,.73,1.72,.50,-2.40,mat('#89947e'));
+      box(houseGroup,1.45,.15,1.15,-.28,.61,-1.20,materials.wood);
+      box(houseGroup,.15,.60,.15,-.83,.31,-1.60,materials.wood);
+      const chest=VILLAGE_CHESTS.find(c=>c.house===h.id);
+      if(chest){
+        box(houseGroup,.94,.52,.65,-1.9,.34,-1.1,materials.wood);
+        const lid=new THREE.Group();lid.position.set(-1.9,.59,-1.43);houseGroup.add(lid);
+        box(lid,.99,.16,.72,0,0,.33,materials.stone);chestLids.set(chest.id,lid);
+      }
+      houseNodes.get(h.id).roof=roofGroup;
+      houseNodes.get(h.id).pivot=pivot;
+    }
+    // Well, garden beds and small lanterns use pooled geometry/materials.
+    const well=new THREE.Mesh(new THREE.CylinderGeometry(.82,.95,.68,8),materials.stone);well.position.set(3.6,.37,3.8);group.add(well);
+    const water=new THREE.Mesh(new THREE.CircleGeometry(.65,12),materials.water);water.rotation.x=-Math.PI/2;water.position.set(3.6,.75,3.8);group.add(water);
+    for(const x of [-19,-16.5,-14])for(const z of [5,7.2]){
+      const plant=new THREE.Mesh(unitCone,materials.leaf);plant.scale.set(.22,.66,.22);plant.position.set(x,.38,z);group.add(plant);
+    }
+    for(const x of [-19,19]){
+      box(group,.17,2.7,.17,x,1.35,-3.2,materials.wood);
+      box(group,.38,.44,.36,x,2.58,-3.2,materials.torch);
+    }
+    const fire=new THREE.PointLight('#ffba73',0,10,2);fire.position.set(0,1.5,0);group.add(fire);villageNodes[villageNodes.length-1].light=fire;
+    for(const def of v.people){
+      const model=new THREE.Group();group.add(model);
+      const coat=mat(def.color);
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(.25,.30,.93,7),coat);body.position.y=1.08;model.add(body);
+      const head=new THREE.Mesh(new THREE.SphereGeometry(.24,8,6),materials.skin);head.position.y=1.77;model.add(head);
+      const hair=new THREE.Mesh(new THREE.SphereGeometry(.245,8,6,0,2*Math.PI,0,Math.PI*.48),materials.hair);hair.position.y=1.87;model.add(hair);
+      const arms=[],legs=[];
+      for(const side of [-1,1]){
+        const arm=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.66,6),coat);arm.position.set(side*.34,1.10,0);model.add(arm);arms.push(arm);
+        const leg=new THREE.Mesh(new THREE.CylinderGeometry(.10,.12,.70,6),materials.wood);leg.position.set(side*.16,.35,0);model.add(leg);legs.push(leg);
+      }
+      actors.push({def,v,model,arms,legs});
+    }
+  }
+  const protectExistingBuilds=(builds)=>{
+    blockedHomes.clear();for(const [id,o] of houseNodes){
+      if(builds.some(b=>Math.hypot(b.x-(o.v.x+o.h.x),b.z-(o.v.z+o.h.z))<5.7))blockedHomes.add(id);
+      o.group.visible=!blockedHomes.has(id);
+    }
   };
-  const disc=(x,z,r,material)=>{
-    const m=new THREE.Mesh(new THREE.CircleGeometry(r,20),material);m.rotation.x=-Math.PI/2;m.position.set(x,-.065,z);root.add(m);return m;
-  };
-  // Packed-earth roads and plaza; the surrounding world is not flattened or regenerated.
-  cube(root,41,.05,2.65,0,-.045,0,materials.path);
-  cube(root,2.2,.05,37,0,-.047,0,materials.path);
-  disc(0,0,5.5,materials.path);
-  const existingBlocked=new Set();
-  const houseMeshes=new Map();
-  for(const house of VILLAGE_HOMES){
-    const g=new THREE.Group();g.position.set(house.x,0,house.z);root.add(g);houseMeshes.set(house.id,g);
-    const hmat=matte(house.roof);
-    cube(g,5.0,2.35,4.5,0,1.2,0,materials.wood);
-    cube(g,5.34,.21,4.72,0,2.38,0,materials.timber);
-    const roofL=cube(g,3.15,.32,5.1,-1.25,3.12,0,hmat);roofL.rotation.z=.64;
-    const roofR=cube(g,3.15,.32,5.1,1.25,3.12,0,hmat);roofR.rotation.z=-.64;
-    cube(g,.95,1.58,.07,0,.81,2.31,materials.timber);
-    for(const dx of [-1.35,1.35]){
-      cube(g,.57,.59,.075,dx,1.51,2.30,materials.stone);
-      cube(g,.065,.67,.12,dx,1.51,2.37,materials.timber);
+  const update=(elapsed,px,pz,low=false,claims=[])=>{
+    const hour=((elapsed%720+720)%720)/30,night=hour<6.5||hour>=19;
+    for(const node of villageNodes){
+      const visible=Math.hypot(px-node.v.x,pz-node.v.z)<83;node.group.visible=visible;
+      node.light.intensity=visible&&night&&!low?.63:0;
     }
-    for(const dx of [-2.38,2.38]){
-      cube(g,.21,2.65,.23,dx,1.32,2.2,materials.timber);
-      cube(g,.21,2.65,.23,dx,1.32,-2.2,materials.timber);
+    const inside=houseContaining(px,pz,blockedHomes);
+    for(const [id,n] of houseNodes){
+      if(!n.group.parent.visible)continue;
+      n.roof.visible=!(inside?.house.id===id);
+      n.pivot.rotation.y=openedDoors.has(id)?-1.5:0;
     }
-    cube(g,5.35,.18,.30,0,.53,-2.17,materials.stone);
-    // One shared mesh per chimney; animated smoke is lightweight and optional.
-    cube(g,.55,1.12,.60,1.50,3.57,-1.0,materials.stone);
-  }
-  // Village square, small fenced vegetable garden, stable well and unlit campfire ring.
-  const well=new THREE.Group();root.add(well);well.position.set(2.9,0,4.2);
-  const ring=new THREE.Mesh(new THREE.CylinderGeometry(.84,.95,.76,10),materials.stone);ring.position.y=.38;well.add(ring);
-  const water=new THREE.Mesh(new THREE.CircleGeometry(.71,12),matte('#72a9aa'));water.rotation.x=-Math.PI/2;water.position.y=.79;well.add(water);
-  for(const dx of [-.67,.67])cube(well,.13,2.15,.13,dx,1.56,0,materials.timber);
-  const canopy=cube(well,2,.20,1.6,0,2.63,0,materials.roof);canopy.rotation.z=.04;
-  for(const x of [-17.5,-14.8,-12.1])for(const z of [4.7,6.8]){
-    const crop=new THREE.Mesh(new THREE.ConeGeometry(.24,.68,6),materials.leaf);crop.position.set(x,.33,z);root.add(crop);
-  }
-  const lamps=[];
-  for(const x of [-18,0,18]){
-    cube(root,.17,2.85,.18,x,1.43,-2.5,materials.timber);
-    const globe=new THREE.Mesh(new THREE.OctahedronGeometry(.25),materials.fire);globe.position.set(x,2.77,-2.5);root.add(globe);
-    lamps.push(globe);
-  }
-  const fireLight=new THREE.PointLight('#ffc681',0,12,2);fireLight.position.set(0,2,0);root.add(fireLight);
-  for(let i=0;i<9;i++){
-    const angle=i*Math.PI*2/9;
-    const stone=new THREE.Mesh(new THREE.DodecahedronGeometry(.29,0),materials.stone);stone.position.set(Math.cos(angle)*.82,.13,Math.sin(angle)*.82);root.add(stone);
-  }
-  const flames=[];
-  for(let i=0;i<3;i++){
-    const flame=new THREE.Mesh(new THREE.ConeGeometry(.22,.66,5),materials.fire);flame.position.set((i-1)*.23,.40,(i%2)*.16);root.add(flame);flames.push(flame);
-  }
-  const actors=[];
-  for(const def of VILLAGERS){
-    const group=new THREE.Group();root.add(group);
-    const body=new THREE.Mesh(new THREE.CylinderGeometry(.25,.31,.89,7),matte(def.color));body.position.y=1.18;group.add(body);
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.225,8,6),materials.skin);head.position.y=1.86;group.add(head);
-    const hair=new THREE.Mesh(new THREE.SphereGeometry(.23,8,6,0,Math.PI*2,0,Math.PI*.48),materials.hair);hair.position.y=1.97;group.add(hair);
-    const arms=[],legs=[];
-    for(const side of [-1,1]){
-      const arm=new THREE.Mesh(new THREE.CylinderGeometry(.08,.095,.68,6),matte(def.color));arm.position.set(side*.34,1.18,0);group.add(arm);arms.push(arm);
-      const leg=new THREE.Mesh(new THREE.CylinderGeometry(.105,.13,.70,6),materials.timber);leg.position.set(side*.15,.41,0);group.add(leg);legs.push(leg);
-    }
-    actors.push({def,group,arms,legs});
-  }
-  function protectExistingBuilds(builds){
-    existingBlocked.clear();
-    for(const h of VILLAGE_HOMES){
-      if(builds.some(b=>Math.hypot(b.x-(VILLAGE.x+h.x),b.z-(VILLAGE.z+h.z))<4.9))existingBlocked.add(h.id);
-    }
-    for(const h of VILLAGE_HOMES)houseMeshes.get(h.id).visible=!existingBlocked.has(h.id);
-  }
-  function update(elapsed,px,pz,low=false){
-    const hour=((elapsed%720+720)%720)/30;
-    const night=hour>=19||hour<6;
-    const near=Math.hypot(px-VILLAGE.x,pz-VILLAGE.z)<76;
-    root.visible=near;
-    if(!near)return;
+    for(const [id,lid] of chestLids){lid.rotation.x=claims.includes(id)?-.8:0;}
     for(const a of actors){
-      const dest=villagerSchedule(a.def,elapsed);
-      a.group.visible=dest.active;
-      if(!dest.active)continue;
-      a.group.position.set(dest.x,0,dest.z);
-      const sway=dest.walking&&!low?Math.sin(elapsed*7+a.def.home)*.14:0;
-      a.arms[0].rotation.x=sway;a.arms[1].rotation.x=-sway;
-      a.legs[0].rotation.x=-sway*.8;a.legs[1].rotation.x=sway*.8;
-      if(dest.walking){const ahead=villagerSchedule(a.def,elapsed+.2);const dx=ahead.x-dest.x,dz=ahead.z-dest.z;if(Math.hypot(dx,dz)>.001)a.group.rotation.y=Math.atan2(dx,dz);}
+      if(!a.model.parent.visible){a.model.visible=false;continue;}
+      const state=villagerSchedule(a.def,elapsed,a.v);
+      a.model.visible=state.active;
+      if(!state.active)continue;
+      a.model.position.set(state.x,0,state.z);
+      const wave=state.walking&&!low?Math.sin(elapsed*8+a.def.home)*.17:0;
+      a.arms[0].rotation.x=wave;a.arms[1].rotation.x=-wave;
+      a.legs[0].rotation.x=-wave*.8;a.legs[1].rotation.x=wave*.8;
+      if(state.walking){const next=villagerSchedule(a.def,elapsed+.16,a.v);const dx=next.x-state.x,dz=next.z-state.z;if(Math.hypot(dx,dz)>.01)a.model.rotation.y=Math.atan2(dx,dz);}
     }
-    fireLight.intensity=night&&near&&!low?.9:0;
-    for(const l of lamps)l.material=materials.fire;
-    flames.forEach((f,i)=>{f.scale.y=night?(.8+.12*Math.sin(elapsed*10+i)):0.55;});
-  }
-  return {root,update,protectExistingBuilds,blockedHomes:existingBlocked,houseCount:VILLAGE_HOMES.length,villagerCount:VILLAGERS.length};
+  };
+  return {root,update,protectExistingBuilds,blockedHomes,openedDoors,houseCount:houseNodes.size,villagerCount:actors.length,openDoor:id=>openedDoors.add(id),toggleDoor:id=>openedDoors.has(id)?openedDoors.delete(id):openedDoors.add(id)};
 }

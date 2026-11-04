@@ -1,64 +1,55 @@
-# Wilderness v0.23 — Landscape-First + Living Village
+# Wilderness v0.23.1 — Four Living Villages, Interiors, Chests & Barter
 
-**Complete, ready-to-upload GitHub Pages release (34 files).** All JavaScript/HTML files and the original 6 GLB/WebP assets are included. Replace the entire matching root package; add `village-system.js` beside `game.js`. Keep `assets/` as a subfolder, not alongside the source files.
+**Full ready-to-upload GitHub Pages game package.** This update includes all game files and all six GLB/WebP assets. No partial snippets. A separate SQL ZIP is **not required**: the validated save JSON schema remains **version 21** and the existing v0.22+ Wilderness Supabase cloud RPC already accepts it.
 
-This is one deliberately scoped combined release: landscape-first mobile layout and **one** detailed, low-cost living settlement. It is **not** a complete multi-village economy or full NPC pathfinding simulation.
+## What's new
 
-## What changed
+- **Four settlements total**: previous Amberfall Village remains at **X -112, Z +113**; Stonebrook Hamlet at **X +112, Z +110**; Briarhaven at **X -113, Z -112**; Sunridge Crossing at **X +113, Z -111**. Three are new to v0.23.1. Each appears as a hidden map discovery until visited, then can be selected as a waypoint.
+- **26 larger houses** across all villages. All are *real hollow rooms* with walkable floors and collision around perimeter walls. Approach the front door and tap **Door** to swing it open or closed. The roof hides while you are inside to support the third-person camera.
+- **21 villagers** with morning/work/plaza/evening routines. Villagers stay within their settlement. NPC models and houses render only near their villages to reduce mobile rendering load.
+- **13 village supply chests**, placed in some houses. Approach a chest from inside and tap **Loot**. Chest rewards are pseudo-randomly generated **from the house's permanent ID**: every chest can have different supplies, but refreshing never rerolls it. One claim per chest per world, tracked in existing `exploration.claimed`, protected by save validation. Chest lids display as opened after claiming.
+- **Barter trading**: talk to any daytime villager to open the mobile-friendly trade interface. Exchanges use existing wood, stone, food, seeds, charcoal and ore. Items are only subtracted if the entire trade can complete; any failed local save rolls the trade back. No currency, reputation or new unapproved resources.
+- **No joystick rewrite**: the v0.22 touch-recovery fix and v0.23 landscape HUD and dual-thumb controls are unchanged.
 
-### 1. Landscape-first iPhone gameplay
+### Why no Supabase SQL?
 
-- Rotate your phone horizontally. The game's CSS automatically rearranges the HUD, survival meters, map, zoom, joystick, Jump, combat, backpack, building menu, cloud panel and crafting panels to use the wider screen. Portrait play remains supported.
-- The original v0.22 `DualInput` + `InputRecovery` pointer logic is **retained** (same joystick owner, global touch release, `↻ Unstick`). Moving with the left thumb while using Jump / Attack / Talk with the right remains supported.
-- The onboarding card has been shortened substantially. A brief portrait-only orientation hint fades away automatically.
-- The desktop keyboard/mouse workflow still works. This does NOT forcibly rotate Safari; a normal web page cannot depend on that permission.
+Save JSON stays on **version 21**, with all new treasure claims in the **existing validated exploration field** and all trades in the **existing inventory**. The current Wilderness SQL accepts v21. The account-first autosave baseline (`wilderness_v019_cloud_baseline`) and owner-only cloud RPC are unchanged. No Supabase tables or policies are created or modified by this ZIP.
 
-### 2. Amberfall Village — northwestern outer wilderness
+**Important cross-device rule:** Update ALL browsers/devices that access your Wilderness account to **v0.23.1 before opening village chests or making trades**. An old v0.23 client cannot validate new v0.23.1 chest-claim IDs in a newer cloud save. Leave old clients closed. Keep a JSON export before upgrading.
 
-- **Eight** small textured-style timber houses, stone paths, crossroads, an open village square, a well, gardens, poles and a communal fire ring.
-- **Six NPC villagers**, with named jobs (farmer, woodcutter, baker, guard, gardener, resident). They have small walking animations and distinct routes to work, the village square and their homes. Their day/night timetable derives from the existing game clock; they never roam outside the village.
-- A resident within interaction range adds **💬 Talk** to the existing right-hand action button. Conversations are short, fixed role-appropriate lines. There is not yet trading, recruitment, voiced dialogue, or enterable NPC-house interiors.
-- NPCs are rendered/updated only near the village for mobile performance; Low Effects reduces their idle-motion and lighting cost. Village buildings are collidable; NPCs are not damageable.
-- New `🏘️ Amberfall Village` map landmark, discoverable in-game with a selectable waypoint. Village discovery persists using the *existing* exploration-save field.
-- The village is at **X -112, Z +113** in the existing expanded world. Historical trees/rocks keep the same IDs and coordinates; outer foliage close to the village buildings is hidden, not renumbered/deleted.
-- If a player's own existing construction overlaps a proposed NPC house, that NPC house is hidden so the player's saved building takes priority.
+## Install from an iPhone
 
-### Data safety and cloud compatibility
+1. On the working v0.23 site, open **Bag → Export world** and save the JSON file to Files. Keep the previous v0.23 ZIP.
+2. Download/extract `wilderness-prototype-v0.23.1.zip` in iPhone Files.
+3. Open your **existing Wilderness GitHub repository** in Safari. On the GitHub Pages deployment branch (usually `main`), replace every existing root `.html` and `.js` file with the full files in this ZIP. Do not upload the ZIP itself or a nested `wilderness-prototype-v0.23.1` wrapper folder.
+4. Keep the `assets/` folder intact with `pine.glb`, `oak.glb`, `moss-boulder.glb`, `forest-ground.webp`, `stone-path.webp`, `timber-planks.webp`. All six are included in this ZIP.
+5. Upload `CRAFTING_PROPOSALS.md` optionally; it is **not game code**. Commit changes and verify GitHub Pages deployment succeeded.
+6. Refresh the game's original URL. It should show **Single-player · v0.23.1**. The HTML boot checker uses cache-busted `?v=0.23.1` imports to avoid mixed module versions.
+7. Open Map, travel to one of the four village quadrants, discover the name, open a house, find a supply chest, and trade with a villager during the day.
+8. Save, refresh, check the claimed chest remains empty and items remain in the backpack. Check your old house, stairs, cave, campfires, wardrobe and automatic cloud sign-in.
 
-- The older v0.22 Safari local key `wilderness_v022_singleplayer` remains **read-only**; v0.23 creates `wilderness_v023_singleplayer`. Export a JSON backup from v0.22 first.
-- The JSON schema remains **version 21**, already accepted by the v0.22 Wilderness SQL migration. No new data fields, items or tables were added. This release **does not need Supabase SQL** if v0.22 cloud saving is already working.
-- Cloud Sync retains the previously accepted account-first autosave and revision-based conflict protection. The baseline metadata key has not changed. The separate local cloud recovery slot is also preserved.
-- Existing two-storey homes, crates, seed patches, cave maze, ore states, campfires, wardrobe, health, inventory, day/night and outer resource IDs remain supported.
+**No SQL migration and NO rollback SQL** for this release. Your configured `cloud-config.js` and publishable key remain included. Never upload SQL/admin secrets to a public GitHub site.
 
-## Exact iPhone upload — GitHub only (no SQL)
+## Suggested acceptance tests
 
-1. Open **working v0.22** → Bag → **Export world**. Save the JSON to iPhone Files. Keep your v0.22 ZIP; do not clear Safari website data.
-2. Download and extract `wilderness-prototype-v0.23.zip` in iPhone Files.
-3. Open your existing Wilderness GitHub repository, on the branch that GitHub Pages deploys (usually `main`).
-4. Replace **every existing root `.html`/`.js` file** with the corresponding complete file in this extracted package. **Add `village-system.js` at the repository root** beside `game.js`; don't upload a nested `wilderness-prototype-v0.23/` folder.
-5. Ensure `assets/` still contains **pine.glb, oak.glb, moss-boulder.glb, forest-ground.webp, stone-path.webp, timber-planks.webp**. They are also included in the ZIP. Do not flatten the assets folder.
-6. Commit. Open GitHub Pages deployment status, then refresh your usual game website. The header must show **Single-player · v0.23**. The boot checker uses `?v=0.23` to avoid mixing older JS modules.
-7. Turn your iPhone sideways. Enter the forest; hold the left joystick while tapping Jump or Attack. Check `↻ Unstick` if an interrupted gesture lingers.
-8. Open Map, select **Unexplored location** in the northwestern outer region, and travel to **Amberfall Village (X -112 / Z +113)**. Once discovered, the map reveals its name. Talk to villagers during the day.
-9. Save, refresh, reopen your world, verify second floors/caves/campfires and Cloud Save (if already configured) still work. If any cloud conflict appears, export a backup before selecting a copy.
+1. Landscape and portrait layouts still function; joystick + Jump simultaneously and `↻ Unstick` still work.
+2. All four village markers discover normally; old Amberfall progress is preserved.
+3. Door opens, you enter, roof hides so the room is visible, and you can exit and close the door.
+4. An NPC house is suppressed if it would overlap one of your existing player builds.
+5. Some houses have supply chests; other houses do not. Looting a chest gives supplies once only, even after refresh.
+6. Daytime villager interaction opens the trade panel. Trade costs and rewards are shown before approval. Trading without adequate supplies is blocked.
+7. Both local save and Cloud Save retain village discovery, loot claims and new inventory quantities.
+8. A second device running v0.23.1 loads the same cloud world automatically without normal sign-in choice screens.
+9. Cavern mining, campfires, clothes, two-storey construction and hunger/thirst/sleep still work.
+10. Performance remains acceptable on a physical iPhone in Standard and Low Effects.
 
-## Acceptance tests on iPhone
+## Rollback / recovery
 
-1. Both landscape and portrait work; landscape is more comfortable and does not hide the player behind HUD elements.
-2. Landscape joystick + Jump; joystick + Attack; joystick + Talk with a second finger.
-3. Open Bag, Map, Build and Cloud panel sideways; scroll and close them safely.
-4. Stuck-touch recovery still works after backgrounding Safari, orientation changes and opening panels.
-5. Village houses, paths and residents appear after travelling to Amberfall; no villagers wander outside the settlement.
-6. Villagers walk during daytime, gather around the square, and return home after sunset. Approach a daytime villager and tap Talk.
-7. Collidable NPC house walls work. A saved player building in the village area isn't overwritten by a village house.
-8. Save and refresh: original construction, upper floors, cave loot, mining, campfires, clothing and village discovery remain intact.
-9. When signed in, cloud autosave and restoring from another device still work without routine world-choice prompts.
-10. Standard and Low Effects perform acceptably on the actual iPhone.
+- Your **previous v0.23 Safari save** (`wilderness_v023_singleplayer`) is preserved separately. v0.23.1 uses the new `wilderness_v0231_singleplayer` key.
+- Do NOT clear Safari website data. To recover, use your exported backup and redeploy previous ZIP only if needed.
+- **Older code cannot read newer chest-claim IDs** after you've looted village chests. Do not run an old build against an account whose cloud save already includes those claims; older builds can show a save validation error. Keep all devices updated or restore an older pre-v0.23.1 backup deliberately.
+- If a live cloud sync problem appears, export your current v0.23.1 world before changing anything. No Supabase rollback exists or is needed for this update.
 
 ## Verification limitations
 
-Node JS syntax checks, pure-state save migration, deterministic NPC schedules, safe walking paths, map/landmark validation, desktop-sized CSS layout tests and ZIP/file-integrity checks were completed locally. The static HTML/CSS layout was checked at 667×375, 844×390, and 932×430; the camera/game engine could **not** be rendered end-to-end in the available browser environment due network restrictions. These checks are **not a substitute for real Safari WebGL, multitouch, framerate or live Supabase testing**.
-
-## Rollback
-
-If v0.23 misbehaves, deploy your preserved v0.22 ZIP (all files and assets). Your v0.22 Safari save stays untouched. Do **not** run any SQL rollback. If you have continued playing v0.23 and want to revert, first export its JSON backup; saves from newer versions may include newly discovered locations that older versions do not understand.
+All 36 focused automated checks passed: landmarks, villagers, house collision, door entrances, save migration and claim validation, stable chest loot, existing item catalog, barter offers, source/module imports, input-recovery preservation and JS syntax. A stubbed Three.js scene-assembly test built all 26 house groups and 21 NPC models and exercised room/door updates. This is **not** a real WebGL screenshot or an iPhone frame-rate/Cloud Save integration test. You should approve rendering and touch behavior only after testing on Safari.

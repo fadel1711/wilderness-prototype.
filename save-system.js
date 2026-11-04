@@ -1,4 +1,4 @@
-// Wilderness v0.23. The JSON schema stays at version 21; no Supabase SQL change.
+// Wilderness v0.23.1. JSON schema stays at version 21; village loot uses validated exploration claims.
 import {normalizeExploration} from './exploration-system.js';
 import {normalizeFarm} from './farm-system.js';
 import {normalizeAtmosphere} from './atmosphere-system.js';
@@ -30,8 +30,9 @@ export const V19_KEY='wilderness_v019_singleplayer';
 export const V20_KEY='wilderness_v020_singleplayer';
 export const V21_KEY='wilderness_v021_singleplayer';
 export const V22_KEY='wilderness_v022_singleplayer';
-export const SAVE_KEY='wilderness_v023_singleplayer';
-export const PRE_IMPORT_KEY='wilderness_v023_pre_import_recovery';
+export const V23_KEY='wilderness_v023_singleplayer';
+export const SAVE_KEY='wilderness_v0231_singleplayer';
+export const PRE_IMPORT_KEY='wilderness_v0231_pre_import_recovery';
 export const BACKUP_FORMAT='wilderness-world-backup';
 export const ITEM=Object.freeze({
   axe:{name:'Wooden axe',icon:'🪓',max:1,tool:true},
