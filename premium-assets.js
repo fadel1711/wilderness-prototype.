@@ -1,8 +1,8 @@
 // Wilderness v0.15 original stylized 3D art pack. All mesh and texture files are
 // bundled with the ZIP; no cross-site model downloads. Failure leaves v0.14 art intact.
 // These are compact handcrafted GLB models, not assets copied from the user's reference.
-export const PREMIUM_ASSETS=['assets/pine.glb','assets/oak.glb','assets/moss-boulder.glb',
- 'assets/forest-ground.webp','assets/stone-path.webp','assets/timber-planks.webp'];
+export const PREMIUM_ASSETS=['pine.glb','oak.glb','moss-boulder.glb',
+ 'forest-ground.webp','stone-path.webp','timber-planks.webp'];
 
 export function createPremiumArt(THREE,{resources,player,renderer,grassMat,pathMat,timber,timberDark}){
   const entries=[];let ready=false,low=false,failed=false;
@@ -20,7 +20,7 @@ export function createPremiumArt(THREE,{resources,player,renderer,grassMat,pathM
     try{
       const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
       const loader=new GLTFLoader();
-      const [pine,oak,rock]=await Promise.all(PREMIUM_ASSETS.slice(0,3).map(url=>loader.loadAsync('./'+url+'?v=015')));
+      const [pine,oak,rock]=await Promise.all(PREMIUM_ASSETS.slice(0,3).map(url=>loader.loadAsync('./assets/'+url+'?v=015')));
       const library={pine:pine.scene,oak:oak.scene,rock:rock.scene};
       for(const r of resources){
         const model=r.type==='rock'?library.rock:(Number(r.id.slice(1))%5===0?library.oak:library.pine);
@@ -39,14 +39,14 @@ export function createPremiumArt(THREE,{resources,player,renderer,grassMat,pathM
   }
   async function loadTextures(){
     const tl=new THREE.TextureLoader();
-    const maps=[['assets/forest-ground.webp',grassMat,76,76],
-      ['assets/stone-path.webp',pathMat,1,1],
-      ['assets/timber-planks.webp',timber,1,1],
-      ['assets/timber-planks.webp',timberDark,1,1]];
+    const maps=[['forest-ground.webp',grassMat,76,76],
+      ['stone-path.webp',pathMat,1,1],
+      ['timber-planks.webp',timber,1,1],
+      ['timber-planks.webp',timberDark,1,1]];
     const cache=new Map();
     for(const [url,material,x,y] of maps){
       try{
-        if(!cache.has(url))cache.set(url,tl.loadAsync('./'+url+'?v=015'));
+        if(!cache.has(url))cache.set(url,tl.loadAsync('./assets/'+url+'?v=015'));
         const img=await cache.get(url);
         const t=img.clone();t.wrapS=t.wrapT=THREE.RepeatWrapping;
         t.repeat.set(x,y);t.colorSpace=THREE.SRGBColorSpace;

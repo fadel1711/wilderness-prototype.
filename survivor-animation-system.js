@@ -1,11 +1,11 @@
-// Wilderness v0.23.8.2 — optional Meshy survivor preview.
+// Wilderness v0.24.0 — integrated animated survivor.
 // The actual world/player group, collision physics, and saves do not change.
 // If loading, parsing or updating fails, the classic procedural survivor remains usable.
 export const SURVIVOR_GLB = './assets/survivor-animated.glb';
 
 // Meshy exported cumulative animation sets and gave some clips opaque IDs.
 // Named activities below use the newest file containing the union of all uploaded clips.
-// The preview page displays every raw clip so uncertain action labels can be checked.
+// Animation names were inferred from the supplied cumulative export and require in-game visual verification.
 export const SURVIVOR_CLIPS = Object.freeze({
   idle: 'Idle_11',
   idleLong: 'Idle_3',

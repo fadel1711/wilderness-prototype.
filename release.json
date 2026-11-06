@@ -1,5 +1,5 @@
 {
-  "version": "0.23.8.2",
-  "build": "2026-11-06-meshy-animated-survivor-preview",
-  "description": "Single consolidated 20-clip Meshy survivor, rigged hand equipment, animation viewer, classic fallback; cloud format unchanged"
+  "version": "0.24.0",
+  "build": "2026-11-06-nightfall-balanced",
+  "description": "Night-only balanced zombies: six nearby maximum, moderate attacks, protected homesteads/villages, sword combat and immediate loot. Existing cloud save schema unchanged."
 }

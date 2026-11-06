@@ -1,12 +1,8 @@
-# Wilderness v0.23.8.2 — Animation Preview
+# Wilderness roadmap — November 2026
 
-Latest focused preview: Meshy survivor with 20 consolidated animation clips, right-hand equipment rig, separate animation viewer and safe classic-model fallback. No Supabase change.
+- **v0.24.0 Nightfall**: Balanced night zombies now integrated in the actual game. Max six around the player; homestead and villages protected; sword, dodge, shield, auto loot. Acceptance test on real iPhone still pending.
+- **v0.24.1**: Physique/model pass for the animated survivor. The current GLB did not contain usable textures; avoid altering bone mapping without visual tests.
+- **v0.24.2**: Immersive building camera and multi-floor placement polish, as previously planned.
+- **Later**: deeper cave exploration, tameable dog companion, smarter zombie behavior and sounds. Add incrementally to preserve stability.
 
-# Wilderness roadmap (November 2026)
-
-- **Current v0.23.8.1 — Calm Controls & Cloud Recovery:** Repair v0.23.8's cluttered UI, wrong contextual action priority, upside-down sword, light attachment, and repetitive cloud/device choices. Make the server authoritative, protect emergency device backups, and stop play if cloud unavailable.
-- **Next v0.23.9 — Immersive Building Mode (separate release):** Pan/orbit/zoom the camera while positioning a ghost, hide non-building HUD, place Build dropdown top-right, confirm/cancel and restore HUD. Perform iPhone touch testing first.
-- **Then v0.24 — Night Zombies:** Only after controls and cloud synchronization pass acceptance. Night-only controlled enemy counts with safe zones and forgiving difficulty.
-- **Later v0.25+ — World exploration, climbing, wildlife, mining, and dog companion** as previously discussed, phased one at a time.
-
-No new survival challenge or multiplayer until this stable base is accepted on a real phone.
+Keep a ZIP + README for each release. Save formats and account logic remain stable.
