@@ -1,41 +1,29 @@
-# Wilderness v0.23.5 — Portable & Standing Torches
+# Wilderness v0.23.6 — Account Profiles + Landscape Without Rotation Setting
 
-This is a **complete 38-file GitHub Pages replacement**, not a partial patch. Existing landscape mode, villages, deep cave, building editor, combat controls, and account-first Cloud Save are kept.
+This is the full GitHub Pages game replacement, including existing save code, 3D models and assets. **No Supabase SQL migration is required** if your v0.23.5 cloud backend and email auth already work.
 
-## New gameplay
+## New players must make a profile
+- On startup, the player must **sign up or sign in** before Enter the Forest is enabled. Sign-up requires **survivor name**, email and password (8+ characters). The name is stored in Supabase Auth user metadata for display only; it is not used for permissions.
+- Supabase email confirmation may require checking email before the first successful sign-in. Existing returning accounts without a survivor name choose one once. Existing signed-in accounts reuse their session automatically.
+- The account world is checked **before gameplay is unlocked**. If two devices truly have conflicting unsynced worlds, resolve this in Account & Cloud Save. Ordinary logins restore/sync automatically as in v0.23.5.
+- Authenticated devices can play offline if this device was previously synced to the same account and the local save is valid; new players need internet. A missing or inaccessible auth service prevents first-time gameplay by design. This is an intentional account requirement, not a local guest mode.
 
-- **Explorer torch**: Craft at a **workbench** for **2 wood + 1 charcoal**. Equip from the right-side toolstrip (`🔥 Torch`) or Bag. Tap the contextual **Fuel / Light / Extinguish** button to illuminate your way. Burn **1 charcoal for 240 seconds** of active play. The torch is a permanent reusable tool.
-- **Standing torch**: Build > **Standing Torch**, costing **2 wood + 1 stone**. Approach and press **Interact / Gather**, then **Add charcoal** to light it, or extinguish/relight it. It keeps remaining fuel and position across save/reload.
-- **Graphics**: Small animated flame meshes, up to three nearby non-shadow point lights, and at most 24 drifting smoke quads. Effects Low reduces particles and brightness. This is efficient visual approximation, not simulated fluid dynamics.
-- Fuel does not burn in the background or while paused. No zombie/night combat behavior is added here.
+## Landscape behaviour
+- On platforms supporting the manifest orientation, installed Wilderness **requests landscape** on launch. On iPhone Safari, `screen.orientation.lock()` is not supported. Instead, **the game scene and its touch controls are rotated 90 degrees in a portrait-locked viewport**. Physically turn your phone sideways to view it normally, without visiting the Control Center orientation toggle.
+- Player sign-in panels are upright when the phone is held vertically. Native landscape also remains supported. Do not assume this changes the iPhone OS orientation; it only rotates the game's content.
+- The original v0.23.5 joystick / multi-pointer recovery is retained; touchscreen positions and WebGL aspect are converted to the rotated viewport. Safari-specific iPhone acceptance testing is essential.
 
-## Critical installation order (iPhone)
+## Installation on iPhone
+1. On v0.23.5, open **Bag → Export world** and keep the JSON backup. **Keep v0.23.5 ZIP for rollback.**
+2. Unzip the v0.23.6 full package. Replace ALL root HTML and JS files in your Wilderness GitHub Pages repository. Add **profile-gate.js**, **manifest.webmanifest**, and **wilderness-icon.png** alongside `index.html`.
+3. Keep/upload the six unchanged model and texture files in `assets/`.
+4. Commit changes. After deployment, open the game and confirm **v0.23.6**.
+5. Existing user: with internet, sign in with the existing Wilderness account, choose a survivor name if asked, verify original cabins and items, and test auto sync. New player: enter name, email/password, confirm email if required, then sign in and play.
+6. Test Safari with orientation lock ON: hold the phone sideways; the game should appear right-side-up via the rotated web canvas, and movement / jumping should work. Also test orientation lock OFF and PWA via **Share → Add to Home Screen → Open as Web App**.
+7. Test account sign-out while in game (must pause and require a profile again). Test an offline launch only after previously signed in and synced; test a second device with the same account.
 
-1. In working v0.23.4, open **Bag → Export world**, save the JSON. Keep a copy of the old ZIP.
-2. **Supabase FIRST if using Cloud Save**: open the **separate private v0.23.5 backend ZIP**, read `README_PRIVATE.md`; run the **forward migration** in your **Wilderness** Supabase project, then the **read-only verification**. **Never run emergency rollback as part of normal install**. No live database changes are performed by Rosa.
-3. Extract this GitHub ZIP in Files. At repository root, **replace all** HTML, JS, README/ROADMAP files. **Add `torch-system.js`** beside `game.js`, `save-system.js` and `building-editor.js`. Keep `assets/` with six `.glb`/`.webp` files.
-4. Commit. Wait for successful GitHub Pages deployment. Reload Safari in landscape and verify header **v0.23.5**. Do not clear website data.
-5. Visit workbench, craft torch; then test handheld fuel/toggle, build standing torch, add charcoal, refresh, and test cloud syncing.
-
-## Save safety
-
-- New local save is **`wilderness_v0235_singleplayer`**; prior **`wilderness_v0231_singleplayer`** is left intact for rollback.
-- New JSON save version **22**, with validated `torches` state, enables persistent portable and standing lights. v21 data is upgraded on load. Old player buildings/chests/outfits/campfire states are untouched.
-- Cloud automatic account behavior is unchanged, but **Supabase must accept version 22 BEFORE uploading the new game** or cloud autosaves will fail. Cloud conflict protection still applies to truly independent changes.
-- Do not play an older client on the same cloud account after creating torch items or builds.
-- Save backups in Files; do not rely only on cloud sync when testing new versions.
-
-## Acceptance checklist
-
-1. My original v0.23.4 world remains intact after migration.
-2. Workbench crafts Explorer Torch, costs exactly two wood and one charcoal.
-3. Torch can be equipped, and lighting/refueling consumes charcoal only when needed.
-4. I can walk + jump while using the torch.
-5. Torch visuals illuminate dark areas and Low Effects are manageable.
-6. Build > Standing Torch can be placed, lit, extinguished and fueled.
-7. Fuel persists after refreshing and does not decrease offline.
-8. Building Editor can move standing torch without losing its identity/fuel.
-9. Cloud saves automatically and restores on a second device.
-10. Sword combat, villages, Bag, chests and joystick recovery still function.
-
-Developer tests verify schema, resource transactions and file checks only. Live iPhone Safari WebGL and live database migration are not verified here.
+## Save and security notes
+- Browser save key and JSON world version are **unchanged** from v0.23.5. Existing buildings, torches, villages, chests, clothing and cave discoveries are preserved.
+- **No Supabase SQL migration** in this update. It uses the existing Supabase email/password authentication and world-save RLS. Never put service-role or secret keys in GitHub; only the publishable key.
+- Cloud conflicts and older-world recovery protections are unchanged. No changes were made to your live GitHub or database.
+- This is an iPhone acceptance candidate: local syntax, file and interface checks can pass even if Safari has an OS-specific touch or WebGL issue.

@@ -1,7 +1,7 @@
 // Wilderness v0.23.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.5';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.5';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.6';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.6';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -84,15 +84,27 @@ function configured(url,key){
 }
 export function mountCloudSave({createClientOverride=null,configOverride=null}={}){
   const url=configOverride?.url??CLOUD_URL,key=configOverride?.key??CLOUD_PUBLISHABLE_KEY;
-  const required=['cloudPanel','cloudClose','cloudStatus','cloudSetup','cloudAuth','cloudSigned','cloudChoices','cloudConflictText','cloudEmail','cloudPassword','cloudLogin','cloudSignup','cloudUserEmail','cloudDetails','cloudKeepLocal','cloudUseRemote','cloudSyncNow','cloudSignout'];
+  const required=['cloudPanel','cloudClose','cloudStatus','cloudSetup','cloudAuth','cloudSigned','cloudChoices','cloudConflictText','cloudDisplayName','cloudProfileEditor','cloudProfileName','cloudSetProfile','cloudEmail','cloudPassword','cloudLogin','cloudSignup','cloudUserEmail','cloudDetails','cloudKeepLocal','cloudUseRemote','cloudSyncNow','cloudSignout'];
   if(required.some(id=>!el(id)))throw Error('Cloud Save panel incomplete: check index.html and cloud-save.js');
   let client=null,user=null,remote=null,revision=0,mode='setup',busy=false,loading=false,lastSync=0,scheduled=null;
   let generation=0,loginPending=false;
   const status=(text)=>{el('cloudStatus').textContent=text;};
+  const nameValid=name=>typeof name==='string'&&name.trim().length>=2&&name.trim().length<=24&&/^[\p{L}\p{N} _.'-]+$/u.test(name.trim());
+  function notifyProfile(){
+    const displayName=String(user?.user_metadata?.display_name||'').trim();
+    let offlineTrusted=false;
+    if(mode==='offline'&&user){
+      const base=safeMetaRead();offlineTrusted=base?.userId===user.id&&!!getWorld();
+    }
+    const detail={mode,userId:user?.id||null,displayName,hasProfile:nameValid(displayName),offlineTrusted};
+    window.__wildernessAuthState=detail;
+    window.dispatchEvent(new CustomEvent('wilderness:account-state',{detail}));
+  }
   function render(){
     el('cloudSetup').hidden=mode==='auth'||!!user;
     el('cloudAuth').hidden=mode!=='auth'||!!user;
     el('cloudSigned').hidden=!user;
+    el('cloudProfileEditor').hidden=!user||nameValid(String(user?.user_metadata?.display_name||''));
     el('cloudChoices').hidden=!['empty','conflict','cloud-only','invalid'].includes(mode);
     el('cloudKeepLocal').disabled=busy||!getWorld();
     el('cloudUseRemote').disabled=busy||!remote||mode==='invalid';
@@ -108,6 +120,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       mode==='cloud-only'?'This device has no valid local world. Loading the cloud world will create a local recovery snapshot when possible.':
       mode==='invalid'?'Cloud data is damaged or from an unsupported version. You may upload a valid local world to replace it, but first export a JSON backup.':
       'Both copies have independent progress. Choose the correct one; the local world is backed up before a cloud restore. Normally this question will never appear.';
+    notifyProfile();
   }
   function getWorld(){try{
     if(window.__wildernessCloudSnapshot)return window.__wildernessCloudSnapshot()||null;
@@ -182,18 +195,32 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   }
   async function submitAuth(isSignup){
     if(!client||loginPending)return;
-    const email=el('cloudEmail').value.trim(),password=el('cloudPassword').value;
+    const email=el('cloudEmail').value.trim(),password=el('cloudPassword').value,name=el('cloudDisplayName').value.trim();
+    if(isSignup&&!nameValid(name)){status('Choose a survivor name of 2–24 letters/numbers (spaces allowed).');return;}
     if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8){status('Enter a valid email and password of at least 8 characters.');return;}
     loginPending=true;el('cloudLogin').disabled=el('cloudSignup').disabled=true;
     status(isSignup?'Creating a Wilderness account…':'Signing in…');
     try{
-      const response=isSignup?await client.auth.signUp({email,password}):await client.auth.signInWithPassword({email,password});
+      const response=isSignup?await client.auth.signUp({email,password,options:{data:{display_name:name}}}):await client.auth.signInWithPassword({email,password});
       if(response.error)throw response.error;
       el('cloudPassword').value='';
       if(response.data?.session?.user)await onSession(response.data.session);
       else status('Account request sent. Check your email for a confirmation link, then sign in.');
     }catch(e){status('Account error: '+message(e));}
     finally{loginPending=false;el('cloudLogin').disabled=el('cloudSignup').disabled=false;}
+  }
+  async function setProfileName(){
+    if(!client||!user)return;
+    const name=el('cloudProfileName').value.trim();
+    if(!nameValid(name)){status('Choose a name of 2–24 letters/numbers.');return;}
+    el('cloudSetProfile').disabled=true;status('Saving your survivor profile…');
+    try{
+      const {data,error}=await client.auth.updateUser({data:{display_name:name}});
+      if(error)throw error;
+      user=data?.user||{...user,user_metadata:{...user.user_metadata,display_name:name}};
+      render();status('Survivor profile saved. Your account is ready.');
+    }catch(e){status('Profile could not be updated: '+message(e));}
+    finally{el('cloudSetProfile').disabled=false;}
   }
   async function writeWorld(world,expectedRev){
     const payload=normalizeSave(world);const owner=user?.id;
@@ -249,6 +276,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   el('cloudClose').addEventListener('click',close);
   el('cloudLogin').addEventListener('click',()=>submitAuth(false));
   el('cloudSignup').addEventListener('click',()=>submitAuth(true));
+  el('cloudSetProfile').addEventListener('click',setProfileName);
   el('cloudKeepLocal').addEventListener('click',uploadDevice);
   el('cloudUseRemote').addEventListener('click',applyCloud);
   el('cloudSyncNow').addEventListener('click',syncNow);
@@ -258,7 +286,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   document.addEventListener('visibilitychange',()=>{if(mode!=='ready')return;if(document.hidden)syncNow();else scheduleSync();});
   const controller={open,close,inspectRemote,syncNow};window.__wildernessCloudPanel=controller;
   if(!configured(url,key)){
-    mode='setup';render();status('Cloud Save needs a dedicated Supabase project. Local saving still works normally.');
+    mode='setup';render();status('Cloud Save needs a dedicated Supabase project. Sign-in is required before gameplay.');
     return controller;
   }
   mode='setup';render();status('Connecting to Wilderness Cloud…');
@@ -267,7 +295,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.23.5'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.23.6'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();
@@ -275,9 +303,9 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       if(data?.session?.user)await onSession(data.session);
       client.auth.onAuthStateChange((event,session)=>{
         // Defer other Supabase calls outside of the auth callback.
-        if(event==='SIGNED_OUT'||event==='SIGNED_IN'||event==='INITIAL_SESSION')setTimeout(()=>onSession(session),0);
+        if(event==='SIGNED_OUT'||event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='USER_UPDATED')setTimeout(()=>onSession(session),0);
       });
-    }catch(e){mode='setup';render();status('Cloud connection could not start: '+message(e)+'. Your local game still works.');}
+    }catch(e){mode='setup';render();status('Cloud connection could not start: '+message(e)+'. A profile is required to play.');}
   })();
   return controller;
 }
