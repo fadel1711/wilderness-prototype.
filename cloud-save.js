@@ -1,7 +1,8 @@
 // Wilderness v0.23.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.6';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.6';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.8.1';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.8.1';
+import {cloudAutoDecision} from './cloud-policy.js?v=0.23.8.1';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -84,18 +85,21 @@ function configured(url,key){
 }
 export function mountCloudSave({createClientOverride=null,configOverride=null}={}){
   const url=configOverride?.url??CLOUD_URL,key=configOverride?.key??CLOUD_PUBLISHABLE_KEY;
-  const required=['cloudPanel','cloudClose','cloudStatus','cloudSetup','cloudAuth','cloudSigned','cloudChoices','cloudConflictText','cloudDisplayName','cloudProfileEditor','cloudProfileName','cloudSetProfile','cloudEmail','cloudPassword','cloudLogin','cloudSignup','cloudUserEmail','cloudDetails','cloudKeepLocal','cloudUseRemote','cloudSyncNow','cloudSignout'];
+  const required=['cloudPanel','cloudClose','cloudStatus','cloudSetup','cloudAuth','cloudSigned','cloudChoices','cloudConflictText','cloudDisplayName','cloudProfileEditor','cloudProfileName','cloudSetProfile','cloudEmail','cloudPassword','cloudLogin','cloudSignup','cloudUserEmail','cloudDetails','cloudKeepLocal','cloudUseRemote','cloudSyncNow','cloudRetry','cloudSignout'];
   if(required.some(id=>!el(id)))throw Error('Cloud Save panel incomplete: check index.html and cloud-save.js');
   let client=null,user=null,remote=null,revision=0,mode='setup',busy=false,loading=false,lastSync=0,scheduled=null;
   let generation=0,loginPending=false;
-  const status=(text)=>{el('cloudStatus').textContent=text;};
+  const status=(text)=>{
+    el('cloudStatus').textContent=text;
+    const pill=el('cloudPill');if(pill){
+      pill.textContent=mode==='ready'?busy?'☁ Saving…':'☁ Cloud live':mode==='offline'?'☁ Reconnect':mode==='invalid'?'☁ Save protected':mode==='auth'?'☁ Sign in':'☁ Connecting…';
+      pill.title=text;
+    }
+  };
   const nameValid=name=>typeof name==='string'&&name.trim().length>=2&&name.trim().length<=24&&/^[\p{L}\p{N} _.'-]+$/u.test(name.trim());
   function notifyProfile(){
     const displayName=String(user?.user_metadata?.display_name||'').trim();
-    let offlineTrusted=false;
-    if(mode==='offline'&&user){
-      const base=safeMetaRead();offlineTrusted=base?.userId===user.id&&!!getWorld();
-    }
+    const offlineTrusted=false; // Cloud-confirmed session required to play.
     const detail={mode,userId:user?.id||null,displayName,hasProfile:nameValid(displayName),offlineTrusted};
     window.__wildernessAuthState=detail;
     window.dispatchEvent(new CustomEvent('wilderness:account-state',{detail}));
@@ -105,22 +109,24 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
     el('cloudAuth').hidden=mode!=='auth'||!!user;
     el('cloudSigned').hidden=!user;
     el('cloudProfileEditor').hidden=!user||nameValid(String(user?.user_metadata?.display_name||''));
-    el('cloudChoices').hidden=!['empty','conflict','cloud-only','invalid'].includes(mode);
+    el('cloudChoices').hidden=true; // Cloud is authoritative; no device-vs-cloud picker.
     el('cloudKeepLocal').disabled=busy||!getWorld();
     el('cloudUseRemote').disabled=busy||!remote||mode==='invalid';
     el('cloudSyncNow').disabled=busy||mode!=='ready';
+    el('cloudRetry').hidden=!(user&&['offline','invalid'].includes(mode));
     if(user)el('cloudUserEmail').textContent=user.email||'Wilderness player';
     el('cloudDetails').textContent=mode==='ready'?`☁ Automatic sync on · Cloud revision ${revision}. Your account follows you between devices.`:
       mode==='empty'?'This account has no cloud world, but the device belongs to a different account. Choose carefully before copying it.':
       mode==='cloud-only'?'Your local save cannot be read. You can restore the existing cloud world after reviewing the warning.':
       mode==='conflict'?'Different unsynced changes exist on this device and cloud. Choose once which world to keep.':
       mode==='invalid'?'The cloud copy failed validation. It has not been applied to your device.':
-      'Your local world stays saved in Safari.';
+      '☁ Waiting for a confirmed cloud connection. Local data is a recovery cache only.';
     el('cloudConflictText').textContent=mode==='empty'?'This device previously synced with a different account. Upload it only if you really want to copy this world into your new account.':
       mode==='cloud-only'?'This device has no valid local world. Loading the cloud world will create a local recovery snapshot when possible.':
       mode==='invalid'?'Cloud data is damaged or from an unsupported version. You may upload a valid local world to replace it, but first export a JSON backup.':
       'Both copies have independent progress. Choose the correct one; the local world is backed up before a cloud restore. Normally this question will never appear.';
     notifyProfile();
+    const pill=el('cloudPill');if(pill)pill.textContent=mode==='ready'?'☁ Cloud live':mode==='offline'?'☁ Reconnect':mode==='invalid'?'☁ Save protected':mode==='auth'?'☁ Sign in':'☁ Connecting…';
   }
   function getWorld(){try{
     if(window.__wildernessCloudSnapshot)return window.__wildernessCloudSnapshot()||null;
@@ -132,7 +138,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
     catch(e){/* Failure simply means a manual choice may be required next login. */}
   }
   function cancelSchedule(){if(scheduled!==null){clearTimeout(scheduled);scheduled=null;}}
-  function resetAccount(){generation++;cancelSchedule();user=null;remote=null;revision=0;busy=false;mode=client?'auth':'setup';render();status(client?'Signed out. Local world remains available.':'Cloud service not configured. Local saves work normally.');}
+  function resetAccount(){generation++;cancelSchedule();user=null;remote=null;revision=0;busy=false;mode=client?'auth':'setup';render();status(client?'Signed out. Your cloud world remains protected.':'Cloud service not configured. Sign in requires cloud access.');}
   async function fetchRemote(){
     const {data,error}=await client.from('wilderness_worlds').select('save,revision,updated_at').eq('user_id',user.id).maybeSingle();
     if(error)throw error;
@@ -154,7 +160,10 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
         catch(e){mode='invalid';render();status('The cloud save is invalid. Your device has not been changed.');return;}
       }
       const local=getWorld(),baseline=safeMetaRead();
-      const choice=cloudDecision(local,validRemote,baseline,owner,{freshDevice:!!window.__wildernessCloudDeviceFresh});
+      let importRequest=null;try{importRequest=JSON.parse(localStorage.getItem('wilderness_pending_cloud_import')||'null');}catch(e){}
+      const choice=cloudAutoDecision(local,validRemote,baseline,owner,{freshDevice:!!window.__wildernessCloudDeviceFresh,explicitImport:importRequest,worldFingerprint,progressFingerprint});
+      // The import marker is single-use. Any rejected upload is preserved locally.
+      if(importRequest&&choice!=='upload')try{localStorage.removeItem('wilderness_pending_cloud_import');}catch(e){}
       if(choice==='same'){
         mode='ready';baselineWrite(validRemote.save,revision);
         status('☁ Connected. Your account world syncs automatically.');render();return;
@@ -162,6 +171,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       if(choice==='upload'){
         mode='loading';render();status('☁ Automatically backing up this device to your account…');
         await writeWorld(local,revision);
+        try{localStorage.removeItem('wilderness_pending_cloud_import');}catch(e){}
         return;
       }
       if(choice==='restore'){
@@ -180,17 +190,20 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
         }
         return;
       }
-      // Genuine conflict or invalid local data: do not silently discard work.
-      mode=choice;render();
-      status(choice==='empty'?'Different account detected. Choose whether to copy this device’s world into it.':
-        choice==='cloud-only'?'Cloud found, but this device save could not be read. Restore manually after reviewing.':
-        choice==='invalid'?'There is no valid local world to upload.':
-        '⚠ Two unsynced worlds have different progress. Choose the one to keep.');
+      if(choice==='fresh'){
+        status('Creating a new world for this account; previous device world is kept as a recovery copy…');
+        if(typeof window.__wildernessCloudStartFresh==='function')window.__wildernessCloudStartFresh();
+        else {mode='offline';render();status('Cannot safely start new account world: game recovery hook missing.');}
+        return;
+      }
+      // Unexpected corrupt local data: fail closed. Never erase the cloud.
+      mode='invalid';render();
+      status('⚠ Cloud world could not be recovered safely; no save was overwritten.');
     }catch(e){if(ticket!==generation)return;mode='offline';render();status('Cloud unavailable: '+message(e)+'. Your local world remains safe.');}
   }
   async function onSession(session){
     if(!session?.user){resetAccount();return;}
-    if(user?.id===session.user.id&&mode!=='auth'&&mode!=='setup')return;
+    if(user?.id===session.user.id&&['loading','ready'].includes(mode))return;
     user=session.user;mode='loading';render();await inspectRemote();
   }
   async function submitAuth(isSignup){
@@ -227,8 +240,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
     const {data,error}=await client.rpc('wilderness_save_world',{p_expected_revision:expectedRev,p_save:payload});
     if(error)throw error;
     if(!data||!data[0]||!Number.isSafeInteger(Number(data[0].new_revision))){
-      await inspectRemote();
-      throw Error('A newer cloud save exists. Choose the version you want to keep.');
+      const error=new Error('Newer cloud revision detected');error.code='REVISION_CHANGED';throw error;
     }
     if(!user||user.id!==owner)throw Error('Account changed during sync; reload and sign in again.');
     remote={save:payload,revision:Number(data[0].new_revision),updated_at:data[0].saved_at};
@@ -236,39 +248,32 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
     mode='ready';render();status(`☁ World backed up successfully (revision ${revision}).`);
     return true;
   }
-  async function uploadDevice(){
-    if(!client||!user||busy||!['empty','conflict','cloud-only','invalid'].includes(mode))return;
-    const current=getWorld();if(!current){status('Cannot upload: your local world is unreadable. You may restore the cloud copy instead.');return;}
-    const prompt=remote?'Replace the cloud copy with this device’s current world? The cloud copy will be overwritten. Export a JSON backup first if unsure.':'Create the first cloud backup using this device’s current world?';
-    if(!window.confirm(prompt))return;
-    busy=true;cancelSchedule();render();status('Uploading your world…');
-    try{await writeWorld(current,revision);}
-    catch(e){status('Cloud upload not completed: '+message(e)+'. Local data is safe.');}
-    finally{busy=false;render();}
-  }
-  function applyCloud(){
-    if(!user||busy||!remote||mode==='invalid')return;
-    let normalized;try{normalized=normalizeSave(remote.save);}catch(e){status('Cloud world rejected by validation.');return;}
-    if(!window.confirm('Restore the cloud world to this device? Current v0.23.5 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
-    cancelSchedule();
-    try{window.__wildernessCloudReplace(normalized);baselineWrite(normalized,revision);}
-    catch(e){status('Could not restore cloud world: '+message(e));}
-  }
+  // Legacy manual world-choice buttons are intentionally disabled in cloud-only mode.
+  function uploadDevice(){}
+  function applyCloud(){}
   function scheduleSync(){
     if(mode!=='ready'||!client||!user||busy||scheduled!==null)return;
-    const wait=Math.max(2500,10000-(Date.now()-lastSync));
+    const wait=Math.max(900,2200-(Date.now()-lastSync));
     scheduled=setTimeout(()=>{scheduled=null;syncNow();},wait);
   }
   async function syncNow(){
     cancelSchedule();
     if(!client||!user||mode!=='ready'||busy)return;
-    const local=getWorld();if(!local){status('Local save is unreadable. Sync paused; your cloud copy was not replaced.');return;}
-    let raw;try{raw=encodeWorld(local);}catch(e){status('Local world failed validation; sync paused.');return;}
+    const local=getWorld();if(!local){mode='invalid';render();status('Local save is unreadable. Cloud was not overwritten; reconnect after restoring a valid backup.');return;}
+    let raw;try{raw=encodeWorld(local);}catch(e){mode='invalid';render();status('Local world failed validation. Cloud is protected; restore a valid backup.');return;}
+    if(typeof navigator!=='undefined'&&!navigator.onLine){mode='offline';render();status('Offline — reconnect to continue. Pending progress is protected locally.');return;}
     if(remote&&worldFingerprint(raw)===worldFingerprint(encodeWorld(remote.save))){status(`☁ Cloud is up to date (revision ${revision}).`);return;}
-    if(typeof navigator!=='undefined'&&!navigator.onLine){status('Offline — saved on this device. Cloud will retry when online.');return;}
+    if(typeof navigator!=='undefined'&&!navigator.onLine){mode='offline';render();status('Offline — reconnect to continue. Pending progress is protected locally.');return;}
     busy=true;render();status('Saving the latest local progress to cloud…');
     try{await writeWorld(local,revision);}
-    catch(e){status('Cloud could not sync: '+message(e)+'. Local world remains saved.');}
+    catch(e){
+      status('Cloud sync interrupted: '+message(e)+'. Pending copy is protected; reconnecting…');
+      if(e?.code==='REVISION_CHANGED'){
+        mode='loading';render();await inspectRemote();
+      }else{
+        mode='offline';render();
+      }
+    }
     finally{busy=false;render();}
   }
   function open(){el('cloudPanel').classList.add('show');render();}
@@ -280,10 +285,12 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   el('cloudKeepLocal').addEventListener('click',uploadDevice);
   el('cloudUseRemote').addEventListener('click',applyCloud);
   el('cloudSyncNow').addEventListener('click',syncNow);
+  el('cloudRetry').addEventListener('click',()=>{if(user)inspectRemote();});
   el('cloudSignout').addEventListener('click',async()=>{if(!client)return;cancelSchedule();try{await client.auth.signOut();resetAccount();}catch(e){status('Sign-out error: '+message(e));}});
   window.addEventListener('wilderness:local-save',scheduleSync);
   window.addEventListener('online',()=>{if(mode==='ready')scheduleSync();else if(user)inspectRemote();});
-  document.addEventListener('visibilitychange',()=>{if(mode!=='ready')return;if(document.hidden)syncNow();else scheduleSync();});
+  window.addEventListener('offline',()=>{if(user){cancelSchedule();mode='offline';render();status('Internet unavailable. Gameplay paused; local recovery cache kept intact.');}});
+  document.addEventListener('visibilitychange',()=>{if(mode==='ready'){if(document.hidden)syncNow();else scheduleSync();}else if(!document.hidden&&user)inspectRemote();});
   const controller={open,close,inspectRemote,syncNow};window.__wildernessCloudPanel=controller;
   if(!configured(url,key)){
     mode='setup';render();status('Cloud Save needs a dedicated Supabase project. Sign-in is required before gameplay.');
@@ -295,7 +302,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.23.6'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.23.8.1'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

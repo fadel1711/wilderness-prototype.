@@ -1,5 +1,5 @@
 {
-  "version": "0.23.8",
-  "build": "2026-11-06-loadout-combat-ring",
-  "description": "Six-slot loadout, smart action and thumb combat ring"
+  "version": "0.23.8.1",
+  "build": "2026-11-06-cloud-authority-and-one-action",
+  "description": "Control simplification, sword/torch positioning, cloud automatic reconciliation, stability repair"
 }

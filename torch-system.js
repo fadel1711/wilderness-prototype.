@@ -43,13 +43,17 @@ export function createTorchEffects(THREE,scene){
   const geometry=new THREE.PlaneGeometry(1,1);
   const material=new THREE.MeshBasicMaterial({color:0xc5c5b7,transparent:true,opacity:.115,depthWrite:false,side:THREE.DoubleSide});
   const smoke=new THREE.InstancedMesh(geometry,material,24);scene.add(smoke);smoke.count=0;smoke.frustumCulled=false;
-  const pos=new THREE.Vector3(),scale=new THREE.Vector3(),matrix=new THREE.Matrix4();
+  const pos=new THREE.Vector3(),tipPos=new THREE.Vector3(),scale=new THREE.Vector3(),matrix=new THREE.Matrix4();
   let elapsed=0;
-  function update(dt,player,hand,stands,records,camera,low=false,daylight=0){
+  function update(dt,player,hand,stands,records,camera,low=false,daylight=0,handFlame=null){
     elapsed+=Math.max(0,Math.min(dt,.1));
     const x=player.position?.x??player.x,z=player.position?.z??player.z;
     const targets=[];
-    if(hand.lit&&hand.fuel>0)targets.push({x:x+Math.sin(player.rotation?.y??0)*.4,y:(player.position?.y??0)+1.42,z:z+Math.cos(player.rotation?.y??0)*.4});
+    if(hand.lit&&hand.fuel>0){
+      // THREE transforms keep the flame anchored in the animated right hand.
+      if(handFlame?.getWorldPosition){handFlame.getWorldPosition(tipPos);targets.push({x:tipPos.x,y:tipPos.y,z:tipPos.z});}
+      else targets.push({x:x+.35,y:(player.position?.y??0)+1.45,z:z+.2});
+    }
     for(const b of stands){const rec=records[b.id];if(rec?.lit&&rec.fuel>0&&Math.hypot(x-b.x,z-b.z)<(low?15:26))targets.push({x:b.x,y:(b.group?.position.y??0)+1.85,z:b.z});}
     targets.sort((a,b)=>Math.hypot(x-a.x,z-a.z)-Math.hypot(x-b.x,z-b.z));
     for(let i=0;i<lights.length;i++){const t=targets[i],l=lights[i];l.intensity=t?(low?.42:1.2)*(1-.25*daylight)*(0.88+0.12*Math.sin(elapsed*13+i*2.1)):0;if(t)l.position.set(t.x,t.y,t.z);}

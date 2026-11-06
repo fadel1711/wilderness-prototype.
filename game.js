@@ -1,31 +1,32 @@
 import * as THREE from 'three';
-import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,V19_KEY,V20_KEY,V21_KEY,V22_KEY,V23_KEY,V234_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.23.8';
-import {isUpper,LOFT_FURNISH_TYPES,LOFT_BASE_Y,LOFT_WALK_Y,stairRise,stairTop,canRemoveSupport} from './second-story-system.js?v=0.23.8';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.23.8';
+import {primaryAction} from './primary-action.js?v=0.23.8.1';
+import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,V19_KEY,V20_KEY,V21_KEY,V22_KEY,V23_KEY,V234_KEY,SAVE_KEY,PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.23.8.1';
+import {isUpper,LOFT_FURNISH_TYPES,LOFT_BASE_Y,LOFT_WALK_Y,stairRise,stairTop,canRemoveSupport} from './second-story-system.js?v=0.23.8.1';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.23.8.1';
 
-import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.23.8';
+import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.23.8.1';
 
-import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.23.8';
-import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.23.8';
-import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.23.8';
-import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.23.8';
-import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.23.8';
-import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.23.8';
-import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.23.8';
-import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.23.8';
-import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.23.8';
-import {createPremiumArt} from './premium-assets.js?v=0.23.8';
-import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.23.8';
-import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.23.8';
-import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.23.8';
-import {TORCH_SECONDS_PER_CHARCOAL,TORCH_MAX_SECONDS,normalizeTorches,fuelTorch,toggleTorch,advanceTorches,createTorchEffects} from './torch-system.js?v=0.23.8';
-import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.23.8';
-import {MAZE_WALLS,deepCaveWallAt,insideDeepCave,caveRockZone,ORE_VEINS,DEEP_CACHE,normalizeDeepCave,veinStatus,mineVein,nearestVein,createDeepCave} from './deep-cave-system.js?v=0.23.8';
-import {WORLD_RADIUS,OLD_WORLD_RADIUS,outerResourcePlan,outerScatterPlan,OUTER_ZONES} from './world-expansion-system.js?v=0.23.8';
-import {InputRecovery,installInputRecovery} from './input-recovery.js?v=0.23.8';
-import {mountLandscapeGate,landscapeViewport,landscapePoint} from './orientation-gate.js?v=0.23.8';
-import {VILLAGE,VILLAGES,VILLAGE_RADIUS,VILLAGE_CHESTS,nearbyVillager,nearestVillageDoor,nearestVillageChest,offersForVillager,villageHouseAt,createLivingVillage} from './village-system.js?v=0.23.8';
-import {EDIT_HOLD_MS,EDIT_DISTANCE,shouldCancelHold,editOffsetStep,displacedPart,exactlySamePlacement,buildingEditVerdict} from './building-editor.js?v=0.23.8';
+import {MAX_HEALTH,MAX_STAMINA,SAFE_RADIUS,RESPAWN_MS,WOLF_SPAWNS,clamp,distance,inSafeZone,attackResult,canAttack,combatRespawn,wolfState} from './combat-system.js?v=0.23.8.1';
+import {EXPLORE_RADIUS,LANDMARKS,LOOT,distance2D,nearbyLandmarks,claimLoot,normalizeExploration} from './exploration-system.js?v=0.23.8.1';
+import {CROPS,normalizeFarm,plotStatus,plantCrop,harvestCrop} from './farm-system.js?v=0.23.8.1';
+import {DAY_SECONDS,DEFAULT_ELAPSED,normalizeAtmosphere,timeOfDay,SoundFx} from './atmosphere-system.js?v=0.23.8.1';
+import {normalizeSurvival,advanceSurvival,consumeSurvival,drinkAtSpring,needsPenalty,sleepUntilMorning,sleepSurvival,EDIBLES} from './survival-system.js?v=0.23.8.1';
+import {makeArtTexture,createSkyGradient,updateSkyGradient,createGroundScatter} from './visual-system.js?v=0.23.8.1';
+import {createEchoCave,CAVE_ART_VERSION} from './cave-art.js?v=0.23.8.1';
+import {SEED_PATCHES,FORAGE_RANGE,normalizeForage,patchReady,gatherWildSeeds,closestSeedPatch} from './seed-system.js?v=0.23.8.1';
+import {stepVertical,canWalkStep,STEP_HEIGHT} from './movement-system.js?v=0.23.8.1';
+import {createPremiumArt} from './premium-assets.js?v=0.23.8.1';
+import {DualInput,bindSimultaneousAction} from './dual-input.js?v=0.23.8.1';
+import {clampZoom,DEFAULT_ZOOM,MIN_ZOOM,MAX_ZOOM,createSkyObjects,updateSkyObjects} from './sky-camera.js?v=0.23.8.1';
+import {CAMPFIRE_MAX_FUEL,normalizeCampfires,refuelCampfire,toggleCampfire,advanceCampfires,createCampfireEffects} from './campfire-system.js?v=0.23.8.1';
+import {TORCH_SECONDS_PER_CHARCOAL,TORCH_MAX_SECONDS,normalizeTorches,fuelTorch,toggleTorch,advanceTorches,createTorchEffects} from './torch-system.js?v=0.23.8.1';
+import {OUTFITS,PANTS,BOOTS,HAIR,normalizeWardrobe,changeWardrobe,wardrobeColors} from './wardrobe-system.js?v=0.23.8.1';
+import {MAZE_WALLS,deepCaveWallAt,insideDeepCave,caveRockZone,ORE_VEINS,DEEP_CACHE,normalizeDeepCave,veinStatus,mineVein,nearestVein,createDeepCave} from './deep-cave-system.js?v=0.23.8.1';
+import {WORLD_RADIUS,OLD_WORLD_RADIUS,outerResourcePlan,outerScatterPlan,OUTER_ZONES} from './world-expansion-system.js?v=0.23.8.1';
+import {InputRecovery,installInputRecovery} from './input-recovery.js?v=0.23.8.1';
+import {mountLandscapeGate,landscapeViewport,landscapePoint} from './orientation-gate.js?v=0.23.8.1';
+import {VILLAGE,VILLAGES,VILLAGE_RADIUS,VILLAGE_CHESTS,nearbyVillager,nearestVillageDoor,nearestVillageChest,offersForVillager,villageHouseAt,createLivingVillage} from './village-system.js?v=0.23.8.1';
+import {EDIT_HOLD_MS,EDIT_DISTANCE,shouldCancelHold,editOffsetStep,displacedPart,exactlySamePlacement,buildingEditVerdict} from './building-editor.js?v=0.23.8.1';
 
 // Wilderness v0.7 — survival combat with v0.7 crafting, equipment, storage, and interiors; v0.5 elevated cabins, floor/foundation stacking, blueprints and land development.
 // Deliberately retains the v0.1 save key, format, resource IDs, and procedural positions.
@@ -165,16 +166,19 @@ mesh(new THREE.CylinderGeometry(.052,.060,1.03,8),handleMat,pickModel,0,-.23,0);
 mesh(box(.66,.12,.12),rockMat,pickModel,0,-.72,0);
 mesh(new THREE.ConeGeometry(.095,.27,6),ironMat,pickModel,-.35,-.73,0).rotation.z=Math.PI/2;
 mesh(new THREE.ConeGeometry(.095,.27,6),ironMat,pickModel,.35,-.73,0).rotation.z=-Math.PI/2;
+// The weapon mount sits at the right glove. All items extend UP from the grip.
+axeModel.rotation.z=Math.PI;pickModel.rotation.z=Math.PI;
 const swordModel=new THREE.Group();weaponMount.add(swordModel);
-mesh(box(.11,.92,.11),ironMat,swordModel,0,-.44,0);
-mesh(box(.44,.10,.14),brass,swordModel,0,-.84,0);
-mesh(new THREE.CylinderGeometry(.052,.052,.24,8),handleMat,swordModel,0,-1.02,0);
+mesh(new THREE.CylinderGeometry(.055,.055,.30,8),handleMat,swordModel,0,-.08,0);
+mesh(box(.44,.095,.14),brass,swordModel,0,.17,0);
+mesh(box(.12,.78,.10),ironMat,swordModel,0,.59,0);
+mesh(new THREE.ConeGeometry(.08,.23,4),ironMat,swordModel,0,1.07,0).rotation.y=Math.PI/4;
 swordModel.visible=false;
 const torchModel=new THREE.Group();weaponMount.add(torchModel);
-mesh(new THREE.CylinderGeometry(.035,.06,.83,7),handleMat,torchModel,0,-.30,0);
-const torchHead=mesh(new THREE.DodecahedronGeometry(.15,0),mat('#483a2b'),torchModel,0,-.75,0);
-const torchFlame=mesh(new THREE.ConeGeometry(.18,.42,8),new THREE.MeshBasicMaterial({color:'#ffb44b',transparent:true,opacity:.95,depthWrite:false}),torchModel,0,-.99,0);
-torchFlame.rotation.z=Math.PI;torchModel.visible=false;torchFlame.visible=false;
+mesh(new THREE.CylinderGeometry(.035,.055,.73,7),handleMat,torchModel,0,.29,0);
+const torchHead=mesh(new THREE.DodecahedronGeometry(.15,0),mat('#483a2b'),torchModel,0,.72,0);
+const torchFlame=mesh(new THREE.ConeGeometry(.16,.37,8),new THREE.MeshBasicMaterial({color:'#ffb44b',transparent:true,opacity:.95,depthWrite:false}),torchModel,0,.98,0);
+torchModel.visible=false;torchFlame.visible=false;
 player.position.set(0,0,0);
 
 const resourceRoot=new THREE.Group();scene.add(resourceRoot);
@@ -930,7 +934,7 @@ function saveData(){return makeSave({inventory,equipped,px:player.position.x,pz:
   resources:Object.fromEntries(resources.map(r=>[r.id,r.hits])),deepCave,torches,builds:builds.map(({id,type,x,z,rot,level})=>({id,type,x,z,rot,...(level===1?{level:1}:{})})),plans,storage,exploration,farm,atmosphere,survival,forage,campfires,wardrobe,combat:{hp:health,stamina,wolves:Object.fromEntries(wolves.filter(w=>w.deadUntil>Date.now()).map(w=>[w.id,w.deadUntil]))}});}
 function saveGame(silent=false){
   if(saveReadFailed){if(!silent)toast('Save protected: export/recover your old world first');return false;}
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));window.dispatchEvent(new Event('wilderness:local-save'));if(!silent)toast('World saved to this browser ✓');return true;}
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));window.dispatchEvent(new Event('wilderness:local-save'));if(!silent)toast('☁ Save queued');return true;}
   catch(e){if(!silent)toast('Save failed — export a backup');console.error('Save failed',e);return false;}
 }
 function findSafePosition(){
@@ -945,13 +949,14 @@ function findSafePosition(){
 function loadGame(){
   let raw=null,origin='';
   // Read the newest available save. Never overwrite a corrupt newer save with older data.
+  let forceFresh=false;try{forceFresh=localStorage.getItem('wilderness_cloud_fresh_world')==='1';if(forceFresh)localStorage.removeItem('wilderness_cloud_fresh_world');}catch(e){}
   try{
     const candidates=[
       [SAVE_KEY,'v0.23.7'],[V234_KEY,'v0.23.4'],[V23_KEY,'v0.23'],[V22_KEY,'v0.22'],[V21_KEY,'v0.21'],[V20_KEY,'v0.20'],[V19_KEY,'v0.19'],[V18_KEY,'v0.18'],[V17_KEY,'v0.17'],[V16_KEY,'v0.16'],[V15_KEY,'v0.15'],[V14_KEY,'v0.14'],[V13_KEY,'v0.13'],[V12_KEY,'v0.12'],[V11_KEY,'v0.11'],[V10_KEY,'v0.10'],[V09_KEY,'v0.9'],[V08_KEY,'v0.8'],[V07_KEY,'v0.7'],
       [V06_KEY,'v0.6'],[V05_KEY,'v0.5'],[V04_KEY,'v0.4'],
       [V03_KEY,'v0.3'],[LEGACY_KEY,'v0.2']
     ];
-    for(const [key,label] of candidates){
+    for(const [key,label] of (forceFresh?[]:candidates)){
       const found=localStorage.getItem(key);
       if(found!==null){raw=JSON.parse(found);origin=label;break;}
     }
@@ -1062,22 +1067,23 @@ function renderInventory(){
   $('restorePrevious').disabled=!localStorage.getItem(PRE_IMPORT_KEY);renderWardrobe();
 }
 
-// v0.23.8 hotbar is a per-device CONTROL preference; it does not change the cloud world schema.
+// v0.23.8.1 hotbar is a per-device CONTROL preference; it does not change the cloud world schema.
 const QUICKBAR_KEY='wilderness_quickbar_v0238';
 const QUICKBAR_CHOICES=['axe','stone_axe','pickaxe','iron_pickaxe','sword','torch','carrot','potato','egg','stew','water'];
 const QUICKBAR_DEFAULT=['axe','pickaxe','sword','torch','carrot','stew'];
 let quickbarSlots=(()=>{try{const raw=JSON.parse(localStorage.getItem(QUICKBAR_KEY));return Array.isArray(raw)&&raw.length===6&&raw.every(id=>QUICKBAR_CHOICES.includes(id))?raw:QUICKBAR_DEFAULT.slice();}catch{return QUICKBAR_DEFAULT.slice();}})();
 let quickbarEditing=-1;
+let selectedConsumable=null;
 function quickbarAvailable(id){return amount(id)>0;}
 function quickbarChoose(id){
   if(!quickbarAvailable(id)){toast('Not in your backpack: '+(ITEM[id]?.name||id));return;}
-  if(ITEM[id]?.tool){equip(id);return;}
-  if(EDIBLES[id]){consumeFromBag(id);return;}
+  if(ITEM[id]?.tool){selectedConsumable=null;equip(id);return;}
+  if(EDIBLES[id]){selectedConsumable=id;renderQuickbar();syncCombatDock();toast('Selected '+ITEM[id].name+' — tap Eat / Drink');return;}
 }
 function renderQuickbar(){
   const host=$('quickslots');if(!host)return;host.replaceChildren();
   quickbarSlots.forEach((id,i)=>{
-    const b=document.createElement('button');b.className='quickslot'+(id===equipped?' active':'')+(!quickbarAvailable(id)?' unavailable':'')+(quickbarEditing===i?' editing':'');
+    const b=document.createElement('button');b.className='quickslot'+((id===equipped&&!selectedConsumable||id===selectedConsumable)?' active':'')+(!quickbarAvailable(id)?' unavailable':'')+(quickbarEditing===i?' editing':'');
     b.setAttribute('aria-label','Quick slot '+(i+1)+': '+(ITEM[id]?.name||id));
     const icon=document.createElement('span');icon.className='qicon';icon.textContent=ITEM[id]?.icon||'□';
     const name=document.createElement('span');name.textContent=(ITEM[id]?.name||id).slice(0,9);
@@ -1093,30 +1099,41 @@ function openQuickbarPicker(i){
     picker.hidden=true;quickbarEditing=-1;renderQuickbar();
   });options.append(b);});renderQuickbar();
 }
+function currentPrimaryAction(){
+  const village=nearbyVillageAction();
+  const node=getNearest();
+  return primaryAction({equipped,food:selectedConsumable&&amount(selectedConsumable)>0?selectedConsumable:null,
+    resource:node?.type||null,deepVein:!!nearbyDeepVein(),
+    nearby:village?.type||(getNearbyStation()?'station':null)});
+}
 function smartAction(){
   if(paused||inventoryOpen||stationOpen||mapOpen||buildMode)return;
-  // Never turn a sword swing into an interaction: Attack remains dedicated in the combat ring.
-  if(equipped==='torch'){changeHeldTorch();return;}
-  if(equipped==='sword'){attack();return;}
+  const action=currentPrimaryAction();
+  if(action.kind==='attack'){attack();return;}
+  if(action.kind==='torch'){changeHeldTorch();return;}
+  if(action.kind==='consume'){
+    const food=selectedConsumable;selectedConsumable=null;
+    consumeFromBag(food);renderQuickbar();syncCombatDock();return;
+  }
+  if(action.kind==='gather'){gather();return;}
   interactOrGather();
 }
+let lastActionText='';
 function updateSmartActionLabel(){
   const b=$('action');if(!b)return;
-  if(equipped==='torch')b.textContent=torches.hand.lit?'Extinguish':'Ignite';
-  else if(equipped==='sword')b.textContent='⚔ Attack';
-  else if(nearbyVillageAction()?.type==='door')b.textContent='🚪 Open / Close';
-  else if(nearbyVillageAction()?.type==='chest')b.textContent='📦 Loot';
-  else if(nearbyVillageAction()?.type==='person')b.textContent='🤝 Trade';
-  else if(equipped==='pickaxe'||equipped==='iron_pickaxe')b.textContent='⛏ Mine / Use';
-  else if(equipped==='axe'||equipped==='stone_axe')b.textContent='🪓 Chop / Use';
-  else b.textContent='Use';
+  const current=currentPrimaryAction();
+  const label=current.kind==='torch'
+    ?(torches.hand.lit?'🔥 Extinguish':torches.hand.fuel?'🔥 Ignite':'🔥 Refuel')
+    :current.label;
+  if(label!==lastActionText){b.textContent=label;b.setAttribute('aria-label','Primary action: '+label);lastActionText=label;}
 }
 
 function syncCombatDock(){
-  const show=equipped==='sword'&&!buildMode&&!inventoryOpen&&!stationOpen&&!mapOpen&&!paused;
+  const show=equipped==='sword'&&!selectedConsumable&&!buildMode&&!inventoryOpen&&!stationOpen&&!mapOpen&&!paused;
   $('combatControls').classList.toggle('show',show);
   document.body.classList.toggle('combat-active',show);
   if(!show){blockHeld=false;updateCombatUi();}
+  updateSmartActionLabel();
 }
 function setInventory(open){if(open&&editingBuilding)cancelBuildingEdit();if(open)resetInputControls();inventoryOpen=open;$('inventoryPanel').classList.toggle('show',open);
   if(open){if(buildMode)setBuildMode(false);if(stationOpen)closeStation();renderInventory();}
@@ -1125,7 +1142,7 @@ function setInventory(open){if(open&&editingBuilding)cancelBuildingEdit();if(ope
 function equip(id){
   if(!ITEM[id]?.tool||!amount(id))return;
   if(!['axe','pickaxe','stone_axe','iron_pickaxe','sword','torch'].includes(id)){toast(id==='shield'?'Shield is used automatically when you hold Block':'Bow gameplay is planned for a later update');return;}
-  equipped=id;axeModel.visible=['axe','stone_axe'].includes(id);pickModel.visible=['pickaxe','iron_pickaxe'].includes(id);swordModel.visible=id==='sword';combatMode=id==='sword';
+  selectedConsumable=null;equipped=id;axeModel.visible=['axe','stone_axe'].includes(id);pickModel.visible=['pickaxe','iron_pickaxe'].includes(id);swordModel.visible=id==='sword';combatMode=id==='sword';
   syncCombatDock();syncTorchVisuals();updateHud();
   toast(ITEM[id].name+' equipped');saveGame(true);
 }
@@ -1135,7 +1152,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.23.7-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.23.8.1-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -1147,13 +1164,15 @@ async function importSave(file){
   let imported;
   try{imported=normalizeSave(JSON.parse(await file.text()));}
   catch(e){toast('Import rejected: '+e.message);return;}
-  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.23.7 world will be replaced. Export it first if needed.`;
+  const question=`Restore ${imported.builds.length} buildings, ${count(imported.inventory,'wood')} wood and ${count(imported.inventory,'stone')} stone from this backup?\n\nYour current v0.23.8.1 world will be replaced. Export it first if needed.`;
   if(!window.confirm(question))return;
   try{
     const previous=localStorage.getItem(SAVE_KEY);
     if(previous!==null)localStorage.setItem(PRE_IMPORT_KEY,previous);
     localStorage.setItem(SAVE_KEY,JSON.stringify(imported));
-    localStorage.removeItem('wilderness_v019_cloud_baseline'); // Manual import: do not silently overwrite cloud.
+    // Explicit import is promoted via cloud CAS only if the last known revision still matches.
+    const b=JSON.parse(localStorage.getItem('wilderness_v019_cloud_baseline')||'null');
+    if(b?.userId) localStorage.setItem('wilderness_pending_cloud_import',JSON.stringify({userId:b.userId,revision:b.revision}));
     suppressUnloadSave=true; // Prevent pagehide from saving the superseded world.
     location.reload();
   }catch(e){toast('Import failed. Your current world is unchanged.');console.error(e);}
@@ -1162,12 +1181,13 @@ function undoLastImport(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem(PRE_IMPORT_KEY)||'null'));}
   catch(e){toast('No valid pre-import recovery found');return;}
-  if(!window.confirm('Undo the last world import? This replaces your current v0.23.7 world with the previous version. Export your current world first if needed.'))return;
+  if(!window.confirm('Undo the last world import? This replaces your current v0.23.8.1 world with the previous version. Export your current world first if needed.'))return;
   try{
     const current=localStorage.getItem(SAVE_KEY);
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
     if(current!==null)localStorage.setItem(PRE_IMPORT_KEY,current);
-    localStorage.removeItem('wilderness_v019_cloud_baseline');
+    const baseline=JSON.parse(localStorage.getItem('wilderness_v019_cloud_baseline')||'null');
+    if(baseline?.userId)localStorage.setItem('wilderness_pending_cloud_import',JSON.stringify({userId:baseline.userId,revision:baseline.revision}));
     suppressUnloadSave=true;location.reload();
   }catch(e){toast('Recovery failed; saved worlds were not intentionally deleted');console.error(e);}
 }
@@ -1175,19 +1195,23 @@ function undoCloudRestore(){
   let previous;
   try{previous=normalizeSave(JSON.parse(localStorage.getItem('wilderness_v023_pre_cloud_restore')||'null'));}
   catch(e){toast('No valid cloud recovery snapshot exists');return;}
-  if(!window.confirm('Restore the world that was on this device before the last cloud download? Export your current v0.23.7 world first. Cloud sync will pause until you choose which world to keep.'))return;
+  if(!window.confirm('Restore the world that was on this device before the last cloud download? Export your current v0.23.8.1 world first. Cloud sync will pause until you choose which world to keep.'))return;
   try{
     const current=saveReadFailed?localStorage.getItem(SAVE_KEY):JSON.stringify(saveData());
     localStorage.setItem(SAVE_KEY,JSON.stringify(previous));
     if(current!==null)localStorage.setItem('wilderness_v023_pre_cloud_restore',current);
-    localStorage.removeItem('wilderness_v019_cloud_baseline');
+    const baseline=JSON.parse(localStorage.getItem('wilderness_v019_cloud_baseline')||'null');
+    if(baseline?.userId)localStorage.setItem('wilderness_pending_cloud_import',JSON.stringify({userId:baseline.userId,revision:baseline.revision}));
     suppressUnloadSave=true;location.reload();
   }catch(e){toast('Cloud recovery failed — no data was intentionally cleared');console.error(e);}
 }
-loadGame();grantSuppliesOnce();campfires=normalizeCampfires(campfires,builds);syncCampfireMeshes();applyQuality();updatePrefs();updateAtmosphere();updateSeedVisuals();axeModel.visible=['axe','stone_axe'].includes(equipped);pickModel.visible=['pickaxe','iron_pickaxe'].includes(equipped);torchModel.visible=equipped==='torch';syncTorchVisuals();updateHud();
+loadGame();grantSuppliesOnce();campfires=normalizeCampfires(campfires,builds);syncCampfireMeshes();applyQuality();updatePrefs();updateAtmosphere();updateSeedVisuals();axeModel.visible=['axe','stone_axe'].includes(equipped);pickModel.visible=['pickaxe','iron_pickaxe'].includes(equipped);torchModel.visible=equipped==='torch';swordModel.visible=equipped==='sword';syncTorchVisuals();updateHud();
 function getNearest(){
   let best=3.0,winner=null;
-  for(const r of resources){if(r.hits<=0||r.deepHidden)continue;const d=Math.hypot(r.x-player.position.x,r.z-player.position.z);if(d<best){best=d;winner=r;}}
+  const desired=['axe','stone_axe'].includes(equipped)?'tree':['pickaxe','iron_pickaxe'].includes(equipped)?'rock':null;
+  const valid=resources.filter(r=>r.hits>0&&!r.deepHidden&&(!desired||r.type===desired));
+  const pool=valid.length?valid:resources;
+  for(const r of pool){if(r.hits<=0||r.deepHidden)continue;const d=Math.hypot(r.x-player.position.x,r.z-player.position.z);if(d<best){best=d;winner=r;}}
   return winner;
 }
 function nearbyDeepVein(){return insideDeepCave(player.position.x,player.position.z)?nearestVein(player.position):null;}
@@ -2145,7 +2169,7 @@ addEventListener('keydown',e=>{
   if(landscapeGate.isBlocked()){keys.clear();return;}
   if(editingBuilding){if(e.key==='Escape'){cancelBuildingEdit();e.preventDefault();}return;}
   keys.add(e.key.toLowerCase());if(e.repeat||paused)return;
-  if(e.key.toLowerCase()==='e')interactOrGather();
+  if(e.key.toLowerCase()==='e')smartAction();
   if(e.code==='Space')jump();
   if(e.key==='1')equip(amount('stone_axe')?'stone_axe':'axe');if(e.key==='2')equip(amount('iron_pickaxe')?'iron_pickaxe':'pickaxe');if(e.key==='3')equip('sword');
   if(e.key.toLowerCase()==='x')attack();if(e.key.toLowerCase()==='c')dodge();if(e.key.toLowerCase()==='q')setBlock(true);
@@ -2202,11 +2226,13 @@ function updateCamera(dt){
   camera.position.lerp(desired,Math.min(1,dt*9));camera.lookAt(target);
   updateSkyObjects(celestial,atmosphere.elapsed,DAY_SECONDS,camera);
 }
+let lastActionLabelCheck=0;
 function tick(){
+  if(performance.now()-lastActionLabelCheck>250){lastActionLabelCheck=performance.now();if(!paused)updateSmartActionLabel();}
   requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.05);
   if(!paused&&window.__wildernessProfileAllowed&&!landscapeGate.isBlocked()){
     forestLodTimer+=dt; if(forestLodTimer>.8){forestLodTimer=0;refreshForestLOD(effectsQuality==='low');premiumArt.refresh();}
-    atmosphere.elapsed+=dt;moodTimer+=dt;if(moodTimer>.35){moodTimer=0;updateAtmosphere();updateSmartActionLabel();updateSmartActionLabel();updateSmartActionLabel();}
+    atmosphere.elapsed+=dt;moodTimer+=dt;if(moodTimer>.35){moodTimer=0;updateAtmosphere();updateSmartActionLabel();}
     ambienceCooldown-=dt;if(ambienceCooldown<=0){ambienceCooldown=12+Math.random()*14;if(!timeOfDay(atmosphere.elapsed).night)sound.play('bird');}
     const spent=advanceCampfires(campfires,dt);
     campfireTimer+=dt;if(campfireTimer>.09){const step=campfireTimer;campfireTimer=0;syncCampfireMeshes();campfireFx.update(step,builds.filter(b=>b.type==='campfire'),campfires,player.position,camera,effectsQuality==='low',timeOfDay(atmosphere.elapsed).daylight);}
@@ -2215,7 +2241,7 @@ function tick(){
     torchTimer+=dt;if(torchTimer>.09){const step=torchTimer;torchTimer=0;syncTorchVisuals();
       // Visual effects are optional. A failed WebGL effect must never freeze movement.
       if(!torchFxFailed)try{
-        torchFx.update(step,player,equipped==='torch'&&amount('torch')>0?torches.hand:{fuel:0,lit:false},builds.filter(b=>b.type==='torch_stand'),torches.stands,camera,effectsQuality==='low',timeOfDay(atmosphere.elapsed).daylight);
+        torchFx.update(step,player,equipped==='torch'&&amount('torch')>0?torches.hand:{fuel:0,lit:false},builds.filter(b=>b.type==='torch_stand'),torches.stands,camera,effectsQuality==='low',timeOfDay(atmosphere.elapsed).daylight,torchFlame);
       }catch(error){torchFxFailed=true;console.error('Torch effects disabled for this session (gameplay is safe):',error);
         try{torchFx.dispose();}catch(_){} toast('Torch visual effect disabled; gameplay continues.');}
     }
@@ -2225,6 +2251,13 @@ function tick(){
     // v0.23.4: a held right-thumb Attack pointer repeats at the EXISTING swing cadence.
     // This runs only during active gameplay; pointercancel/blur clears DualInput.
     if(!editingBuilding&&inputs.isHeld('attack')&&attackCooldown<=0&&stamina>=12)attack();
+    // A held primary button continuously swings/chops/mines at existing cooldowns.
+    // Never repeat Use, trade, loot, fuel, eat, or door interactions.
+    if(!editingBuilding&&inputs.isHeld('interact')){
+      if(equipped==='sword'&&!selectedConsumable&&attackCooldown<=0&&stamina>=12)attack();
+      else if(['axe','stone_axe','pickaxe','iron_pickaxe'].includes(equipped)
+        &&currentPrimaryAction().kind==='gather'&&performance.now()>=actionUntil)gather();
+    }
     const axisX=(editingBuilding||inventoryOpen||stationOpen||mapOpen)?0:move.x+(keys.has('d')||keys.has('arrowright')?1:0)-(keys.has('a')||keys.has('arrowleft')?1:0);
     const axisZ=(editingBuilding||inventoryOpen||stationOpen||mapOpen)?0:move.y+(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0);
     const moveMagnitude=Math.min(1,Math.hypot(axisX,axisZ));
@@ -2319,11 +2352,19 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.23.8',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
+window.__wildernessDebug=()=>({torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.23.8.1',wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
 // Cloud save never deletes or changes the old v0.16 key. Loading a remote world
 // first retains a local recovery snapshot, then reloads with autosave suppressed.
 window.__wildernessForceLocalSave=()=>saveGame(true);
 window.__wildernessCloudSnapshot=()=>saveReadFailed?null:saveData();
+window.__wildernessCloudStartFresh=()=>{
+  // A new account must not inherit another account's locally cached world.
+  const prior=saveReadFailed?localStorage.getItem(SAVE_KEY):JSON.stringify(saveData());
+  if(prior)localStorage.setItem('wilderness_v0238_account_switch_recovery',prior);
+  localStorage.removeItem(SAVE_KEY);
+  localStorage.setItem('wilderness_cloud_fresh_world','1');
+  suppressUnloadSave=true;location.reload();
+};
 window.__wildernessCloudReplace=remote=>{
   const normalized=normalizeSave(remote);
   const raw=JSON.stringify(normalized);
