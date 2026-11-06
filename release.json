@@ -1,5 +1,5 @@
 {
-  "version": "0.24.0",
-  "build": "2026-11-06-nightfall-balanced",
-  "description": "Night-only balanced zombies: six nearby maximum, moderate attacks, protected homesteads/villages, sword combat and immediate loot. Existing cloud save schema unchanged."
+  "version": "0.24.1",
+  "build": "2026-11-06-guest-access",
+  "description": "Play as Guest (device-only, separate local save); accounts still have automatic cloud sync. Includes Nightfall balanced zombies and animated survivor."
 }

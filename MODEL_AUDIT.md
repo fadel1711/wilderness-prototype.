@@ -36,3 +36,5 @@ All **10** supplied GLB files were inspected directly (not inferred from their f
 4. Optional **damage / defeat / interact** hooks in a later focused release after the core gameplay remains stable.
 
 Don't purchase more Meshy animation generations yet. Test the bundled animations in actual gameplay first; some may already be in the 20 exported clips under opaque names.
+
+**Guest mode addition v0.24.1:** New local-only guest save key, profile gate entry, no guest cloud sync; account-mode cloud behavior preserved. Runtime iPhone test pending.

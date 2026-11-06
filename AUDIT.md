@@ -9,3 +9,5 @@
 - GitHub boot diagnostic required list now includes `zombie-system.js`.
 - Added a one-click in-game 'Preview Nightfall' in Bag settings for testing, modifying only existing atmospheric elapsed time.
 - Do not treat static QA as device rendering acceptance.
+
+**Guest mode addition v0.24.1:** New local-only guest save key, profile gate entry, no guest cloud sync; account-mode cloud behavior preserved. Runtime iPhone test pending.
