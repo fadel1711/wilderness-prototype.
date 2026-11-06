@@ -1,7 +1,9 @@
-# Wilderness roadmap status — v0.23.4
+# Wilderness roadmap
 
-**Now packaged:** long-press building editor, selection, repositioning, rotation, exact dismantle, and save safety. iPhone acceptance pending.
-
-**Next:** v0.23.5 — handheld / placeable torches, light and optional fuel; then v0.24 — Night Zombies, v0.25 — Mountains & Rivers, v0.26 — Climbing, v0.27 — Wildlife, v0.28 — Underground Mine, v0.29 — Dog Companion.
-
-Keep feature bundles small and preserve proven joystick/multitouch, village boundaries, save format, and account-first automatic cloud sync.
+- **v0.23.5: Portable and standing torches** — this release.
+- **v0.24: Night zombies** — next after acceptance; protect villages/homes.
+- **v0.25: Mountains and rivers** — terrain and safe migration.
+- **v0.26: Climbing** — stamina and ledge controls.
+- **v0.27: Wildlife** — chickens, cows, pigs, deer; 10–15 individuals per species at world level, bounded nearby rendering.
+- **v0.28: Separate underground mine** — layered maze and new deposits.
+- **v0.29: Dog companion** — tame via bones and meat.

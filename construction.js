@@ -1,8 +1,8 @@
 // Wilderness v0.21 — new two-storey modular pieces; old v0.5 ground-level builds are preserved.
 import {UPPER_TYPES,LOFT_FURNISH_TYPES,isUpper,upperPlacementVerdict} from './second-story-system.js?v=0.21';
 // Existing v0.4 positions and types remain unchanged; elevated placements are derived.
-export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire',...UPPER_TYPES]);
-export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf','campfire']);
+export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire','torch_stand',...UPPER_TYPES]);
+export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf','campfire','torch_stand']);
 export const WALL_TYPES=Object.freeze(['wall','door','window','fence','loft_wall','loft_door','loft_window']);
 export const COSTS=Object.freeze({
   cabin:{wood:12,stone:5},floor:{wood:2,stone:0},wall:{wood:3,stone:0},
@@ -10,7 +10,7 @@ export const COSTS=Object.freeze({
   roof:{wood:4,stone:0},stairs:{wood:3,stone:0},path:{wood:0,stone:1},
   fence:{wood:2,stone:0},planter:{wood:2,stone:1},
   workbench:{wood:6,stone:2},chest:{wood:5,stone:0},furnace:{wood:3,stone:12},
-  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0},campfire:{wood:4,stone:5},
+  table:{wood:4,stone:0},chair:{wood:2,stone:0},bed:{wood:6,stone:0},shelf:{wood:3,stone:0},campfire:{wood:4,stone:5},torch_stand:{wood:2,stone:1},
   loft_floor:{wood:5,stone:2},loft_wall:{wood:4,stone:1},loft_door:{wood:4,stone:1},loft_window:{wood:4,stone:2},loft_roof:{wood:5,stone:1},loft_stairs:{wood:12,stone:5}
 });
 const PI=Math.PI;
@@ -72,9 +72,9 @@ export function placementVerdict(candidate,builds,resources,player,world=46){
     if(builds.some(b=>['loft_wall','loft_window','loft_door'].includes(b.type)&&near(b,candidate,.68)))return 'Too close to an upstairs wall';
     return '';
   }
-  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:type==='campfire'?1.12:FURNISH_TYPES.includes(type)?.70:1.30;
+  const radius=type==='cabin'?3.35:wallType(type)?1.06:type==='path'?.95:type==='campfire'?1.12:type==='torch_stand'?.65:FURNISH_TYPES.includes(type)?.70:1.30;
   if(Math.abs(x)>world-radius-.4||Math.abs(z)>world-radius-.4)return 'Outside the map';
-  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:type==='campfire'?1.32:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
+  if(Math.hypot(x-player.x,z-player.z)<(type==='cabin'?3.25:wallType(type)?.80:type==='campfire'?1.32:type==='torch_stand'?.80:FURNISH_TYPES.includes(type)?.68:1.0))return 'Too close to your character';
   for(const r of resources){if(r.hits>0&&near(r,candidate,radius+r.radius+.28))return 'Resource in the way';}
   const footprintCount=type==='cabin'?cabinFoundationCount(candidate,builds):0;
   // Cabins are either completely on the ground or completely supported by a 3x3 pad.
@@ -96,7 +96,7 @@ export function placementVerdict(candidate,builds,resources,player,world=46){
     if(FURNISH_TYPES.includes(type)&&FURNISH_TYPES.includes(b.type)&&(!b.level||b.level===0)&&near(candidate,b,1.10))return 'Another furnishing occupies this spot';
     if(FURNISH_TYPES.includes(type)&&!isUpper(b.type)&&wallType(b.type)&&near(candidate,b,.7))return 'Too close to a wall';
     if(wallType(type)&&wallType(b.type)&&near(candidate,b,.35))return 'Edge already occupied';
-    if(type===b.type&&['floor','foundation','path','planter','campfire'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
+    if(type===b.type&&['floor','foundation','path','planter','campfire','torch_stand'].includes(type)&&near(candidate,b,.35))return 'Tile already occupied';
     if(type==='floor'&&b.type==='cabin'&&near(candidate,b,3))return 'Cabin already has a floor';
     if(type==='roof'&&b.type==='roof'&&near(candidate,b,.35))return 'Roof already occupied';
     if(type==='stairs'&&b.type==='stairs'&&near(candidate,b,.35))return 'Stairs already occupied';
@@ -128,7 +128,7 @@ export const shiftPart=(part,x,z,rot)=>{
 };
 export function resolveBlueprint(plan,x,z,rot){return plan.parts.map(p=>shiftPart(p,x,z,rot));}
 export const sortParts=parts=>[...parts].sort((a,b)=>{
-  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,campfire:6,loft_floor:7,loft_stairs:8,loft_wall:9,loft_door:9,loft_window:9,loft_roof:10,roof:11};
+  const order={foundation:0,path:1,floor:2,cabin:3,stairs:4,wall:5,door:5,window:5,fence:5,planter:6,workbench:6,chest:6,furnace:6,table:6,chair:6,bed:6,shelf:6,campfire:6,torch_stand:6,loft_floor:7,loft_stairs:8,loft_wall:9,loft_door:9,loft_window:9,loft_roof:10,roof:11};
   return order[a.type]-order[b.type];
 });
 export function blueprintVerdict(parts,builds,resources,player,world=46){

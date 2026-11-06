@@ -7,6 +7,7 @@ export const RECIPES=Object.freeze({
     {id:'iron_pickaxe',label:'Iron pickaxe',icon:'⛏️',needs:{wood:3,iron_bar:2},output:{iron_pickaxe:1},info:'Faster rock mining'},
     {id:'sword',label:'Iron sword',icon:'⚔️',needs:{wood:2,iron_bar:3},output:{sword:1},info:'Used for v0.7 melee combat'},
     {id:'shield',label:'Wooden shield',icon:'🛡️',needs:{wood:5,stone:2},output:{shield:1},info:'Used for v0.7 melee combat'},
+    {id:'torch',label:'Explorer torch',icon:'🔥',needs:{wood:2,charcoal:1},output:{torch:1},info:'Reusable handheld torch. Refuel with charcoal to light your way'},
     {id:'bow',label:'Hunting bow',icon:'🏹',needs:{wood:6,stone:1},output:{bow:1},info:'For the future combat update'}
   ]),
   furnace:Object.freeze([
