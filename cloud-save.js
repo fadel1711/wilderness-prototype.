@@ -1,7 +1,7 @@
 // Wilderness v0.23.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.2';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.2';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.23.3';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.23.3';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -221,7 +221,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
   function applyCloud(){
     if(!user||busy||!remote||mode==='invalid')return;
     let normalized;try{normalized=normalizeSave(remote.save);}catch(e){status('Cloud world rejected by validation.');return;}
-    if(!window.confirm('Restore the cloud world to this device? Current v0.23.2 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
+    if(!window.confirm('Restore the cloud world to this device? Current v0.23.3 progress will be saved in a local recovery slot before reload. Export a JSON backup first if unsure.'))return;
     cancelSchedule();
     try{window.__wildernessCloudReplace(normalized);baselineWrite(normalized,revision);}
     catch(e){status('Could not restore cloud world: '+message(e));}
@@ -266,7 +266,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.23.2'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.23.3'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

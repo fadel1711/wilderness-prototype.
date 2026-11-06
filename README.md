@@ -1,39 +1,49 @@
-# Wilderness v0.23.2 — Mandatory Landscape Mode (iPhone)
+# Wilderness v0.23.3 — Thumb-Friendly Combat (Landscape)
 
-A **complete, ready-to-upload GitHub Pages game package** based directly on the working v0.23.1. It includes every game module, all six assets in `assets/`, and the new `orientation-gate.js`. This is a **small UI and input-safety hotfix**. All four villages, their enterable houses/doors/chests/trading, cave mining, construction, farming, wardrobe, campfires and automatic Cloud Save remain intact.
+**Full GitHub Pages release** built on the working v0.23.2 ZIP. All existing gameplay, villages, enterable houses, loot, trades, deep cave, second-story construction, weather/sky, seed gathering, campfires, wardrobe, wildlife, and cloud-saving behavior are retained. No new back-end requirements.
 
 ## What changed
 
-- **Landscape-only gameplay:** On a portrait-shaped screen, a polished full-screen Rotate Your Phone screen blocks gameplay. Physically rotate the iPhone sideways to dismiss it automatically. Landscape does not require an extra tap or page reload.
-- **No false promise of automatic phone rotation:** Ordinary iPhone Safari webpages cannot reliably force iOS screen orientation. This update **requires** landscape by showing a rotation gate; it does not secretly rotate the device. If your iPhone refuses to rotate, disable **Portrait Orientation Lock** in Control Center.
-- **Gameplay pauses safely in portrait:** no character movement, day/night clock progress, hunger/thirst depletion, creature updates or autosave ticks while the screen is locked. The previous held joystick, camera pointer, jump and block inputs are cleared on rotation. Landscape resumes the existing game seamlessly.
-- **Start screen and menus:** if you open the game vertically, the gate covers the start menu too. Rotate sideways first to access gameplay and menus. The existing "↻ Unstick" recovery control is retained.
-- **No database or save changes:** `SAVE_KEY` is **still `wilderness_v0231_singleplayer`**, and the validated save JSON schema version is still **21**. The previous cloud-save implementation and baseline are **not modified**; cloud configuration remains included. **No Supabase SQL or rollback is required.**
+- **Right-thumb combat pad when Sword is equipped:** a **large Attack** button at the bottom-right, with **Hold (Block)** above **Dodge** to its left. The **Jump** button stays immediately to the left of the pad. No more reaching up to the old high combat toolbar.
+- **Tap OR hold Attack:** a quick tap makes one swing. On a touch screen, holding Attack keeps swinging at the existing 0.48-second attack cooldown while stamina permits. Releasing stops automatic swings. Attack damage, stamina cost, wolf behavior, and protection zones are unchanged.
+- **Press-and-hold shield:** Hold the new Block button while you need protection; release to stop guarding. This is not a permanent toggle. Dodge remains a quick tap. Existing equipment and stamina requirements still apply.
+- **Two-thumb movement:** one finger continues steering the trusted left joystick while the other attacks, guards, dodges, or jumps. Separate pointer IDs are retained; interrupted touches still release via the v0.22 recovery system and **↻ Unstick**.
+- **Clearer combat state:** when your sword is equipped, Gather / Bag / Save / Build become a narrow row just above the combat pad, and equipment switches move above that row. Equip an axe or pickaxe to restore the previous everyday controls.
+- **Safer menus:** attack, dodge, and block no longer fire through an open Map panel. All interactive buttons have accessible labels. Portrait gameplay remains blocked as in v0.23.2.
 
-## iPhone installation (GitHub Pages)
+## Installation from an iPhone — complete replacement
 
-1. Open your working **v0.23.1** game and use **Bag → Export world**. Save the JSON backup in Files. Do not clear Safari website data.
-2. Download/extract `wilderness-prototype-v0.23.2.zip` in the iPhone Files app.
-3. Open your **existing Wilderness GitHub repository**, on its GitHub Pages deployment branch (usually `main`). Replace **all existing root `.html` and `.js` files** using the full versions inside the ZIP, and add the NEW **`orientation-gate.js`** beside `game.js`.
-4. Keep the six model/texture assets inside `assets/` (included in this ZIP). Don't upload a ZIP or a wrapper folder into the repository root.
-5. Commit changes. When GitHub Pages reports success, refresh the normal Wilderness game URL. Check the game header **Single-player · v0.23.2** while sideways. Source-module imports and startup checks use **0.23.2** cache-busting query strings to avoid mixed files.
-6. Rotate to portrait: the full-screen landscape-required message should appear. Rotate back: it should vanish with your exact world and character still there. Test walk+Jump multitouch, ↻ Unstick, Map, Bag, village doors, loot and automatic cloud saving.
+1. In your current working v0.23.2 game, open **Bag → Export world**, and save the JSON backup into the iPhone Files app. Do not clear Safari website data.
+2. Download and extract **wilderness-prototype-v0.23.3.zip** in Files.
+3. In your **existing Wilderness GitHub Pages repository**, replace the `.html` and `.js` files at its ROOT with the full versions inside the ZIP. Do not upload this ZIP or its enclosing folder as one file; its files belong at the repository root. **No partial code snippets or patches** are needed.
+4. Keep the six existing `.glb` / `.webp` art files in the **`assets/`** folder. Full copies are also included in the ZIP.
+5. Keep `README.md`, `ROADMAP.md`, and `CRAFTING_PROPOSALS.md` if you want the latest instructions. Commit changes to your published branch (usually `main`); confirm GitHub Pages deployment succeeded.
+6. Open the usual Wilderness URL with your iPhone sideways. Verify the header reads **Single-player · v0.23.3**. Equip your sword with **⚔ Sword** in the equipment strip (if you don't have a sword, use the Bag's existing Combat Kit or craft one).
+7. Check that a large **Attack** button appears at the bottom right, **Hold** and **Dodge** alongside it, and **Jump** immediately to their left. Walk and hold Attack using separate thumbs. Switch back to an axe to see the normal Gather / Bag controls.
 
-**DO NOT run any Supabase migration or rollback.** This is presentation-only. If your device has an old cached client, close the old tab, confirm the GitHub Pages deployment and check the version header; do not delete your browser saves.
+## Save / cloud safety
 
-## Quick acceptance checks
+- **No new Supabase SQL**. Do not run any previous migration or emergency rollback. This build uses **the exact existing `wilderness_v0231_singleplayer` local save key**, the existing v0.23.1/0.23.2 JSON schema and existing cloud-sync baseline. No account or database settings changed.
+- If you use Cloud Save, it should work as it did in the approved v0.23.2 build: normally automatic when signed in, with conflict prompts only for meaningful competing offline changes.
+- Your old game ZIP remains a rollback option. Export the current world before rolling back. Do not delete Safari browser data.
+- **No backend or GitHub accounts have been modified by this package**; you deploy the files yourself.
 
-1. Portrait mode blocks input (including keyboards), covers the entire screen and pauses time, NPCs and survival drain.
-2. Landscape automatically restores the full HUD and controls without asking you to reload.
-3. Turn from landscape to portrait **while holding the joystick**: movement stops immediately. Return to landscape: joystick and camera work normally; ↻ Unstick remains available.
-4. Landscape Bag/Map/Build and the cloud account panel remain usable.
-5. All four villages, houses, doors, chests and trades continue to work; original settlement and items remain unchanged.
-6. Refresh with your phone in landscape; the same world loads and Cloud Save behaves as in v0.23.1.
+## Acceptance checks on iPhone
+
+1. Header says v0.23.3, and landscape-only mode still blocks portrait gameplay.
+2. Equipping Sword shows the right-thumb combat pad; switching to Axe hides it and restores the normal controls.
+3. Walk with your left thumb, tap Attack with the right. Then walk while holding Attack: repeated swings obey the stamina cost / existing cooldown. Releasing Attack stops repeated swings.
+4. Walk while holding Block. Release it: blocking ends. Test Dodge and Jump independently while walking. All combat buttons are within comfortable reach.
+5. Open Map or Bag during/after combat: accidental attacks do not trigger; closing the panel resumes correct controls.
+6. Rotate or switch away while holding a button: the controls release. The **↻ Unstick** button still resets both joystick and camera.
+7. Four villages, doors, loot chests, existing structures, inventory, cave exploration and campfires behave as before.
+8. Save, refresh and sign back into your usual account. Your world and automatic cloud saving work as before.
+
+## Technical check scope
+
+- JavaScript parser checks, full module-reference audit, binary art-asset inventory, identical save schema and cloud baseline, mocked independent-pointer actions, and browser layout checks at 568×320, 667×375, 844×390, 932×430 and 1024×768 are performed for this release.
+- **Not claimed:** a successful live WebGL game playthrough in iPhone Safari, actual on-device thumb ergonomics, or a live Supabase write test. Please perform the acceptance checks before approving further features.
 
 ## Rollback
 
-Since v0.23.2 deliberately keeps exactly the **same save key and schema** as v0.23.1, you can redeploy your previous **complete v0.23.1 ZIP** if needed. Export a current world JSON backup first; don't clear browser data and don't run SQL. **No automatic cloud conflict-choice changes** are included.
-
-## Verification notes
-
-JavaScript syntax, import references, v0.23.1 save-key and cloud-baseline preservation, portrait/landscape gating, control-reset behavior, full archive integrity and static UI layout were tested. Live iPhone Safari rendering and touch/orientation behavior still require real-device confirmation. An iPhone webpage cannot override the iOS orientation-lock switch.
+Deploy your **complete v0.23.2 ZIP** to the same GitHub Pages branch if the updated controls fail. **No Supabase rollback** is needed. Your existing browser save format is unchanged; keep your separately exported JSON backup.

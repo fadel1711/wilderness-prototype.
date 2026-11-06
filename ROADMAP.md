@@ -1,12 +1,20 @@
-# v0.23.2 — Landscape-only hotfix
+# Wilderness — Upcoming small releases
 
-No changes to future milestone scope; v0.23.1 village features stay in place.
+## Current package
 
-# Wilderness roadmap after v0.23.2
+**v0.23.3 — Thumb-Friendly Combat:** right-thumb attack/hold-block/dodge, tap-or-hold attacks, lower-reach Jump, preserved multitouch and landscape controls. No save or backend migration.
 
-- **v0.23.2 — Living Village Expansion (this release):** Amberfall enlarged, Stonebrook, Briarhaven and Sunridge added; 26 enterable houses, 21 villagers, functional doors, 13 one-time randomized-but-deterministic loot chests, and in-game barter. Portrait fallback and landscape HUD retained. JSON schema v21: no Supabase SQL.
-- **Crafting proposals awaiting approval:** See `CRAFTING_PROPOSALS.md`. No new material IDs or recipes shipped yet. Evaluate a small foundation material set before expanding the economy.
-- **v0.24 — Night Zombies (planned):** night-only hostile enemy AI, village protection radius, safe homes, sensible spawn rate on iPhone, light/torch interactions, and no offline destruction.
-- **v0.25 — Dog Companion (planned):** bones and meat sources, tameable dog, follow/stay controls, save-safe companion ownership, predictable movement and mobile performance checks.
+## Proposed subsequent releases (not yet built)
 
-Every major release requires: a complete GitHub ZIP, separate private Supabase SQL ZIP only when genuinely needed, local/Cloud Save migration checks, iPhone acceptance, and a clear rollback path.
+- **v0.23.4 — Long-Press Building Editor:** select player-made constructions via long press, safely edit/rotate/move where structurally valid; protect chest inventory and supports.
+- **v0.23.5 — Torches:** placeable and hand-held light sources, fuel and lightweight smoke/light effects.
+- **v0.24 — Night Zombies:** limited nighttime enemies, safe homestead and villages, balanced difficulty.
+- **v0.25 — Mountains & Rivers:** height-aware terrain, paths, bridges, preserved existing settlement coordinates.
+- **v0.26 — Climbing:** terrain ledges, stamina, safe landing.
+- **v0.27 — Wildlife:** chickens, cows, pigs, deer with a bounded world population and proximity-based simulation.
+- **v0.28 — Underground Mine:** distinct navigable mine, branching paths and mineable resources.
+- **v0.29 — Dog Companion:** bones and meat for taming, follow and simple assistance.
+
+Crafting ideas are still **proposals**, not included in v0.23.3. See `CRAFTING_PROPOSALS.md`.
+
+All future updates should preserve existing builds, player data, landscape input safety and the accepted automatic cloud-save flow; only create SQL migrations if new persistent data genuinely requires one.
