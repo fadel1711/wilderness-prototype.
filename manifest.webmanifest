@@ -2,7 +2,7 @@
   "name": "Wilderness",
   "short_name": "Wilderness",
   "description": "A cozy open-world survival adventure",
-  "start_url": "./index.html",
+  "start_url": "./index.html?app=0.23.7",
   "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
@@ -20,5 +20,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "version": "0.23.7"
 }

@@ -1,29 +1,32 @@
-# Wilderness v0.23.6 — Account Profiles + Landscape Without Rotation Setting
+# Wilderness v0.23.7 — Torch Freeze & Installed-App Updates
 
-This is the full GitHub Pages game replacement, including existing save code, 3D models and assets. **No Supabase SQL migration is required** if your v0.23.5 cloud backend and email auth already work.
+**Complete game replacement:** all root files + all six files under `assets/`. This is a correction of v0.23.6, not a gameplay expansion. No Supabase SQL. No change to Wilderness cloud-save data formats or the `wilderness_v0235_singleplayer` browser save key.
 
-## New players must make a profile
-- On startup, the player must **sign up or sign in** before Enter the Forest is enabled. Sign-up requires **survivor name**, email and password (8+ characters). The name is stored in Supabase Auth user metadata for display only; it is not used for permissions.
-- Supabase email confirmation may require checking email before the first successful sign-in. Existing returning accounts without a survivor name choose one once. Existing signed-in accounts reuse their session automatically.
-- The account world is checked **before gameplay is unlocked**. If two devices truly have conflicting unsynced worlds, resolve this in Account & Cloud Save. Ordinary logins restore/sync automatically as in v0.23.5.
-- Authenticated devices can play offline if this device was previously synced to the same account and the local save is valid; new players need internet. A missing or inaccessible auth service prevents first-time gameplay by design. This is an intentional account requirement, not a local guest mode.
+## Exact cause of the torch freeze
+The `tick()` function checked `amount('torch')` before executing `const amount = ...` (the movement magnitude declaration) in the **same block**. JavaScript treats the `const` as blocking the outer inventory `amount()` function for the entire block, so equipping a torch caused a `ReferenceError` on every frame and stopped normal gameplay. The movement variable is now called `moveMagnitude`. The torch's visual-effects updater is also isolated so a GPU effect failure cannot freeze the main simulation. Inventory, torch fuel, and cloud saves remain intact.
 
-## Landscape behaviour
-- On platforms supporting the manifest orientation, installed Wilderness **requests landscape** on launch. On iPhone Safari, `screen.orientation.lock()` is not supported. Instead, **the game scene and its touch controls are rotated 90 degrees in a portrait-locked viewport**. Physically turn your phone sideways to view it normally, without visiting the Control Center orientation toggle.
-- Player sign-in panels are upright when the phone is held vertically. Native landscape also remains supported. Do not assume this changes the iPhone OS orientation; it only rotates the game's content.
-- The original v0.23.5 joystick / multi-pointer recovery is retained; touchscreen positions and WebGL aspect are converted to the rotated viewport. Safari-specific iPhone acceptance testing is essential.
+## Installed iPhone app update fix
+v0.23.7 includes `release.json` and `version-check.js`. When Wilderness launches or returns from the background, it fetches the latest release version from GitHub Pages without using a cached response and validates that the corresponding HTML is already deployed. If newer, it switches to the updated version URL without erasing local saves. If you are currently playing, it shows an Update now button instead of interrupting gameplay. If you reopen the app from the background, it can refresh automatically.
 
-## Installation on iPhone
-1. On v0.23.5, open **Bag → Export world** and keep the JSON backup. **Keep v0.23.5 ZIP for rollback.**
-2. Unzip the v0.23.6 full package. Replace ALL root HTML and JS files in your Wilderness GitHub Pages repository. Add **profile-gate.js**, **manifest.webmanifest**, and **wilderness-icon.png** alongside `index.html`.
-3. Keep/upload the six unchanged model and texture files in `assets/`.
-4. Commit changes. After deployment, open the game and confirm **v0.23.6**.
-5. Existing user: with internet, sign in with the existing Wilderness account, choose a survivor name if asked, verify original cabins and items, and test auto sync. New player: enter name, email/password, confirm email if required, then sign in and play.
-6. Test Safari with orientation lock ON: hold the phone sideways; the game should appear right-side-up via the rotated web canvas, and movement / jumping should work. Also test orientation lock OFF and PWA via **Share → Add to Home Screen → Open as Web App**.
-7. Test account sign-out while in game (must pause and require a profile again). Test an offline launch only after previously signed in and synced; test a second device with the same account.
+**Important limitation:** The currently installed *older* v0.23.6 app has no version checker, so it cannot run this new updater until it loads v0.23.7 at least once. After deploying, **first** open your normal GitHub Pages game address in Safari with `?app=0.23.7` added to `index.html` (for example, `https://owner.github.io/repo/index.html?app=0.23.7`), and confirm the on-screen header displays v0.23.7. Then return to your Home Screen app and reopen it. If the installed app still shows the old version, first verify Cloud Save has synced and export your world backup before considering a new Home Screen icon. DO NOT clear Safari data or remove the existing icon while progress exists only on that device. The page's old service-worker cache, if any, is not removed.
 
-## Save and security notes
-- Browser save key and JSON world version are **unchanged** from v0.23.5. Existing buildings, torches, villages, chests, clothing and cave discoveries are preserved.
-- **No Supabase SQL migration** in this update. It uses the existing Supabase email/password authentication and world-save RLS. Never put service-role or secret keys in GitHub; only the publishable key.
-- Cloud conflicts and older-world recovery protections are unchanged. No changes were made to your live GitHub or database.
-- This is an iPhone acceptance candidate: local syntax, file and interface checks can pass even if Safari has an OS-specific touch or WebGL issue.
+Going forward, publish a **new** `release.json` with the new version in each release, alongside the complete game files. If this file isn't updated, the automatic checker cannot discover later releases.
+
+## Install (iPhone / GitHub Pages)
+1. From the CURRENT installed app, open **Bag → Export world** and save the JSON file in iPhone Files. Wait for the existing cloud-sync indicator to confirm a successful sync if you use an account.
+2. Download and unzip the complete v0.23.7 ZIP. Keep the old v0.23.6 ZIP as a rollback backup.
+3. On GitHub, replace all existing root files, **including** `index.html`, `game.js`, `torch-system.js`, `profile-gate.js`, `cloud-save.js`, and `manifest.webmanifest`. Add `version-check.js` and `release.json` in the same folder as `index.html`. Keep the same six files inside `assets/`. Avoid nesting a new project folder under the existing repository.
+4. Upload the complete replacement **in a single GitHub commit** if possible, including `release.json`. Wait for the GitHub Pages deployment to finish. The checker verifies the updated HTML before reloading, so a partially completed deployment cannot trigger an update.
+5. In Safari open `https://YOUR-GITHUB-PAGES-GAME-URL/index.html?app=0.23.7`, replacing the placeholder with your actual game URL and retaining any repository path. Confirm the HUD or start screen says **v0.23.7**.
+6. Reopen the existing Home Screen app; do not delete it. Test torch equipped, lit, extinguished, and stowed. Move / jump at the same time, visit villages, then close and reopen to confirm the account/world persists.
+7. The next release's `release.json` must be bumped. The built-in version checker can then offer / perform future updates without reinstalls.
+
+## Recovery
+- If Safari shows v0.23.7 but the Home Screen app still shows v0.23.6, the app may be using a cached old start page. It **cannot update itself** until the new page loads once. Keep local saves intact. Export JSON and confirm the cloud copy before attempting reinstall / replacement of the Home Screen icon.
+- If any version fails to start, do not clear local data. Retry the Safari URL with the `?app=0.23.7` suffix, verify `release.json` is live, and check all GitHub Pages deployment logs.
+- No SQL migration or rollback is required. Supabase projects were not modified.
+
+## Checks performed
+- JavaScript syntax and entire ZIP integrity.
+- Static regression checks for torch shadowing, effects recovery, HTML/cache versions, manifest start URL and unchanged save key.
+- Local browser test can verify the HTML layout but not Three.js rendering in this environment unless the CDN becomes accessible. iPhone Safari torch/light performance remains the acceptance test.
