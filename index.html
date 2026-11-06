@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<title>Wilderness — v0.23.3 · Thumb-Friendly Combat & Village Life</title>
+<title>Wilderness — v0.23.4 · Long-Press Building Editor</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -203,14 +203,14 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
 .wardrobeOptions.accessories{grid-template-columns:repeat(2,minmax(0,1fr))}
 .wardrobeHint{font-size:10px!important;color:#bfcbbb!important;line-height:1.5!important;margin:8px 0 0!important}
 
-/* v0.23.3 iPhone emergency touch release, intentionally away from the action buttons */
+/* v0.23.4 iPhone emergency touch release, intentionally away from the action buttons */
 .resetcontrols{position:absolute;left:149px;bottom:33px;z-index:8;pointer-events:auto;
   min-height:34px;padding:7px 9px;background:#31463ae8;border:1px solid #e4d6aa66;
   border-radius:10px;font-size:10px;font-weight:800;touch-action:manipulation}
 @media(max-width:375px){.resetcontrols{left:133px;bottom:22px;font-size:9px;padding:7px}}
 @media(orientation:landscape) and (max-height:460px){.resetcontrols{left:118px;bottom:21px}}
 
-/* v0.23.3 landscape-first HUD; DO NOT replace pointer / joystick listeners. */
+/* v0.23.4 landscape-first HUD; DO NOT replace pointer / joystick listeners. */
 #landscapeTip{animation:landscapeHint 9s ease-out forwards;position:fixed;z-index:6;top:calc(env(safe-area-inset-top) + 49px);left:50%;transform:translateX(-50%);max-width:80%;pointer-events:none;background:#293e32e9;border:1px solid #dac99869;border-radius:30px;padding:6px 13px;color:#f5ead6;font-size:10px;font-weight:700;text-align:center}
 @keyframes landscapeHint{0%,65%{opacity:1}100%{opacity:0}}
 @media(orientation:landscape){#landscapeTip{display:none}}
@@ -268,7 +268,7 @@ button:focus-visible{outline:2px solid #f6d9a0;outline-offset:2px}
   .combatcontrols{bottom:calc(env(safe-area-inset-bottom) + 55px)}
 }
 
-/* v0.23.3 · Right-thumb combat: a distinct low action cluster, not a high toolbar.
+/* v0.23.4 · Right-thumb combat: a distinct low action cluster, not a high toolbar.
    Combat styles activate ONLY while a sword is equipped and gameplay is unpaused.
    Keep dual-pointer ownership and v0.22 recovery listeners unchanged. */
 body.combat-active #combatControls.show{
@@ -349,7 +349,7 @@ body.combat-active #toolStrip{
   body.combat-active .actions #bagToggle,body.combat-active .actions .subactions button{min-width:52px;padding:4px 5px;font-size:9px}
 }
 
-/* v0.23.3: mandatory landscape gate on all portrait-shaped viewports.
+/* v0.23.4: mandatory landscape gate on all portrait-shaped viewports.
    A browser cannot physically rotate an iPhone; block the screen instead. */
 #portraitGate{display:none;position:fixed;inset:0;z-index:1000;box-sizing:border-box;
   align-items:center;justify-content:center;text-align:center;overflow-y:auto;
@@ -369,6 +369,24 @@ body.combat-active #toolStrip{
   border:1px solid #dac99c35;border-radius:13px;background:#0d201e8a}
 #portraitGate .rotate-badge{font-size:10px;font-weight:850;letter-spacing:2px;color:#e1c689}
 
+
+body.building-edit-active .hud-bottom,body.building-edit-active .combatcontrols,body.building-edit-active .toolstrip{pointer-events:none;opacity:.32}
+/* v0.23.4: compact, touch-friendly editor for an EXISTING selected building. */
+.buildingeditor{display:none;position:fixed;z-index:18;top:calc(env(safe-area-inset-top) + 47px);left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 230px));min-width:min(290px,calc(100vw - 30px));max-height:calc(100dvh - 90px);overflow-y:auto;background:#23352cf5;border:1px solid #c7cfa47d;border-radius:13px;box-shadow:0 10px 32px #0009;padding:8px;color:#f4f1df;pointer-events:auto;overscroll-behavior:contain}
+.buildingeditor.show{display:block}
+.buildingeditor .editheading{display:flex;align-items:center;gap:6px;justify-content:space-between}
+.buildingeditor .editheading strong{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.buildingeditor button{border:1px solid #b7c3a04c;border-radius:8px;background:#48614d;color:#f8f4e7;touch-action:manipulation;min-height:32px;font-size:11px;font-weight:750;padding:6px 8px}
+.buildingeditor button:disabled{opacity:.4}
+.buildingeditor .editheading button{background:#6a554b}
+.buildingeditor .editline{font-size:10px;margin:5px 0 4px;color:#dbe7cf;line-height:1.25}
+.buildingeditor .editnudge,.buildingeditor .editactions{display:flex;gap:5px;margin-top:5px}
+.buildingeditor .editnudge button,.buildingeditor .editactions button{flex:1;padding:7px 3px;min-height:35px}
+.buildingeditor #editApply{background:#6d9567}.buildingeditor #editDismantle{background:#834d49}
+#editStatus{white-space:normal;min-height:13px}
+@media(orientation:landscape) and (max-height:430px){.buildingeditor{top:calc(env(safe-area-inset-top) + 30px);width:min(430px,calc(100vw - 225px));padding:5px;max-height:calc(100dvh - 38px)}.buildingeditor button{min-height:27px;padding:4px 3px;font-size:10px}.buildingeditor .editnudge button,.buildingeditor .editactions button{min-height:28px}.buildingeditor .editline{margin:3px 0}}
+@media(orientation:portrait){.buildingeditor{display:none!important}}
+
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
@@ -384,7 +402,7 @@ body.combat-active #toolStrip{
     <div class="rotate-help">Won't rotate? Open iPhone Control Center and turn off <b>Portrait Orientation Lock</b>, then turn your phone sideways.</div>
   </div>
 </div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.23.3</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.23.4</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div class="task" id="task">Gather resources and build a cabin.</div>
 <div id="damageOverlay"></div>
 <div class="vitals" aria-label="Survival status"><div class="vitalRow">❤ <span>HP</span><div class="vitalBar"><i id="healthFill"></i></div><b id="healthNumber">100</b></div><div class="vitalRow">⚡ <span>SP</span><div class="vitalBar"><i id="staminaFill"></i></div><b id="staminaNumber">100</b></div><div class="needsDivider"></div><div class="vitalRow">🍞 <span>H</span><div class="vitalBar"><i id="hungerFill"></i></div><b id="hungerNumber">88</b></div><div class="vitalRow">💧 <span>T</span><div class="vitalBar"><i id="thirstFill"></i></div><b id="thirstNumber">85</b></div><div class="vitalRow">🌙 <span>E</span><div class="vitalBar"><i id="energyFill"></i></div><b id="energyNumber">90</b></div><span id="safeLabel" class="safeLabel">🛖 Homestead safe</span></div><div id="timeHud" class="timehud" aria-label="Time of day">☀ Day 1 · 09:00</div><button id="mapButton" class="mapquick" aria-label="Open map">🗺 Map</button><div class="zoomdock" role="group" aria-label="Camera zoom"><button id="zoomIn" aria-label="Zoom camera in">＋</button><span id="zoomLevel">7.4m</span><button id="zoomOut" aria-label="Zoom camera out">−</button></div><div id="waypointHud" class="waypointhud">🧭 Explore · 🗺 Map</div><div id="interaction"></div><div id="toast" class="toast"></div>
@@ -429,7 +447,7 @@ body.combat-active #toolStrip{
   <div class="planlist"><button data-type="stock:0">🏗 Raised Deck</button><button data-type="stock:1">🌿 Garden Corner</button><button id="rangerRest" data-type="stock:2" hidden>⛺ Ranger Rest (discover)</button><button data-type="stock:3">🏠 Two-Storey Starter</button></div>
   <div class="pickersection">YOUR DESIGNS</div>
   <div id="savedPlans" class="planlist"></div>
-  <div class="landtools"><button id="saveNearby">📐 Save nearby design</button><button id="dismantleNearest">↶ Dismantle nearest</button></div>
+  <div class="landtools"><button id="saveNearby">📐 Save nearby design</button><button id="dismantleNearest">↶ Dismantle nearest</button><button id="editNearest">✏ Edit nearest</button></div>
   <div class="small">Ground floors + two nearby walls support upper floors. Tall Stairs require an Upper Floor landing. Foundations support floors automatically. A raised cabin needs a complete 3×3 foundation pad (9 tiles). Choose a piece or blueprint to hide this panel and use the compact placement controls. Green = placeable, amber = missing materials, red = blocked. Save up to six custom designs. Dismantling refunds materials.</div>
 </div>
 <div id="placementDock" class="placementdock" role="group" aria-label="Construction placement controls">
@@ -438,6 +456,12 @@ body.combat-active #toolStrip{
   <p id="buildStatus" class="buildstatus" aria-live="polite">Select a piece to position it.</p>
   <div class="nudgecontrols"><button id="nudgeLeft" aria-label="Shift construction left">← Left</button><button id="nudgeForward" aria-label="Shift construction farther">↑ Far</button><button id="nudgeBack" aria-label="Shift construction closer">↓ Near</button><button id="nudgeRight" aria-label="Shift construction right">Right →</button></div>
   <div class="buildcontrols"><button id="rotate">↻ Rotate</button><button id="resetNudge">◎ Reset</button><button id="place">✓ Place</button></div>
+</div>
+<div id="buildingEditor" class="buildingeditor" role="dialog" aria-label="Edit selected building" aria-hidden="true">
+ <div class="editheading"><strong id="editTitle">✏ Edit building</strong><button id="editCancel" aria-label="Cancel building edits">✕ Cancel</button></div>
+ <div id="editPosition" class="editline">X 0 · Z 0</div><div id="editStatus" class="editline" aria-live="polite">Long press to select one of your structures.</div>
+ <div class="editnudge"><button id="editLeft" aria-label="Move selected building left">← Left</button><button id="editForward" aria-label="Move selected building forward">↑ Far</button><button id="editBack" aria-label="Move selected building backward">↓ Near</button><button id="editRight" aria-label="Move selected building right">Right →</button></div>
+ <div class="editactions"><button id="editRotate">↻ Rotate</button><button id="editApply" disabled>✓ Save Position</button><button id="editDismantle">↶ Dismantle</button></div>
 </div>
 <section id="stationPanel" class="stationpanel" role="dialog" aria-label="Crafting and storage station">
   <div class="panelheader"><strong id="stationTitle">Workbench</strong><button id="closeStation" aria-label="Close station">✕ Close</button></div>
@@ -482,7 +506,7 @@ body.combat-active #toolStrip{
     </div>
     <p class="wardrobeHint">All styles are unlocked. Tap an option, then close Bag to see it on your character. Colors, hood and scarf persist in local and cloud saves. No combat advantage.</p>
   </section>
-  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress is saved locally and optionally to Wilderness Cloud. Village chest loot and trades save automatically. Export a JSON backup before changing releases. Import replaces this browser's current v0.23.3 world after confirmation.</p>
+  <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. The bow remains available to craft for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage, while also reducing render resolution.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button></div><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a carrot, potato, egg, stew or water stack in your Bag to consume one. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Your progress is saved locally and optionally to Wilderness Cloud. Village chest loot and trades save automatically. Export a JSON backup before changing releases. Import replaces this browser's current v0.23.4 world after confirmation.</p>
 <div class="cloudQuick"><strong>☁ Automatic Account Save</strong><p>Sign in once. Your account world loads and saves automatically; local recovery remains available.</p><button id="cloudOpen">☁ Account & Cloud Save</button></div>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button><button id="undoCloudRestore">↶ Undo last cloud restore</button>
     <input type="file" id="backupFile" accept=".json,application/json" hidden>
@@ -511,14 +535,14 @@ body.combat-active #toolStrip{
     <p class="cloudHint">A cloud save is not a substitute for an occasional Bag → Export world JSON backup.</p>
   </div>
 </section>
-<div id="modal"><div class="intro"><div class="eyebrow">LANDSCAPE · THUMB-FRIENDLY COMBAT</div><h1>Wilderness · v0.23.3</h1>
+<div id="modal"><div class="intro"><div class="eyebrow">LANDSCAPE · BUILDING EDITOR</div><h1>Wilderness · v0.23.4</h1>
 <p><b>Turn your iPhone sideways!</b> Landscape-only controls: equip your sword to open the new right-thumb Attack / Hold / Dodge pad. Portrait is now blocked until you rotate your device.</p>
 <p><b>Explore Amberfall Village:</b> Find eight timber houses, a village square and six residents in the northwestern outer wilderness. Visit by day to talk with villagers and watch their routines.</p>
-<div class="controls"><b>Two thumbs:</b> Hold the left joystick to walk. Equip your sword and use the bottom-right pad: tap or hold Attack for repeated swings, hold Block to guard, or tap Dodge while walking. Jump sits beside it. Outside combat the normal Gather and Bag controls return. Drag empty scenery to look around. Tap <b>↻ Unstick</b> if a gesture gets stuck.<br><b>Explore:</b> Open Map and select the unexplored northwest village waypoint. Your original world, cabins, maze and cloud progress are preserved.<br><b>Keyboard:</b> WASD move · Space jump · E interact · M map · I bag · B build · drag camera.</div>
+<div class="controls"><b>Two thumbs:</b> Hold the left joystick to walk. Equip your sword and use the bottom-right pad: tap or hold Attack for repeated swings, hold Block to guard, or tap Dodge while walking. Jump sits beside it. Outside combat the normal Gather and Bag controls return. Drag empty scenery to look around. Long-press one of your own buildings to select it; move or rotate, then Save Position, or Cancel. You can also open Build → Edit nearest. Tap <b>↻ Unstick</b> if a gesture gets stuck.<br><b>Explore:</b> Open Map and select the unexplored northwest village waypoint. Your original world, cabins, maze and cloud progress are preserved.<br><b>Keyboard:</b> WASD move · Space jump · E interact · M map · I bag · B build · drag camera.</div>
 <button id="start">Enter the forest</button><p style="font-size:11px;margin:9px 0 0">Your progress saves automatically. Back up your world from Bag → Export world before updating.</p></div></div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the complete v0.23.3 JavaScript package, including village-system.js, is at the repository root.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the complete v0.23.4 JavaScript package, including village-system.js, is at the repository root.</p></div></div>
 <script>
-// v0.23.3 boot diagnostics do not touch browser storage or saves.
+// v0.23.4 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -536,14 +560,14 @@ body.combat-active #toolStrip{
     box.style.display='flex';
     if(failure)reason.textContent='Startup error: '+failure;
     else reason.textContent='The game did not finish loading. Checking files…';
-    const required=['game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js','village-system.js','orientation-gate.js'];
+    const required=['building-editor.js','game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js','village-system.js','orientation-gate.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.23.3',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.23.4',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
       if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Upload all JavaScript files plus assets/ to the repository root.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
       const byName=Object.fromEntries(required.map((n,i)=>[n,contents[i]]));
-      if(!byName['game.js'].includes("version:'0.23.3'")||
+      if(!byName['building-editor.js'].includes('buildingEditVerdict')||!byName['game.js'].includes("version:'0.23.4'")||
          !byName['deep-cave-system.js'].includes('DEEP_CAVE_VERSION')||
          !byName['save-system.js'].includes('wilderness_v0231_singleplayer')||
          !byName['construction.js'].includes('loft_floor')||
@@ -557,14 +581,14 @@ body.combat-active #toolStrip{
          !byName['input-recovery.js'].includes('InputRecovery')||
          !byName['orientation-gate.js'].includes('mountLandscapeGate')||
          !byName['village-system.js'].includes('createLivingVillage')||!byName['village-system.js'].includes('VILLAGE_CHESTS')){
-        reason.textContent='Mixed or outdated v0.23.3 files detected. Replace index.html and all game modules, including village-system.js, together from the complete ZIP.';return;
+        reason.textContent='Mixed or outdated v0.23.4 files detected. Replace index.html and all game modules, including village-system.js, together from the complete ZIP.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.23.3"></script>
-<script type="module">import {mountCloudSave} from './cloud-save.js?v=0.23.3'; mountCloudSave();</script>
+<script type="module" src="./game.js?v=0.23.4"></script>
+<script type="module">import {mountCloudSave} from './cloud-save.js?v=0.23.4'; mountCloudSave();</script>
 </body>
 </html>
