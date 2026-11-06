@@ -1,48 +1,40 @@
-# Wilderness v0.23.8.1 — Calm Controls & Cloud Recovery
+# Wilderness v0.23.8.2 — Meshy Survivor + Animation Preview
 
-**Repair release after v0.23.8.** This is the complete GitHub Pages web game, not a patch. The upcoming v0.23.9 immersive building-camera update and v0.24 Night Zombies are **not** included.
+This is a **complete GitHub Pages game package**, built from the prior v0.23.8.1 Calm Controls & Cloud Recovery release. **No Supabase migration** and **no world-save schema change**. The upcoming separate v0.23.9 building-camera release and v0.24 zombies are not included.
 
-## iPhone installation (no SQL)
+## First: is the upload good enough?
 
-1. **Before replacing anything:** open the currently installed game (if it opens) → **Bag → Export world**. Save the `.json` file in iPhone Files. Do not delete the Home Screen app or clear Safari website data.
-2. Download/extract this ZIP in Files. You will find `index.html`, `game.js`, all other `.js` files, `manifest.webmanifest`, `release.json`, `wilderness-icon.png`, and the `assets/` folder.
-3. Open the GitHub repository that currently hosts Wilderness. **Upload/replace ALL files from the ZIP**, keeping files at the root and keeping `assets/` as a subfolder. Don't put the entire game inside a newly named subfolder. Commit.
-4. Let GitHub Pages publish. In Safari, navigate to your normal GitHub Pages `index.html` URL and append `?app=0.23.8.1` (or `&app=0.23.8.1` if there is already a query). The header should say **v0.23.8.1**. This URL bypasses a stale page cache. Then reopen the existing Home Screen app. Do not clear its website data.
-5. Sign in to the **same existing Wilderness account**. The cloud should load and the game should unlock automatically. Look for `☁ Cloud live` in the top-right. If the cloud is unreachable, the game pauses and offers **Reconnect**, rather than creating an offline-only world.
-6. Test sword attacks, axe chopping near a village door, pickaxe mining, torch, food Eat/Drink, village door/chest, Jump/Dodge/Block with movement, and returning to the installed app. Export another backup after confirming successful cloud sync.
+**Yes for an interactive prototype, not for final production visuals.** All ten uploaded GLBs were inspected. They share an identical 44-joint rig and 8,236-vertex mesh. The most recent `Ignite_torch.glb` already includes all 20 combined motion clips, so only that cumulative file is needed. It has been added as `assets/survivor-animated.glb` (~5.3 MB). **The model is untextured**, so it will look clay-gray, not like the textured character shown in Meshy's thumbnails. Several motion clip names are opaque and their exact action quality needs visual inspection on your iPhone. See `MODEL_AUDIT.md`.
 
-**No Supabase migration is needed.** The existing production database was inspected read-only: `wilderness_worlds` has owner-specific RLS and `wilderness_save_world` accepts JSON save format **22** used by this game. We did not edit the live database or repository.
+## Step-by-step iPhone installation (NO SQL)
 
-## What changed
+1. On your current version, use **Bag → Export world** and store the JSON in Files. Do **not** delete your Home Screen app or clear Safari data.
+2. Download and extract the **entire** `wilderness-prototype-v0.23.8.2.zip` package in Files.
+3. Go to your existing Wilderness GitHub Pages repository and upload/replace **all** files from the extracted package. Keep `index.html`, all `.js`, `animation-preview.html`, `manifest.webmanifest`, and `release.json` at the root. Keep the complete `assets/` subfolder, **including `assets/survivor-animated.glb`**. Do not put all files inside an extra directory.
+4. Commit and let GitHub Pages deploy.
+5. In Safari, open the same deployed Wilderness website with `?app=0.23.8.2` appended to `index.html`. Verify the title says **v0.23.8.2**, log into the **same account**, and wait for **☁ Cloud live** before doing important work. Avoid deleting the existing installed app.
+6. To see **all 20 animations** without opening your saved world, open the same site's `/animation-preview.html`. Rotate the character by dragging, pinch to zoom, select clips from the dropdown and adjust speed. The viewer does **not** use your account or cloud data.
+7. Inside the game, open **Bag → Game settings**. The **Meshy Survivor** button toggles between the new rigged model and the classic avatar. The new model loads asynchronously; if the file is missing/broken it automatically leaves the classic avatar visible. Clothing-color controls still affect the classic avatar; the Meshy model has no garment materials yet.
+8. Try walking/running/jumping, attacking, blocking/dodging, chopping/mining and igniting/holding the torch. Observe the actual tool in the animated right hand. If any movement is wrong, choose **Meshy Survivor: Off** in Settings; this is a device-local preference, not a world reset.
 
-- One large **right-thumb primary button**. It attacks with the sword; chops with an axe near a tree; mines with a pickaxe near a rock/ore vein; opens doors/chests and trades when applicable; ignites/refuels/extinguishes a held torch; or eats/drinks selected hotbar food. A sword **never** turns into a chest/door interaction while you are fighting. Interaction takes priority over lighting when standing right next to a usable object with the torch equipped.
-- Six smaller customizable slots along the bottom. Tap a food slot to **select**, then tap Eat/Drink; it is no longer consumed as a surprise. Tap `✎` to choose assignments. The arrangement is a **local input preference**, not world progress.
-- Duplicate oversized combat controls, huge statistics and mission overlays, unnecessary toolbar buttons, and redundant main-screen Save are hidden. Jump remains visible; **small** Block and Dodge appear with a sword. The normal Bag still offers JSON export/import.
-- Corrected sword attachment direction and restored sword visibility on loading with it equipped. Axe/pick grip orientation corrected. Torch mesh **and its actual light position** now follow the hand/flame instead of projecting from the torso. Visual-effect failure is contained and won't halt normal movement.
-- Removed the **device/cloud choice** from normal saving. The signed-in account's cloud world is authoritative; the game automatically reconciles safe unsynced changes only against an unchanged cloud revision. When another device has changed the cloud world, the cloud wins and a recoverable device snapshot is kept. If the cloud copy is invalid, the connection fails, or a local save cannot be validated, gameplay pauses instead of overwriting cloud data.
-- The existing `.json` world format (version 22), cloud RPC, owned-world RLS, installed-app update check, profile gate, building editor, villages, chests, farming, combat and torches are retained.
+## Known limitations
 
-## Cloud-only mode: how it protects you
+- The model will be **plain gray** until you provide a textured/material-separated export. That is not a failure of this package.
+- 20 imported clips are available in the animation viewer; gameplay uses the relevant subset. **Defeat** is deliberately not triggered yet because your world currently has instant, forgiving recovery. Dedicated mining is not verified; it temporarily uses chop motion.
+- The preview uses an existing online Three.js CDN. The GLB is hosted locally with the game. An unavailable CDN will prevent both game and viewer from loading; a missing GLB should fall back to the classic model without freezing the rest of the game.
+- Source/GLB and import validations are automated. Actual WebGL/skin animation, equipment alignment and performance on iOS remain **unverified** until your physical iPhone tests them. Do not describe the animation visuals as fully accepted yet.
 
-- **Online required:** You must sign in and successfully check the cloud world before starting. Loss of connection pauses gameplay. When the service comes back, use **Reconnect**; the account is re-verified.
-- **Automatic:** No modal will ask you to choose between “device” and “cloud.” The cloud is the authority. “☁ Save queued” is **not** a promise that data has reached the server; wait for `☁ Cloud live` and a successful revision/sync confirmation before closing after important actions.
-- **Emergency local recovery exists intentionally:** The device retains a non-authoritative local snapshot and prior-world recovery copies so a network conflict, corruption, account switch, or import cannot silently destroy work. Back up occasionally with Bag → Export world.
-- **Account switching:** An existing cloud world replaces this device's different-account cache after the device cache is backed up. A genuinely new account gets a fresh world; it does not inherit someone else's buildings.
-- **Imports:** An explicit JSON world import is uploaded only against the known cloud revision. If that revision changed, the current cloud is protected and the imported local copy remains recoverable rather than being blindly pushed.
+## Rollback
 
-## Test coverage and limitations
+Re-upload the prior full **v0.23.8.1** GitHub ZIP while preserving your account, browser site data and JSON backup. The cloud schema is unchanged. If your latest cloud save is invalid/unavailable, **do not overwrite it** or run manual SQL; preserve exported backup and report the error.
 
-- 45 focused pure tests for action priority, save-schema compatibility, cloud policies, movement normalization and account gating.
-- 32 mock-runtime checks for 7 cloud scenarios, including offline, corrupt remote data and competing saves.
-- 5 render-system torch-flame anchor assertions.
-- JavaScript syntax, startup import paths, iPhone-shaped static HUD layout checks (844×390, 760×360, 667×375, 568×320 and portrait-lock rotated), and ZIP integrity checks.
-- **Still requires live iPhone acceptance**: actual Safari multitouch gestures, 3D animations, timing under load, and live cloud saves between two devices cannot be reproduced by these checks. The static HUD screenshots are layout tests, not real 3D game captures.
+## Acceptance checklist
 
-## If something goes wrong
-
-- **Cloud says Reconnect:** reconnect Wi-Fi/mobile data and use **Retry connection** in the cloud panel. The game purposely pauses without a verified cloud world.
-- **Stuck on old version:** after deployment, load `index.html?app=0.23.8.1` in Safari. Don't delete the Home Screen app, wipe site storage, or sign out while you have unsynced progress.
-- **Invalid cloud world:** stop. Do **not** run manual SQL or reset your account. Keep the JSON world export and a screenshot of the error; the backend save should not be overwritten.
-- **Rollback:** if needed, redeploy the prior complete v0.23.8 ZIP while preserving browser data and your JSON backup. Because the save format is unchanged, this does not require a database rollback; cloud conflict warnings might return in older versions, so back up first.
-
-See `AUDIT.md` for the fault-by-fault technical review and what remains unverified.
+- [ ] Game shows v0.23.8.2; old world and Cloud live work.
+- [ ] Animated character loads; it is gray but not invisible, gigantic or sunk underground.
+- [ ] Walk/run/jump transition without obvious teleporting or sliding.
+- [ ] Sword/axe/pickaxe/torch follow the animated **right** hand, not the torso; sword points in a sensible direction.
+- [ ] Primary action continues to Attack, Chop/Mine, Ignite and Use without freezing.
+- [ ] Opening `animation-preview.html` shows all **20 clips** and the preview controls work.
+- [ ] Toggling **Meshy Survivor: Off** restores the old character with hood/scarf choices intact.
+- [ ] Your cloud world is unchanged after closing and reopening the game.

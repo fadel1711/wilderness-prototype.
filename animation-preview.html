@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#182c23"><title>Wilderness — Survivor Animation Viewer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#13251f;color:#eef3e9;font:15px system-ui,-apple-system,sans-serif}header{padding:15px 18px 10px;border-bottom:1px solid #3d5947}h1{margin:0 0 4px;font-size:20px}.sub{color:#b9cbbb;font-size:12px}main{max-width:1000px;margin:auto;padding:12px;display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);gap:12px}.stage{height:min(76vh,590px);min-height:340px;position:relative;background:linear-gradient(#4a6356,#243d32);border:1px solid #607b64;border-radius:14px;overflow:hidden}.stage canvas{display:block;width:100%;height:100%;touch-action:none}.hint{position:absolute;bottom:10px;left:10px;right:10px;padding:7px 9px;border-radius:10px;background:#11251bba;font-size:12px}.panel{background:#20392e;padding:14px;border:1px solid #4a6350;border-radius:14px;align-self:start}.panel label{display:block;font-size:13px;font-weight:600;margin-bottom:7px}.panel select,.panel button,.panel input{width:100%;margin:3px 0 13px;padding:10px;background:#294639;border:1px solid #708d73;color:#f5f6f1;border-radius:9px;font-size:14px}.panel button{background:#d9bf83;color:#1c2b23;font-weight:700;cursor:pointer}.panel .row{display:flex;gap:8px}.panel .row button{flex:1}.panel input{accent-color:#e6c77e;padding:0}.info{font-size:13px;line-height:1.5;color:#c6d6c7}.alert{padding:10px;background:#4b4330;border-radius:9px;font-size:12px;color:#ffe8b9}.status{font-weight:600;margin-top:8px;white-space:pre-wrap}@media(max-width:730px){main{display:block}.stage{height:52vh;min-height:285px}.panel{margin-top:10px}.panel select{margin-bottom:10px}}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+</head><body>
+<header><h1>🧍 Wilderness — Survivor Animation Viewer</h1><div class="sub">v0.23.8.2 • Standalone preview of your Meshy survivor; this page never reads or changes your world save.</div></header>
+<main><section class="stage" id="stage"><div class="hint">Drag to rotate the camera · Pinch to zoom · Select an animation on the right</div></section>
+<section class="panel"><label for="clips">Choose animation</label><select id="clips" aria-label="Animation clip"><option>Loading the survivor…</option></select>
+<div class="row"><button id="again">↻ Replay</button><button id="pause">Pause</button></div>
+<label for="speed">Playback speed: <span id="speedLabel">1×</span></label><input id="speed" type="range" min="0.25" max="3" step="0.25" value="1">
+<div class="status" id="status">Loading character model…</div>
+<p class="info" id="detail">A single GLB contains the same geometry and shared skeleton as all 10 uploaded exports, plus 20 animation clips.</p>
+<p class="alert">The supplied model has no embedded textures or materials. Its plain gray appearance is expected. Opaque Meshy clip names are provisional until you check how each movement looks.</p>
+<a href="./index.html?app=0.23.8.2" style="display:block;color:#e7c98c;margin-top:10px">Return to Wilderness</a>
+</section></main>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {SURVIVOR_CLIPS,SURVIVOR_PREVIEW_LABELS,inPlaceClip} from './survivor-animation-system.js?v=0.23.8.2';
+const $=id=>document.getElementById(id);const el=$('stage');
+const scene=new THREE.Scene();scene.background=new THREE.Color('#485d53');
+const camera=new THREE.PerspectiveCamera(50,1,.1,100);camera.position.set(0,1.65,4.5);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'low-power'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;el.prepend(renderer.domElement);
+scene.add(new THREE.HemisphereLight('#f9f5ec','#506350',2.6));const sun=new THREE.DirectionalLight('#fff0d5',2.2);sun.position.set(-3,7,6);scene.add(sun);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(2.2,48),new THREE.MeshStandardMaterial({color:'#4e7053',roughness:1}));floor.rotation.x=-Math.PI/2;floor.position.y=-.004;scene.add(floor);
+const controls=new OrbitControls(camera,renderer.domElement);controls.target.set(0,1.15,0);controls.enableDamping=true;controls.maxDistance=9;controls.minDistance=1.8;controls.maxPolarAngle=Math.PI*.51;controls.update();
+const namedAliases={};for(const [k,v] of Object.entries(SURVIVOR_CLIPS))namedAliases[v]=k.replaceAll(/([A-Z])/g,' $1');
+let mixer=null,action=null,clips=[],paused=false;
+function resize(){const w=el.clientWidth,h=el.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}resize();window.addEventListener('resize',resize);
+function choose(index){if(!mixer||!clips[index])return;const clip=clips[index];if(action)action.stop();action=mixer.clipAction(clip);action.reset().setLoop(THREE.LoopRepeat,Infinity).play();action.timeScale=Number($('speed').value);paused=false;$('pause').textContent='Pause';$('status').textContent=clip.name+' · '+clip.duration.toFixed(2)+' seconds';$('detail').textContent=(namedAliases[clip.name]||SURVIVOR_PREVIEW_LABELS[clip.name]||'Unlabeled Meshy motion')+' · '+clip.tracks.length+' animation channels. Raw motion may require timing/pose adjustments.';}
+$('clips').addEventListener('change',()=>choose(Number($('clips').value)));
+$('again').addEventListener('click',()=>{if(action){action.reset().play();paused=false;$('pause').textContent='Pause';}});
+$('pause').addEventListener('click',()=>{paused=!paused;$('pause').textContent=paused?'Resume':'Pause';});
+$('speed').addEventListener('input',()=>{const val=Number($('speed').value);$('speedLabel').textContent=val+'×';if(action)action.timeScale=val;});
+new GLTFLoader().load('./assets/survivor-animated.glb',gltf=>{
+  const model=gltf.scene;model.scale.setScalar(2.26/1.7);scene.add(model);
+  model.traverse(o=>{if(o.isSkinnedMesh){o.frustumCulled=false;o.material=new THREE.MeshStandardMaterial({color:0xb5b8ac,roughness:.96});}});
+  mixer=new THREE.AnimationMixer(model);clips=gltf.animations.map(c=>inPlaceClip(c,THREE));
+  $('clips').replaceChildren(...clips.map((c,i)=>{const option=document.createElement('option');const label=namedAliases[c.name]||SURVIVOR_PREVIEW_LABELS[c.name]||`Extra motion ${i+1}`;option.value=String(i);option.textContent=`${label} (${i+1}/${clips.length})`;return option;}));
+  const preferred=clips.findIndex(c=>c.name===SURVIVOR_CLIPS.idle);$('clips').value=String(Math.max(0,preferred));choose(Math.max(0,preferred));
+  window.__survivorViewer={clips:clips.map(c=>({name:c.name,duration:c.duration,channels:c.tracks.length})),skin:!!(model.getObjectByName('mixamorig_RightHand')||model.getObjectByName('mixamorig:RightHand'))};
+},undefined,error=>{console.error(error);$('status').textContent='Unable to load model: '+(error.message||error)+' — check that the assets folder was uploaded.';});
+const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(.05,clock.getDelta());if(mixer&&!paused)mixer.update(dt);controls.update();renderer.render(scene,camera);}frame();
+</script></body></html>

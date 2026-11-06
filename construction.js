@@ -1,5 +1,5 @@
 // Wilderness v0.21 — new two-storey modular pieces; old v0.5 ground-level builds are preserved.
-import {UPPER_TYPES,LOFT_FURNISH_TYPES,isUpper,upperPlacementVerdict} from './second-story-system.js?v=0.23.8.1';
+import {UPPER_TYPES,LOFT_FURNISH_TYPES,isUpper,upperPlacementVerdict} from './second-story-system.js?v=0.23.8.2';
 // Existing v0.4 positions and types remain unchanged; elevated placements are derived.
 export const BUILD_TYPES=Object.freeze(['cabin','floor','wall','foundation','door','window','roof','stairs','path','fence','planter','workbench','chest','furnace','table','chair','bed','shelf','campfire','torch_stand',...UPPER_TYPES]);
 export const FURNISH_TYPES=Object.freeze(['workbench','chest','furnace','table','chair','bed','shelf','campfire','torch_stand']);
