@@ -1,5 +1,5 @@
 {
-  "version": "0.23.7",
-  "build": "2026-11-06-hotfix",
-  "description": "Torch freeze fix and installed-app auto updates"
+  "version": "0.23.8",
+  "build": "2026-11-06-loadout-combat-ring",
+  "description": "Six-slot loadout, smart action and thumb combat ring"
 }

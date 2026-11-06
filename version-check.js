@@ -1,6 +1,6 @@
 // Wilderness v0.23.7 — no service worker, no destructive cache purge.
 // Checks the live GitHub Pages release marker whenever the installed app is opened.
-export const THIS_VERSION='0.23.7';
+export const THIS_VERSION='0.23.8';
 export function parseVersion(v){
   if(typeof v!=='string'||!/^\d+\.\d+(?:\.\d+)?$/.test(v))return null;
   return v.split('.').map(Number);
