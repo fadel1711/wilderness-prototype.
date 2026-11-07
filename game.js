@@ -2493,9 +2493,22 @@ addEventListener('keyup',e=>{keys.delete(e.key.toLowerCase());if(e.key.toLowerCa
 // InputRecovery handles blur, pagehide, orientation changes and iOS touch cancellation.
 addEventListener('pointerup',e=>{if(inputs.finish(e.pointerId)==='block')setBlock(false);},true);
 addEventListener('pointercancel',e=>{if(inputs.finish(e.pointerId)==='block')setBlock(false);},true);
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);
+// Display-only hotfix: iPhone portrait-lock rotates #gameShell into a landscape
+// surface. Resize the WebGL canvas for that *logical landscape* surface, not for
+// the device's unrotated (portrait) window dimensions. No save data is touched.
+function resizeLandscapeScene(){
+  const view=landscapeViewport();
+  const width=Math.max(1,Math.round(view.width));
+  const height=Math.max(1,Math.round(view.height));
+  camera.aspect=width/height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width,height);
   applyQuality();
+}
+addEventListener('resize',resizeLandscapeScene);
+addEventListener('orientationchange',()=>{
+  // iOS may dispatch orientationchange before the viewport dimensions settle.
+  requestAnimationFrame(()=>requestAnimationFrame(resizeLandscapeScene));
 });
 // Tiny, pooled interaction puffs; no scene reallocation during gathering.
 const impactPool=[];const puffGeometry=new THREE.SphereGeometry(.065,5,4);

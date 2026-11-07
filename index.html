@@ -14,7 +14,7 @@
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;width:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:#96a9aa}
+html,body{height:100%;width:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:#263e30}
 button{font:inherit;color:inherit;background:#303a32ee;border:1px solid var(--line);border-radius:12px;cursor:pointer;touch-action:manipulation}
 button:active{transform:scale(.97)}button:disabled{opacity:.46;cursor:default}
 #world,#world canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -823,7 +823,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.24.4"></script>
+<script type="module" src="./game.js?v=0.24.4-displayfix1"></script>
 <script type="module">import {installSimpleInterface} from './interface-system.js?v=0.24.3'; installSimpleInterface();</script>
 <script type="module">import {installVersionCheck} from './version-check.js?v=0.24.4'; installVersionCheck();</script>
 <script type="module">import {mountProfileGate} from './profile-gate.js?v=0.24.3'; import {mountCloudSave} from './cloud-save.js?v=0.24.3'; import {isGuestMode} from './session-mode.js?v=0.24.3'; mountProfileGate(); if(!isGuestMode())mountCloudSave();</script>
