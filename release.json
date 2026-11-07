@@ -1,5 +1,5 @@
 {
-  "version": "0.24.1",
-  "build": "2026-11-06-guest-access",
-  "description": "Play as Guest (device-only, separate local save); accounts still have automatic cloud sync. Includes Nightfall balanced zombies and animated survivor."
+  "version": "0.24.2",
+  "build": "2026-11-07-first-steps",
+  "description": "Mandatory interactive tutorial on brand-new Wilderness worlds only; safe existing saves; Guest Mode and Nightfall Balanced preserved."
 }

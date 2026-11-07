@@ -1,5 +1,5 @@
 // Wilderness v0.24.1 — account or explicit local-only guest access.
-import {isGuestMode,setPlayMode} from './session-mode.js?v=0.24.1';
+import {isGuestMode,setPlayMode} from './session-mode.js?v=0.24.2';
 export function profileAccess(s){
   return s?.mode==='guest'||!!s?.userId&&!!s.hasProfile&&s.mode==='ready';
 }

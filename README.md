@@ -1,33 +1,49 @@
-# Wilderness v0.24.1 — Play as Guest + Nightfall Balanced
+# Wilderness v0.24.2 — First Steps (mandatory new-world tutorial)
 
-## What's new
-- **Play as Guest** on the first screen. No email, password, account or Supabase connection needed for guest gameplay.
-- Guest world autosaves to this device/browser only (`wilderness_v024_guest_singleplayer`), fully separate from signed-in account worlds (`wilderness_v0235_singleplayer`).
-- Signed-in players still use automatic cloud saves; guest mode never calls Supabase save operations. Switching from guest to account in Bag → World backup keeps both worlds separate.
-- Guest mode remains selected on next visit until switched to account; guest progress does **not** automatically transfer into an account.
-- **Existing v0.24.0 Nightfall**: balanced zombies (max 6), survivor animations and original game features kept.
+This is a full game replacement ZIP, not a patch. It builds on **v0.24.1 Guest Mode** with **v0.24.0 balanced Nightfall zombies** and the same `assets/survivor-animated.glb`.
 
-## IMPORTANT: preserve existing account worlds
-1. In your current running account world, export its JSON backup from Bag → World backup before deploying.
-2. Extract this ZIP on iPhone. Upload all root files to **the repository root** including **NEW `session-mode.js`**, `index.html`, `game.js`, `profile-gate.js`, `version-check.js`, `release.json` and the other `.js` files.
-3. Upload the contents of ZIP's `assets/` into the repository's existing **`assets/` folder** (especially `survivor-animated.glb`). Do not move assets to root or create an extra `wilderness.../` folder.
-4. After GitHub Pages publishes, open your existing Wilderness URL and check version `v0.24.1`.
-5. On a browser that is **not already signed in**, the entry screen has **Play as Guest**. Tap it; the page reloads once and loads a new guest world. Enter the forest. The game autosaves approximately every 12 seconds while playing, and when leaving the page.
-6. To return to an account, open Bag → World backup → **Sign in / Create account**; that saves guest progress, then reloads the account sign-in page. Existing account world stays separate.
+## The new first-time experience
 
-## How guests can keep progress
-- Same Safari/PWA website storage on the **same iPhone**: guest world resumes automatically.
-- Different device, another browser, cleared website data, iOS storage eviction or private browsing: guest world is **not guaranteed** to survive.
-- Guests should export a **world JSON backup** from Bag regularly and before app updates. Import replaces the *current* world only after confirmation. Before importing a guest backup into an account, export the existing account world first to avoid unintentionally replacing it.
-- Guest mode doesn't remove the game's initial need to load JavaScript/Three.js over the internet; **no login** does not necessarily mean offline play.
+On a truly **new world** (Guest or account), the player must do these real gameplay tasks before the full sandbox opens:
 
-## Tests to run on iPhone
-- Guest button shows when account cannot connect; guest can start without Supabase setup.
-- Build a floor / collect wood as guest; close game, reopen: guest resumes; equipment and buildings remain.
-- Switch to account, sign in: original account world loads, guest changes do not automatically appear there.
-- Switch back via the guest button on the account gate: original guest world resumes.
-- Test existing controls, v0.24.0 zombies and 3D survivor, JSON export/import, and animated model path `assets/survivor-animated.glb`.
+1. **Move** 3 metres with the joystick.
+2. **Gather** at least 3 wood from a real tree and 2 stone from a real rock with the proper starter tools.
+3. **Build** an actual Workbench on clear land. A one-time, small starter materials pack appears at this stage to avoid repeated grinding; it is separate from the old Creative Supplies refill.
+4. **Craft** a Stone Axe using the actual Workbench recipe.
+5. **Build** an actual Campfire.
+6. **Practice** one real sword attack and one held shield block. A training sword and shield are granted for this safe step; the tutorial does not spawn an aggressive wolf.
 
-## What we checked / limitations
-- Static syntax validation, bundled file references, and save-mode isolation tests; no deployment or physical iPhone runtime test performed. Keep the previous working ZIP until acceptance.
-- **No Supabase migration required.** No GitHub or Supabase changes were made directly.
+A compact step card explains the next task and provides a context-aware Help button. A golden beacon marks the nearest relevant tree, rock, or workbench. This happens *inside normal Wilderness gameplay*, not on a separate preview page. You cannot tap Next/Skip to bypass the objectives. Time, survival needs, wolves, and zombies are suspended during the lesson, then resume afterward.
+
+Completed steps resume after a browser refresh on the **same device/browser**. The tutorial progress marker uses a **separate mode-specific localStorage key**; the original save schema, server-side Supabase SQL, and auth flow are unchanged. The player's world itself continues using the usual guest/device or account/cloud save system. Tutorial steps do not automatically synchronize between devices, but downloading an existing world will not trigger the tutorial.
+
+**Existing worlds are protected:** If the account or guest already has an original world save, and no tutorial progress marker is present, the system marks the tutorial complete automatically without altering the world. Importing/restoring an existing world and downloading an existing cloud world also marks tutorial complete. There is no forced tutorial for existing players.
+
+## iPhone GitHub upload
+
+1. First, open your currently working Wilderness game and **Bag → Export world**. Save the JSON backup in iPhone Files. Do not clear website/Safari data.
+2. Unzip `Wilderness-v0.24.2-First-Steps.zip` in iPhone Files.
+3. Upload/replace **all files at the root of the ZIP** in your GitHub repository root, including updated `index.html`, `game.js`, `release.json`, and the **new `tutorial-system.js`**. Do **not** upload only `index.html`.
+4. Upload the **contents** of the ZIP's `assets/` folder into your existing GitHub **`assets/`** folder. Do **not** move `survivor-animated.glb` to the repository root or make a nested extra `assets` folder.
+5. Wait for GitHub Pages to publish; open Wilderness and check **v0.24.2**. Existing account and guest saves should open as before.
+6. For a **new-player test**, use a separate Safari browser/profile or device with no Wilderness saves. Do not clear your own current browser storage. Choose **Play as Guest** and complete the steps. Confirm closing/reopening resumes the same step.
+
+No Supabase migration is required. The author has not deployed this ZIP to GitHub/Supabase or tested the real iPhone 3D rendering; validate on a non-production device or spare test profile first.
+
+## Regression acceptance checks
+
+- Guest can enter without a Supabase account; guest account/world key never overwrites an existing account save.
+- Existing world shows no tutorial and preserves buildings, inventory, health and cloud auto-save.
+- New guest sees step 1; walking progresses; 1 tree and 1 rock harvested unlock the next step.
+- Build Workbench using highlighted control, craft Stone Axe from its actual crafting menu, then place Campfire.
+- Combat practice works through the main action and shield hold; no combat damage during tutorial.
+- Refresh between steps; resume correct objective, items, and built pieces.
+- Existing zombies still spawn after the tutorial when night falls; game world runs as before.
+- No missing assets/JS (especially `assets/survivor-animated.glb` and `tutorial-system.js`); landscape UI remains usable.
+
+## Known limitations
+
+- Tutorial steps use a per-browser marker, not the cloud save schema; they do not sync across a second device.
+- The lesson teaches combat with an unopposed attack and block, **not** a forced wolf battle, to keep new players safe and avoid collision/death-loop issues.
+- Tutorial screens and behavior need real iPhone acceptance testing; the browser runtime cannot be fully exercised offline without the external Three.js CDN.
+- Existing prototype graphics, crafting balance and wider interface remain otherwise unchanged; further general UI simplification should be a distinct design pass.

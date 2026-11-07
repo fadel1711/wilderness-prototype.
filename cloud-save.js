@@ -1,8 +1,8 @@
 // Wilderness v0.23.2 — account-first automatic sync: compare meaningful progress and protect local recovery.
 // A signed-in account syncs automatically. Independent edits with a known baseline and corrupt saves remain protected.
-import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.24.1';
-import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.24.1';
-import {cloudAutoDecision} from './cloud-policy.js?v=0.24.1';
+import {CLOUD_URL,CLOUD_PUBLISHABLE_KEY} from './cloud-config.js?v=0.24.2';
+import {SAVE_KEY,normalizeSave} from './save-system.js?v=0.24.2';
+import {cloudAutoDecision} from './cloud-policy.js?v=0.24.2';
 export const CLOUD_META_KEY='wilderness_v019_cloud_baseline'; // keep the existing accepted account baseline
 const el=id=>document.getElementById(id);
 const encodeWorld=value=>JSON.stringify(normalizeSave(value));
@@ -302,7 +302,7 @@ export function mountCloudSave({createClientOverride=null,configOverride=null}={
       const {createClient}=createClientOverride?{createClient:createClientOverride}:await import('https://esm.sh/@supabase/supabase-js@2.118.0?bundle');
       client=createClient(String(url).trim(),String(key).trim(),{
         auth:{autoRefreshToken:true,persistSession:true,detectSessionInUrl:true},
-        global:{headers:{'X-Client-Info':'wilderness-v0.24.1'}}
+        global:{headers:{'X-Client-Info':'wilderness-v0.24.2'}}
       });
       mode='auth';render();status('Cloud is available. Sign in or create your Wilderness account.');
       const {data,error}=await client.auth.getSession();

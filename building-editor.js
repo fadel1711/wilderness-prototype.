@@ -1,7 +1,7 @@
 // Wilderness v0.23.4: renderer-independent long-press building edit validation.
 // Editing reuses the same building ID, resource cost and save object; it is NOT crafting.
-import {placementVerdict,normalizedRotation,snappedPosition,wallType} from './construction.js?v=0.24.1';
-import {canRemoveSupport} from './second-story-system.js?v=0.24.1';
+import {placementVerdict,normalizedRotation,snappedPosition,wallType} from './construction.js?v=0.24.2';
+import {canRemoveSupport} from './second-story-system.js?v=0.24.2';
 
 export const EDIT_HOLD_MS=560;
 export const EDIT_DRAG_CANCEL_PX=13;

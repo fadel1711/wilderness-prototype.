@@ -1,4 +1,4 @@
-# Wilderness Roadmap (as of v0.24.1)
-- v0.24.1: Play as Guest, separate device-only local save (implemented in package).
-- Existing v0.24.0: balanced night zombies, 3D survivor and main survival experience retained.
-- Next: Improve survivor physique using a rig-compatible 3D mesh; improve building camera/snapping and raised second-storey editing after acceptance.
+# Wilderness roadmap — v0.24.2
+- **v0.24.2:** Mandatory six-step first-world onboarding, separate tutorial checkpoint storage, guest/account protection, one-time starter pack, in-world beacons and context guidance.
+- **After iPhone acceptance:** Inspect onboarding friction; then simplify menus, contextual buttons, and beginner building groups without removing advanced systems.
+- **Later:** Proportionate/rig-compatible survivor physique upgrade, remaining building-camera polish, villages/dog/cave improvements.
