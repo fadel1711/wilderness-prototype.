@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<meta name="wilderness-build" content="0.24.4">
-<link rel="manifest" href="./manifest.webmanifest?v=0.24.4">
+<meta name="wilderness-build" content="0.24.5">
+<link rel="manifest" href="./manifest.webmanifest?v=0.24.5">
 <link rel="apple-touch-icon" href="./wilderness-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wilderness">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Wilderness — v0.24.4 · Build Better</title>
+<title>Wilderness — v0.24.5 · Stability & Polish</title>
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f0eee5;--panel:#232b26e8;--line:#e9e3d12e;--accent:#d7bb88}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -576,7 +576,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
 @media(max-width:680px){.ui-tab{font-size:9px}.ui-hint{font-size:10px}}
 
 
-/* v0.24.4: optional view/clear-spot assistance, without an extra editor screen. */
+/* v0.24.5: optional view/clear-spot assistance, without an extra editor screen. */
 .placementdock .buildassist{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:6px 0 3px}
 .placementdock .buildassist button{padding:7px 2px;font-size:10px;min-height:32px;font-weight:800;
   background:#475f53;border:1px solid #bfd6be75;border-radius:9px;white-space:nowrap}
@@ -585,6 +585,10 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
   .placementdock .buildassist{margin:3px 0 2px;gap:3px}
   .placementdock .buildassist button{padding:5px 2px;min-height:27px;font-size:9px}
 }
+
+/* v0.24.5 — Save feedback in Settings, not a new permanent gameplay HUD. */
+.deviceSaveStatus{font-size:11px;line-height:1.4;color:#d9e7cc;background:#233b2d;border:1px solid #b6d4a53d;border-radius:9px;padding:8px 10px;margin:7px 0 10px}
+.deviceSaveStatus[data-state="failed"]{color:#ffe2b0;background:#4b342d;border-color:#dbb48d88}
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
@@ -600,7 +604,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     <div class="rotate-help">Won't rotate? Open iPhone Control Center and turn off <b>Portrait Orientation Lock</b>, then turn your phone sideways.</div>
   </div>
 </div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.24.4</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.24.5</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div id="cloudPill" class="cloudpill" aria-live="polite">☁ Connecting…</div><div class="task" id="task">Gather resources and build a cabin.</div>
 <section id="tutorialCard" role="region" aria-label="First Steps tutorial" aria-live="polite" hidden><div id="tutorialProgress">FIRST STEPS · 1/6</div><div id="tutorialTitle">Find your feet</div><div id="tutorialInstruction">Move with the joystick</div><div id="tutorialDirection"></div><div id="tutorialHint" hidden></div><div class="tutorialBtns"><button id="tutorialHelp" type="button">? Hint</button><button id="tutorialGuide" type="button">Movement help</button></div></section>
 <div id="damageOverlay"></div>
@@ -708,6 +712,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     <p class="wardrobeHint">All styles are unlocked. Tap an option, then close Bag to see it on your character. Colors, hood and scarf persist in local and cloud saves. No combat advantage.</p>
   </section>
   <div class="backuptools"><div class="supplies"><strong>Combat practice kit</strong><p>Free sword and shield, so you can test combat without grinding. Craft an Explorer Torch at the workbench. Equip it, then use Light/Extinguish to burn charcoal while actively playing. The bow remains available for a future update.</p><button id="combatKit">⚔ Claim free sword + shield</button></div><div class="supplies"><strong>Creative building supplies</strong><p>Seeds can now be gathered naturally at marked wild patches (S on your map). Creative refill remains available if you want it. Tap below whenever you need more materials.</p><button id="refillSupplies">🪵 🪨 Refill supplies (+ ore + seeds)</button></div><div class="gamePrefs"><strong>Game settings</strong><p>Optional sounds and premium art. Low Effects switches to lightweight legacy foliage. Animated Survivor is the default character in Wilderness. Switch it off only if the model fails to load or you prefer the original character.</p><div class="prefButtons"><button id="soundToggle">🔊 Sound On</button><button id="effectsToggle">✨ Effects Standard</button><button id="animatedSurvivorToggle" type="button">🧍 Animated Survivor: On</button></div><p style="margin-top:10px">🧟 <strong>Nightfall · Balanced</strong> — up to 6 zombies nearby; moderate damage; basic and rare loot. Houses and villages stay protected.</p><button id="nightfallPreview" type="button" style="width:100%;padding:10px;background:#405346">🌙 Preview Nightfall (jump to 20:15)</button><p id="needsModeLabel">Relaxed survival — needs active</p><button id="survivalToggle" class="needsModeToggle">🍃 Survival Needs: On</button><p>Tap a food item in your hotbar to select it, then press Eat/Drink; food in your Bag can still be eaten directly. Sleep in a bed to restore energy and advance the clock.</p></div><strong>World backup</strong><p>Account worlds sync automatically to cloud. Guest worlds save separately on this device only. Export JSON backups before changing releases; Import replaces only your currently selected world after confirmation.</p>
+<p id="deviceSaveStatus" class="deviceSaveStatus" role="status" aria-live="polite">Device save status appears here after your next autosave.</p>
 <div class="cloudQuick" id="accountSaveQuick"><strong>☁ Automatic Account Save</strong><p>Your signed-in account world loads automatically. Guest worlds never overwrite account cloud saves.</p><button id="cloudOpen">☁ Account & Cloud Save</button></div>
 <div class="cloudQuick" id="guestSaveQuick" hidden><strong>👤 Guest · Device save</strong><p>Guest progress is saved only in this browser on this device. It will not appear on another device or sync to an account automatically. Export a JSON backup regularly. Switching to an account will keep this guest world separate.</p><button id="guestSwitchAccount" type="button">☁ Sign in / Create account</button></div>
     <div class="backupbuttons"><button id="exportBackup">⬇ Export world</button><button id="importBackup">⬆ Import world</button></div><button id="restorePrevious" disabled>↶ Undo last import</button><button id="undoCloudRestore" hidden>↶ Undo last cloud restore</button>
@@ -741,7 +746,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
 </section>
 <div id="modal"><div class="intro">
   <div class="eyebrow">LANDSCAPE · YOUR ADVENTURE</div>
-  <h1>Wilderness · v0.24.4</h1>
+  <h1>Wilderness · v0.24.5</h1>
   <p>Explore freely as a <b>guest</b> (device-only saves), or sign in to continue your existing account world.</p>
   <p><b>Hold your iPhone sideways.</b> Wilderness rotates its game view when Safari's screen is portrait-locked.</p>
   <div class="controls"><b>Move:</b> left joystick · <b>Look:</b> drag screen · <b>Jump / Attack:</b> right thumb · <b>Build:</b> tap Build or long-press an existing structure. Other instructions are in Bag.</div>
@@ -759,7 +764,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     <small><b>Guest mode</b> needs no account. It keeps a separate local world on this device only; deleting Safari website data may erase it. Export a backup from Bag.</small>
   </div>
 </div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the six v0.24.4 update files were uploaded to the repository root. Keep your existing assets folder.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the five v0.24.5 update files were uploaded to the repository root. Keep your existing assets folder.</p></div></div>
 <script>
 /* Keep account dialogs upright; the scene and touch controls rotate as one landscape viewport. */
 (function(){
@@ -774,7 +779,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
 })();
 </script>
 <script>
-// v0.24.4 boot diagnostics do not touch browser storage or saves.
+// v0.24.5 boot diagnostics do not touch browser storage or saves.
 (function(){
   let failure='';
   function remember(s){ if(!failure&&s)failure=String(s).slice(0,260); }
@@ -794,12 +799,12 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     else reason.textContent='The game did not finish loading. Checking files…';
     const required=['session-mode.js','zombie-system.js','survivor-animation-system.js','torch-system.js','building-editor.js','game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js','village-system.js','orientation-gate.js','profile-gate.js','version-check.js','primary-action.js','cloud-policy.js','tutorial-system.js','interface-system.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.24.4',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.24.5',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
       if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Restore the missing file at the repository root; do not remove other files.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
       const byName=Object.fromEntries(required.map((n,i)=>[n,contents[i]]));
-      if(!byName['interface-system.js'].includes('installSimpleInterface')||!byName['tutorial-system.js'].includes('startTutorial')||!byName['game.js'].includes('tutorialGameEvent')||!byName['session-mode.js'].includes('GUEST_SAVE_KEY')||!byName['profile-gate.js'].includes('profileGateGuest')||!byName['zombie-system.js'].includes('ZOMBIE_BALANCED')||!byName['survivor-animation-system.js'].includes('createSurvivorAnimations')||!byName['version-check.js'].includes('installVersionCheck')||!byName['torch-system.js'].includes('normalizeTorches')||!byName['construction.js'].includes('findNearbyClearPlacement')||!byName['game.js'].includes('function findClearSpot')||!byName['building-editor.js'].includes('buildingEditVerdict')||!byName['game.js'].includes("version:'0.24.4'")||
+      if(!byName['interface-system.js'].includes('installSimpleInterface')||!byName['tutorial-system.js'].includes('startTutorial')||!byName['game.js'].includes('tutorialGameEvent')||!byName['session-mode.js'].includes('GUEST_SAVE_KEY')||!byName['profile-gate.js'].includes('profileGateGuest')||!byName['zombie-system.js'].includes('ZOMBIE_BALANCED')||!byName['survivor-animation-system.js'].includes('createSurvivorAnimations')||!byName['version-check.js'].includes('installVersionCheck')||!byName['torch-system.js'].includes('normalizeTorches')||!byName['construction.js'].includes('findNearbyClearPlacement')||!byName['game.js'].includes('function findClearSpot')||!byName['building-editor.js'].includes('buildingEditVerdict')||!byName['game.js'].includes("version:'0.24.5'")||
          !byName['deep-cave-system.js'].includes('DEEP_CAVE_VERSION')||
          !byName['save-system.js'].includes('wilderness_v0235_singleplayer')||
          !byName['construction.js'].includes('loft_floor')||
@@ -816,16 +821,16 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
          !byName['orientation-gate.js'].includes('mountLandscapeGate')||
          !byName['profile-gate.js'].includes('mountProfileGate')||
          !byName['village-system.js'].includes('createLivingVillage')||!byName['village-system.js'].includes('VILLAGE_CHESTS')){
-        reason.textContent='Mixed Wilderness files detected. Upload the six files in the v0.24.4 update-only ZIP to their matching root paths. Do not delete your assets or saved worlds.';return;
+        reason.textContent='Mixed Wilderness files detected. Upload the changed root files in the v0.24.5 update-only ZIP to their matching root paths. Do not delete your assets or saved worlds.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.24.4-displayfix1"></script>
+<script type="module" src="./game.js?v=0.24.5-stability1"></script>
 <script type="module">import {installSimpleInterface} from './interface-system.js?v=0.24.3'; installSimpleInterface();</script>
-<script type="module">import {installVersionCheck} from './version-check.js?v=0.24.4'; installVersionCheck();</script>
+<script type="module">import {installVersionCheck} from './version-check.js?v=0.24.5'; installVersionCheck();</script>
 <script type="module">import {mountProfileGate} from './profile-gate.js?v=0.24.3'; import {mountCloudSave} from './cloud-save.js?v=0.24.3'; import {isGuestMode} from './session-mode.js?v=0.24.3'; mountProfileGate(); if(!isGuestMode())mountCloudSave();</script>
 </body>
 </html>

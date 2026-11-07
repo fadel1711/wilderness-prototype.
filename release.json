@@ -1,5 +1,5 @@
 {
-  "version": "0.24.4",
-  "build": "2026-11-07-building-assist",
-  "description": "Optional overhead building preview, swipe-to-look during placement, and Find Clear Spot preview only; existing building, tutorial, guest/account saves unchanged."
+  "version": "0.24.5",
+  "build": "2026-11-07-stability-polish",
+  "description": "Joystick deadzone, camera swipe consistency, iPhone background saving and truthful device-save feedback; no world, cloud or guest save schema changes."
 }

@@ -952,10 +952,28 @@ function updateHud(){
 }
 function saveData(){return makeSave({inventory,equipped,px:player.position.x,pz:player.position.z,py:player.position.y,
   resources:Object.fromEntries(resources.map(r=>[r.id,r.hits])),deepCave,torches,builds:builds.map(({id,type,x,z,rot,level})=>({id,type,x,z,rot,...(level===1?{level:1}:{})})),plans,storage,exploration,farm,atmosphere,survival,forage,campfires,wardrobe,combat:{hp:health,stamina,wolves:Object.fromEntries(wolves.filter(w=>w.deadUntil>Date.now()).map(w=>[w.id,w.deadUntil]))}});}
+function updateDeviceSaveStatus(ok){
+  // A successful localStorage write is a device recovery copy, NOT a cloud confirmation.
+  const el=$('deviceSaveStatus');if(!el)return;
+  el.dataset.state=ok?'saved':'failed';
+  if(!ok){el.textContent='⚠ Device save failed — export a world backup';return;}
+  const when=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  el.textContent=guestMode?'✓ Guest world saved on this device · '+when:
+    '✓ Device recovery copy saved · '+when+' · cloud status shown above';
+}
 function saveGame(silent=false){
-  if(saveReadFailed){if(!silent)toast('Save protected: export/recover your old world first');return false;}
-  try{localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));if(!guestMode)window.dispatchEvent(new Event('wilderness:local-save'));if(!silent)toast(guestMode?'💾 Guest world saved on this device':'☁ Save queued');return true;}
-  catch(e){if(!silent)toast('Save failed — export a backup');console.error('Save failed',e);return false;}
+  if(saveReadFailed){updateDeviceSaveStatus(false);if(!silent)toast('Save protected: export/recover your old world first');return false;}
+  try{
+    localStorage.setItem(SAVE_KEY,JSON.stringify(saveData()));
+    updateDeviceSaveStatus(true);
+    if(!guestMode)window.dispatchEvent(new Event('wilderness:local-save'));
+    if(!silent)toast(guestMode?'💾 Guest world saved on this device':'💾 Device save queued for cloud sync');
+    return true;
+  }catch(e){
+    updateDeviceSaveStatus(false);
+    if(!silent)toast('Save failed — export a backup');
+    console.error('Save failed',e);return false;
+  }
 }
 function findSafePosition(){
   if(!obstacleAt(player.position.x,player.position.z))return;
@@ -1173,7 +1191,7 @@ function exportSave(){
   try{
     const url=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     const a=document.createElement('a');a.href=url;
-    a.download='Wilderness-v0.24.3-world-'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='Wilderness-v0.24.5-world-'+new Date().toISOString().slice(0,10)+'.json';
     document.body.append(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),60000);
     toast('Backup prepared. Save the JSON file in Files.');
@@ -2387,9 +2405,12 @@ function joy(e){
   const cx=sideways?rect.top+rect.height/2:rect.left+rect.width/2;
   const cy=sideways?innerWidth-(rect.left+rect.width/2):rect.top+rect.height/2;
   const dx=pt.x-cx,dy=pt.y-cy,max=Math.max(27,(sideways?rect.height:rect.width)*.30);
-  const mag=Math.hypot(dx,dy),scale=mag>max?max/mag:1;
-  move.x=dx*scale/max;move.y=-dy*scale/max;
-  knob.style.transform=`translate(${dx*scale}px,${dy*scale}px)`;
+  const mag=Math.hypot(dx,dy),deadzone=Math.max(4,max*.12);
+  // Small iPhone thumb tremors must not walk the character across the map.
+  const strength=mag<=deadzone?0:Math.min(1,(mag-deadzone)/(max-deadzone));
+  move.x=mag?dx/mag*strength:0;move.y=mag?-dy/mag*strength:0;
+  const visual=mag<=deadzone?0:Math.min(1,max/mag);
+  knob.style.transform=`translate(${dx*visual}px,${dy*visual}px)`;
 }
 function stopJoystick(){
   if(joystickPointer!==null)inputs.finish(joystickPointer);
@@ -2460,19 +2481,23 @@ canvas.addEventListener('pointermove',e=>{
     if(!shouldCancelHold(editPending.x,editPending.y,e.clientX,e.clientY))return;
     releaseEditHold(e);
     // The gesture was a camera swipe, not a long press; let it look normally.
-    if(!editingBuilding&&e.clientX>=innerWidth*.31)beginLook(e);
+    if(!editingBuilding&&landscapePoint(e.clientX,e.clientY).x>=landscapeViewport().width*.31)beginLook(e);
   }
   if(!recovery.owns('look',e.pointerId))return;
   const pt=landscapePoint(e.clientX,e.clientY);
-  yaw-=(pt.x-lastLookX)*.0055;
-  if(buildMode&&buildOverview)buildViewPitch=THREE.MathUtils.clamp(buildViewPitch+(lastLookY-pt.y)*.004,.62,1.22);
-  else pitch=THREE.MathUtils.clamp(pitch+(lastLookY-pt.y)*.004,.17,.94);
+  const lookDx=THREE.MathUtils.clamp(pt.x-lastLookX,-75,75);
+  const lookDy=THREE.MathUtils.clamp(lastLookY-pt.y,-75,75);
+  yaw-=lookDx*.0055;
+  if(buildMode&&buildOverview)buildViewPitch=THREE.MathUtils.clamp(buildViewPitch+lookDy*.004,.62,1.22);
+  else pitch=THREE.MathUtils.clamp(pitch+lookDy*.004,.17,.94);
   lastLookX=pt.x;lastLookY=pt.y;
 });
 for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{releaseEditHold(e);recovery.finish(e.pointerId);});
 addEventListener('blur',()=>{if(editPending){clearTimeout(editPending.timer);editPending=null;}},true);
 
 addEventListener('keydown',e=>{
+  if(e.defaultPrevented||e.isComposing||e.ctrlKey||e.metaKey||e.altKey||
+      e.target?.closest?.('input, textarea, select, button, [contenteditable="true"], [role="textbox"]'))return;
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
   if(landscapeGate.isBlocked()){keys.clear();return;}
   if(editingBuilding){if(e.key==='Escape'){cancelBuildingEdit();e.preventDefault();}return;}
@@ -2686,7 +2711,7 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({playMode:guestMode?'guest':'account',torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.24.4',buildOverview,tutorial:tutorial?{...tutorial}:null,zombies:{difficulty:'balanced',max:ZOMBIE_BALANCED.maxNearby,night:isZombieNight(atmosphere.elapsed,DAY_SECONDS),active:zombies.filter(z=>z.active).map(z=>({id:z.id,x:z.x,z:z.z,hp:z.hp}))},animatedSurvivor:survivorAnimations.info(),wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
+window.__wildernessDebug=()=>({playMode:guestMode?'guest':'account',torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.24.5',buildOverview,tutorial:tutorial?{...tutorial}:null,zombies:{difficulty:'balanced',max:ZOMBIE_BALANCED.maxNearby,night:isZombieNight(atmosphere.elapsed,DAY_SECONDS),active:zombies.filter(z=>z.active).map(z=>({id:z.id,x:z.x,z:z.z,hp:z.hp}))},animatedSurvivor:survivorAnimations.info(),wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
 // Cloud save never deletes or changes the old v0.16 key. Loading a remote world
 // first retains a local recovery snapshot, then reloads with autosave suppressed.
 window.__wildernessForceLocalSave=()=>saveGame(true);
@@ -2722,3 +2747,12 @@ $('start').disabled=!window.__wildernessProfileAllowed;
 $('start').textContent=window.__wildernessProfileAllowed?'Enter the forest':'Sign in to enter the forest';
 window.__gameReady=true;survivorAnimations.setEnabled(animatedSurvivorEnabled);premiumArt.setLow(effectsQuality==='low');premiumArt.start().then(()=>premiumArt.setLow(effectsQuality==='low'));premiumArt.loadTextures();refreshLootVisuals();updateFarmVisuals();updateSeedVisuals();renderMap();tick();
 addEventListener('pagehide',()=>{if(!suppressUnloadSave)saveGame(true);});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){
+    // iOS may suspend the page for hours without running pagehide.
+    if(!suppressUnloadSave&&playerEntered)saveGame(true);
+  }else{
+    // Safari/PWA restores can change available viewport space without resize.
+    requestAnimationFrame(resizeLandscapeScene);
+  }
+});
