@@ -1,5 +1,5 @@
 {
-  "version": "0.24.5",
-  "build": "2026-11-07-stability-polish",
-  "description": "Joystick deadzone, camera swipe consistency, iPhone background saving and truthful device-save feedback; no world, cloud or guest save schema changes."
+  "version": "0.24.5.1",
+  "build": "2026-11-07-native-orientation",
+  "description": "Native portrait and landscape display. Removes forced 90 degree rotation; portrait is usable when iOS stays locked. No world or cloud save changes."
 }

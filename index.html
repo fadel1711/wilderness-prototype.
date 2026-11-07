@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#232a26">
-<meta name="wilderness-build" content="0.24.5">
+<meta name="wilderness-build" content="0.24.5.1">
 <link rel="manifest" href="./manifest.webmanifest?v=0.24.5">
 <link rel="apple-touch-icon" href="./wilderness-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -403,9 +403,9 @@ body.building-edit-active .hud-bottom,body.building-edit-active .combatcontrols,
  .toolstrip .torchlight{min-height:25px}
 }
 
-/* v0.24.3: actual landscape viewport in Safari; portrait-lock fallback rotates the game, not the account form. */
+/* v0.24.5.1: native portrait/landscape rendering; no manual screen rotation. */
 #gameShell{position:fixed;inset:0;width:100vw;height:100dvh;overflow:hidden;isolation:isolate;transform-origin:top left}
-html.sideways-game #gameShell{top:0;left:100vw;width:100dvh;height:100vw;transform:rotate(90deg)}
+/* Removed sideways-game rotation in v0.24.5.1. */
 html.sideways-game #portraitGate{display:none!important}
 html.sideways-game .buildingeditor.show{display:block!important}
 html.sideways-game #landscapeTip{display:none}
@@ -589,6 +589,52 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
 /* v0.24.5 — Save feedback in Settings, not a new permanent gameplay HUD. */
 .deviceSaveStatus{font-size:11px;line-height:1.4;color:#d9e7cc;background:#233b2d;border:1px solid #b6d4a53d;border-radius:9px;padding:8px 10px;margin:7px 0 10px}
 .deviceSaveStatus[data-state="failed"]{color:#ffe2b0;background:#4b342d;border-color:#dbb48d88}
+
+/* v0.24.5.1: iPhone orientation repair. Native portrait stays upright.
+   Physical landscape keeps the existing layout untouched. */
+#gameShell {transform:none;transform-origin:center center;max-width:100vw;max-height:100dvh}
+@media (orientation:portrait){
+  html,body {width:100%;height:100%;overflow:hidden}
+  #gameShell {top:0;left:0;width:100vw;height:100dvh;transform:none!important}
+  #portraitGate {display:none!important}
+  .top {top:calc(env(safe-area-inset-top) + 4px);left:8px;right:8px}
+  .brand {font-size:10px;padding:6px 8px;line-height:1.12;max-width:145px}
+  .brand span {font-size:9px}
+  .stats {top:calc(env(safe-area-inset-top) + 7px);left:auto;right:6px;transform:none;gap:5px;padding:5px 6px;font-size:9px;max-width:calc(100vw - 155px);white-space:nowrap}
+  .stats em {display:none}
+  .vitals,html.sideways-game .vitals {top:calc(env(safe-area-inset-top) + 42px);left:8px;max-width:calc(100vw - 17px);gap:5px;padding:5px 6px;transform:none}
+  .vitalRow {font-size:9px}.vitalRow b {font-size:9px}
+  .timehud,html.sideways-game .timehud {top:calc(env(safe-area-inset-top) + 81px);right:8px;font-size:9px}
+  .cloudpill {top:calc(env(safe-area-inset-top) + 81px);left:8px;right:auto;max-width:130px}
+  #mapButton,html.sideways-game .mapquick {top:calc(env(safe-area-inset-top) + 113px);right:8px}
+  .actions #bagToggle {top:calc(env(safe-area-inset-top) + 151px);right:82px;bottom:auto}
+  .actions #buildToggle {top:calc(env(safe-area-inset-top) + 151px);right:8px;bottom:auto}
+  .quickbar,body.combat-active .quickbar,html.sideways-game .quickbar {top:calc(env(safe-area-inset-top) + 193px);bottom:auto;left:50%;transform:translateX(-50%);max-width:calc(100vw - 12px);width:max-content;overflow-x:auto;scrollbar-width:none;gap:3px;padding:4px}
+  .quickslots {gap:3px}.quickslot {width:40px;min-width:37px;height:44px}
+  .quickbarpicker {top:calc(env(safe-area-inset-top) + 245px);bottom:auto;max-width:calc(100vw - 14px);left:50%;transform:translateX(-50%);max-height:45vh;overflow:auto}
+  .zoomdock {display:none!important}
+  .waypointhud {top:calc(env(safe-area-inset-top) + 270px);left:9px;max-width:calc(100vw - 18px)}
+  .hud-bottom {height:139px!important;bottom:0!important}
+  #stick,html.sideways-game #stick {bottom:calc(env(safe-area-inset-bottom) + 9px);left:11px;width:103px;height:103px}
+  #jumpButton,body.combat-active #jumpButton {right:calc(env(safe-area-inset-right) + 19px);bottom:calc(env(safe-area-inset-bottom) + 119px);left:auto;width:55px;height:55px}
+  .resetcontrols,html.sideways-game .resetcontrols {left:calc(env(safe-area-inset-left) + 117px);bottom:calc(env(safe-area-inset-bottom) + 14px)}
+  .actions #action,body.combat-active .actions #action {right:calc(env(safe-area-inset-right) + 13px);bottom:calc(env(safe-area-inset-bottom) + 12px);width:87px;height:87px}
+  .toolstrip {right:7px;bottom:calc(env(safe-area-inset-bottom) + 185px);max-width:min(220px,70vw);font-size:9px}
+  body.combat-active #combatControls.show {bottom:calc(env(safe-area-inset-bottom) + 219px);right:10px}
+  .inventorypanel {top:calc(env(safe-area-inset-top) + 55px);bottom:calc(env(safe-area-inset-bottom) + 151px);left:8px;right:8px;width:auto;max-width:none}
+  .panel.show,.stationpanel {left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom) + 146px);transform:none;max-width:none;max-height:55vh;width:auto}
+  .mappanel {left:8px;right:8px;top:calc(env(safe-area-inset-top) + 53px);bottom:calc(env(safe-area-inset-bottom) + 143px);max-width:none;width:auto}
+  .placementdock {right:8px;bottom:calc(env(safe-area-inset-bottom) + 143px);width:min(230px,64vw)}
+  .buildingeditor {left:8px;right:8px;top:calc(env(safe-area-inset-top) + 44px);width:auto;min-width:0;transform:none;max-height:57vh}
+  #tutorialCard {top:calc(env(safe-area-inset-top) + 256px);left:50%;transform:translateX(-50%);width:calc(100vw - 28px);max-width:calc(100vw - 28px)}
+  .task {top:calc(env(safe-area-inset-top) + 258px);max-width:calc(100vw - 24px)}
+  .toast {top:calc(env(safe-area-inset-top) + 295px);max-width:90vw}
+  #landscapeTip {display:none!important}
+}
+
+/* Keep the reset control icon-sized; the descriptive label remains accessible. */
+#resetControls {font-size:0!important;overflow:hidden;white-space:nowrap}
+#resetControls::after {content:"↻";font-size:19px;line-height:1}
 </style>
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
@@ -604,7 +650,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     <div class="rotate-help">Won't rotate? Open iPhone Control Center and turn off <b>Portrait Orientation Lock</b>, then turn your phone sideways.</div>
   </div>
 </div>
-<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.24.5</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
+<div class="top"><div class="brand">WILDERNESS<span>Single-player · v0.24.5.1</span></div><div class="stats"><span>🪵 <em>Wood</em> <b id="woodCount">0</b></span><span>🪨 <em>Stone</em> <b id="stoneCount">0</b></span><span>🌾 <em>Food</em> <b id="foodCount">0</b></span></div></div>
 <div id="cloudPill" class="cloudpill" aria-live="polite">☁ Connecting…</div><div class="task" id="task">Gather resources and build a cabin.</div>
 <section id="tutorialCard" role="region" aria-label="First Steps tutorial" aria-live="polite" hidden><div id="tutorialProgress">FIRST STEPS · 1/6</div><div id="tutorialTitle">Find your feet</div><div id="tutorialInstruction">Move with the joystick</div><div id="tutorialDirection"></div><div id="tutorialHint" hidden></div><div class="tutorialBtns"><button id="tutorialHelp" type="button">? Hint</button><button id="tutorialGuide" type="button">Movement help</button></div></section>
 <div id="damageOverlay"></div>
@@ -764,7 +810,7 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     <small><b>Guest mode</b> needs no account. It keeps a separate local world on this device only; deleting Safari website data may erase it. Export a backup from Bag.</small>
   </div>
 </div>
-<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the five v0.24.5 update files were uploaded to the repository root. Keep your existing assets folder.</p></div></div>
+<div id="loaderror"><div style="max-width:430px"><h2>Wilderness couldn't start</h2><p id="loadreason">A game file may not have loaded correctly.</p><button id="retryLoad" style="padding:12px 18px;background:#d7bd87;color:#253027;font-weight:800">Try reloading</button><p style="font-size:12px;line-height:1.5;opacity:.8">Your saved world has not been cleared. Do not delete Safari website data. Verify the five v0.24.5.1 update files were uploaded to the repository root. Keep your existing assets folder.</p></div></div>
 <script>
 /* Keep account dialogs upright; the scene and touch controls rotate as one landscape viewport. */
 (function(){
@@ -799,12 +845,12 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
     else reason.textContent='The game did not finish loading. Checking files…';
     const required=['session-mode.js','zombie-system.js','survivor-animation-system.js','torch-system.js','building-editor.js','game.js','deep-cave-system.js','second-story-system.js','construction.js','save-system.js','craft-system.js','combat-system.js','exploration-system.js','farm-system.js','atmosphere-system.js','visual-system.js','cave-art.js','survival-system.js','movement-system.js','seed-system.js','premium-assets.js','dual-input.js','sky-camera.js','cloud-save.js','cloud-config.js','campfire-system.js','wardrobe-system.js','world-expansion-system.js','input-recovery.js','village-system.js','orientation-gate.js','profile-gate.js','version-check.js','primary-action.js','cloud-policy.js','tutorial-system.js','interface-system.js'];
     try{
-      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.24.5',{cache:'no-store'})})));
+      const responses=await Promise.all(required.map(async f=>({name:f,resp:await fetch('./'+f+'?verify=0.24.5.1',{cache:'no-store'})})));
       const missing=responses.filter(x=>!x.resp.ok);
       if(missing.length){reason.textContent='GitHub Pages cannot find: '+missing.map(x=>x.name+' (HTTP '+x.resp.status+')').join(', ')+'. Restore the missing file at the repository root; do not remove other files.';return;}
       const contents=await Promise.all(responses.map(x=>x.resp.text()));
       const byName=Object.fromEntries(required.map((n,i)=>[n,contents[i]]));
-      if(!byName['interface-system.js'].includes('installSimpleInterface')||!byName['tutorial-system.js'].includes('startTutorial')||!byName['game.js'].includes('tutorialGameEvent')||!byName['session-mode.js'].includes('GUEST_SAVE_KEY')||!byName['profile-gate.js'].includes('profileGateGuest')||!byName['zombie-system.js'].includes('ZOMBIE_BALANCED')||!byName['survivor-animation-system.js'].includes('createSurvivorAnimations')||!byName['version-check.js'].includes('installVersionCheck')||!byName['torch-system.js'].includes('normalizeTorches')||!byName['construction.js'].includes('findNearbyClearPlacement')||!byName['game.js'].includes('function findClearSpot')||!byName['building-editor.js'].includes('buildingEditVerdict')||!byName['game.js'].includes("version:'0.24.5'")||
+      if(!byName['interface-system.js'].includes('installSimpleInterface')||!byName['tutorial-system.js'].includes('startTutorial')||!byName['game.js'].includes('tutorialGameEvent')||!byName['session-mode.js'].includes('GUEST_SAVE_KEY')||!byName['profile-gate.js'].includes('profileGateGuest')||!byName['zombie-system.js'].includes('ZOMBIE_BALANCED')||!byName['survivor-animation-system.js'].includes('createSurvivorAnimations')||!byName['version-check.js'].includes('installVersionCheck')||!byName['torch-system.js'].includes('normalizeTorches')||!byName['construction.js'].includes('findNearbyClearPlacement')||!byName['game.js'].includes('function findClearSpot')||!byName['building-editor.js'].includes('buildingEditVerdict')||!byName['game.js'].includes("version:'0.24.5.1'")||
          !byName['deep-cave-system.js'].includes('DEEP_CAVE_VERSION')||
          !byName['save-system.js'].includes('wilderness_v0235_singleplayer')||
          !byName['construction.js'].includes('loft_floor')||
@@ -821,16 +867,16 @@ body.tutorial-active #buildPanel .ui-build-grid{grid-template-columns:1fr!import
          !byName['orientation-gate.js'].includes('mountLandscapeGate')||
          !byName['profile-gate.js'].includes('mountProfileGate')||
          !byName['village-system.js'].includes('createLivingVillage')||!byName['village-system.js'].includes('VILLAGE_CHESTS')){
-        reason.textContent='Mixed Wilderness files detected. Upload the changed root files in the v0.24.5 update-only ZIP to their matching root paths. Do not delete your assets or saved worlds.';return;
+        reason.textContent='Mixed Wilderness files detected. Upload the changed root files in the v0.24.5.1 update-only ZIP to their matching root paths. Do not delete your assets or saved worlds.';return;
       }
       if(!failure)reason.textContent='All game files were found, but the 3D engine did not start. Check your connection to the Three.js CDN, then try reloading. Send Rosa a screenshot of this message.';
     }catch(e){ if(!failure)reason.textContent='Could not verify game files. Check internet connection and GitHub Pages deployment.'; }
   },12000);
 })();
 </script>
-<script type="module" src="./game.js?v=0.24.5-stability1"></script>
+<script type="module" src="./game.js?v=0.24.5.1-native"></script>
 <script type="module">import {installSimpleInterface} from './interface-system.js?v=0.24.3'; installSimpleInterface();</script>
-<script type="module">import {installVersionCheck} from './version-check.js?v=0.24.5'; installVersionCheck();</script>
+<script type="module">import {installVersionCheck} from './version-check.js?v=0.24.5.1'; installVersionCheck();</script>
 <script type="module">import {mountProfileGate} from './profile-gate.js?v=0.24.3'; import {mountCloudSave} from './cloud-save.js?v=0.24.3'; import {isGuestMode} from './session-mode.js?v=0.24.3'; mountProfileGate(); if(!isGuestMode())mountCloudSave();</script>
 </body>
 </html>
