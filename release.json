@@ -1,5 +1,5 @@
 {
-  "version": "0.24.3",
-  "build": "2026-11-07-interface-simplification",
-  "description": "Clear Backpack and Build tabs; camera zoom moved to settings; all original gameplay, cloud/guest saves and mandatory tutorial preserved."
+  "version": "0.24.4",
+  "build": "2026-11-07-building-assist",
+  "description": "Optional overhead building preview, swipe-to-look during placement, and Find Clear Spot preview only; existing building, tutorial, guest/account saves unchanged."
 }

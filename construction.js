@@ -166,3 +166,18 @@ export const STOCK_BLUEPRINTS=Object.freeze([
     {type:'loft_roof',dx:0,dz:0,rot:0}
   ]}
 ]);
+
+// v0.24.4: preview-only position assistant. Caller applies the game world's
+// actual placement rules; this helper cannot place, spend, or alter a save.
+export function findNearbyClearPlacement(origin,{step=2,maxSteps=4,valid}={}){
+  if(!origin||![origin.x,origin.z,step,maxSteps].every(Number.isFinite)||step<=0||maxSteps<0||maxSteps>8||typeof valid!=='function')return null;
+  const candidates=[];
+  for(let dx=-maxSteps;dx<=maxSteps;dx++)for(let dz=-maxSteps;dz<=maxSteps;dz++){
+    const x=origin.x+dx*step,z=origin.z+dz*step;
+    candidates.push({x,z,dist:dx*dx+dz*dz,dx,dz});
+  }
+  // Prefer the nearest legitimate spot. Stable order prevents preview jumps.
+  candidates.sort((a,b)=>a.dist-b.dist||Math.abs(a.dx)-Math.abs(b.dx)||Math.abs(a.dz)-Math.abs(b.dz)||a.dx-b.dx||a.dz-b.dz);
+  for(const c of candidates)if(valid({x:c.x,z:c.z}))return {x:c.x,z:c.z};
+  return null;
+}

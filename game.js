@@ -4,7 +4,7 @@ import {ZOMBIE_BALANCED,isZombieNight,zombieState,zombieLoot,chooseZombieSpawn,c
 import {createSurvivorAnimations} from './survivor-animation-system.js?v=0.24.3';
 import {LEGACY_KEY,V03_KEY,V04_KEY,V05_KEY,V06_KEY,V07_KEY,V08_KEY,V09_KEY,V10_KEY,V11_KEY,V12_KEY,V13_KEY,V14_KEY,V15_KEY,V16_KEY,V17_KEY,V18_KEY,V19_KEY,V20_KEY,V21_KEY,V22_KEY,V23_KEY,V234_KEY,SAVE_KEY as ACCOUNT_SAVE_KEY,PRE_IMPORT_KEY as ACCOUNT_PRE_IMPORT_KEY,ITEM,startingInventory,count,freeCapacity,addItem,payCosts,normalizeSave,makeSave,exportWrapper} from './save-system.js?v=0.24.3';
 import {isUpper,LOFT_FURNISH_TYPES,LOFT_BASE_Y,LOFT_WALK_Y,stairRise,stairTop,canRemoveSupport} from './second-story-system.js?v=0.24.3';
-import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts} from './construction.js?v=0.24.3';
+import {BUILD_TYPES,FURNISH_TYPES,COSTS,wallType,localXZ,snappedPosition,placementVerdict,normalizedRotation,hasFoundation,raisedCabin,supportHeight,cabinFoundationCount,STOCK_BLUEPRINTS,resolveBlueprint,sortParts,blueprintVerdict,sumCosts,findNearbyClearPlacement} from './construction.js?v=0.24.4';
 
 import {RECIPES,cloneSlots,freshChest,totalAvailable,spendFromContainers,craftItem,transferStack} from './craft-system.js?v=0.24.3';
 
@@ -858,6 +858,7 @@ let inventory=startingInventory(),equipped='axe',inventoryOpen=false,plans=[],st
 let stationOpen=false,stationId=null;
 let exploration={discovered:[],claimed:[],waypoint:null},farm=normalizeFarm(),atmosphere=normalizeAtmosphere(),survival=normalizeSurvival(),forage=normalizeForage(),deepCave=normalizeDeepCave(),mapOpen=false,mapDrawTime=0;
 let buildMode=false,buildPickerOpen=false,selected='cabin',selectedLevel=0,orientation=0,preview=null,previewSignature='',validPlacement=false;
+let buildOverview=false,buildViewPitch=.86; // Visual-only; never written to cloud/local saves.
 let nudgeX=0,nudgeZ=0,previewPosition={x:0,z:0},placementReason='';
 let yaw=0,pitch=.38,nearby=null,runTime=0,moveVX=0,moveVZ=0;
 let actionUntil=0,swingTime=0,impactTarget=null;
@@ -1419,6 +1420,39 @@ function spendForBuilding(cost){
   inventory=staged.bag;for(const c of staged.chests)storage[c.id]=c.slots;
   return true;
 }
+function placementIssue(parts){
+  let issue=isPlan()?blueprintVerdict(parts,builds,resources,player.position,WORLD):
+    placementVerdict(parts[0],builds,resources,player.position,WORLD);
+  if(!issue&&parts.some(q=>VILLAGES.some(v=>Math.hypot(q.x-v.x,q.z-v.z)<VILLAGE_RADIUS+2)))issue='Village land is reserved';
+  return issue;
+}
+function previewPartsAt(x,z){
+  return isPlan()?resolvedParts(x,z):[{type:selected,x,z,rot:orientation,...(selectedLevel===1?{level:1}:{})}];
+}
+function findClearSpot(){
+  if(!buildMode||buildPickerOpen||paused)return;
+  updatePreview();
+  if(validPlacement){toast('This spot is clear. Press Place when ready.');return;}
+  const oldX=nudgeX,oldZ=nudgeZ;
+  const origin=projectedPos();
+  const step=!isPlan()&&FURNISH_TYPES.includes(selected)?1:2;
+  const found=findNearbyClearPlacement(origin,{step,maxSteps:step===1?6:4,valid:({x,z})=>{
+    if(Math.abs(x)>WORLD-4||Math.abs(z)>WORLD-4)return false;
+    return !placementIssue(previewPartsAt(x,z));
+  }});
+  if(!found){toast('No clear spot nearby. Try moving, rotating, or removing an obstacle.');return;}
+  nudgeX=THREE.MathUtils.clamp(oldX+found.x-origin.x,-8,8);
+  nudgeZ=THREE.MathUtils.clamp(oldZ+found.z-origin.z,-8,8);
+  updatePreview();
+  if(!validPlacement){nudgeX=oldX;nudgeZ=oldZ;updatePreview();toast('Move a little closer and try again.');return;}
+  toast('Clear spot found! Check the green preview, then tap Place.');
+}
+function syncBuildView(){
+  const button=$('buildOverview');if(!button)return;
+  button.textContent=buildOverview?'👁 Normal view':'👁 Overview';
+  button.setAttribute('aria-pressed',String(buildOverview));
+  button.title=buildOverview?'Return to ordinary building camera':'Look down on the building preview';
+}
 function updatePreview(){
   if(!buildMode||buildPickerOpen)return;
   const {x,z}=projectedPos();previewPosition={x,z};
@@ -1433,9 +1467,7 @@ function updatePreview(){
     preview.position.set(x,supportHeight(parts[0],builds),z);preview.rotation.y=orientation;
     if(selected==='stairs')applyStairProfile(preview,raisedStairTarget({x,z,rot:orientation}));
   }
-  placementReason=isPlan()?blueprintVerdict(parts,builds,resources,player.position,WORLD):
-    placementVerdict(parts[0],builds,resources,player.position,WORLD);
-  if(!placementReason&&parts.some(q=>VILLAGES.some(v=>Math.hypot(q.x-v.x,q.z-v.z)<VILLAGE_RADIUS+2)))placementReason='Village land is reserved';
+  placementReason=placementIssue(parts);
   validPlacement=!placementReason;
   const c=buildSelectionCost(),enough=available('wood')>=c.wood&&available('stone')>=c.stone;
   const color=validPlacement?(enough?'#97c8a1':'#d8bc87'):'#d28779';
@@ -1476,7 +1508,7 @@ function openBuildPicker(){
 }
 function setBuildMode(enabled){if(enabled&&tutorialActive(tutorial)&&![2,4].includes(tutorial.step)){toast('Complete the current tutorial step first');return;}if(enabled&&editingBuilding)cancelBuildingEdit();if(enabled)resetInputControls();
   if(enabled&&inventoryOpen)setInventory(false);if(enabled&&stationOpen)closeStation();
-  buildMode=enabled;buildPickerOpen=enabled;renderSavedBlueprints();$('rangerRest').hidden=!exploration.claimed.includes('camp');syncBuildUi();
+  buildMode=enabled;buildPickerOpen=enabled;buildOverview=false;syncBuildView();renderSavedBlueprints();$('rangerRest').hidden=!exploration.claimed.includes('camp');syncBuildUi();
   $('toolStrip').style.display=enabled?'none':'flex';
   $('buildToggle').textContent=enabled?'✕ Close Build':'🔨 Build';$('action').style.display=enabled?'none':'block';
   if(!enabled)disposeGhost();syncCombatDock();
@@ -2337,6 +2369,8 @@ $('changePiece').addEventListener('click',openBuildPicker);
 $('levelToggle').addEventListener('click',()=>{if(!LOFT_FURNISH_TYPES.includes(selected))return;selectedLevel=1-selectedLevel;syncBuildUi();disposeGhost();updatePreview();});
 $('rotate').addEventListener('click',()=>{orientation=normalizedRotation(orientation+Math.PI/2);updatePreview();});
 $('resetNudge').addEventListener('click',()=>{nudgeX=nudgeZ=0;updatePreview();});
+$('buildOverview').addEventListener('click',()=>{if(!buildMode||buildPickerOpen)return;buildOverview=!buildOverview;buildViewPitch=.86;syncBuildView();});
+$('findClearSpot').addEventListener('click',findClearSpot);
 $('nudgeLeft').addEventListener('click',()=>nudgeRelative(-1,0));
 $('nudgeRight').addEventListener('click',()=>nudgeRelative(1,0));
 $('nudgeForward').addEventListener('click',()=>nudgeRelative(0,1));
@@ -2399,8 +2433,13 @@ function releaseEditHold(e){
   if(editPending?.pointerId===e.pointerId){clearTimeout(editPending.timer);editPending=null;}
 }
 canvas.addEventListener('pointerdown',e=>{
-  if(paused||editingBuilding||inventoryOpen||stationOpen||mapOpen||buildMode||landscapeGate.isBlocked()||lookPointer!==null)return;
+  if(paused||editingBuilding||inventoryOpen||stationOpen||mapOpen||(buildMode&&buildPickerOpen)||landscapeGate.isBlocked()||lookPointer!==null)return;
   e.preventDefault();
+  if(buildMode){
+    // Placement mode: drag the scene to inspect. Do not trigger long-press editing.
+    if(landscapePoint(e.clientX,e.clientY).x>=landscapeViewport().width*.31)beginLook(e);
+    return;
+  }
   if(editPending)return;
   const target=editorTargetAt(e.clientX,e.clientY);
   if(target){
@@ -2426,7 +2465,8 @@ canvas.addEventListener('pointermove',e=>{
   if(!recovery.owns('look',e.pointerId))return;
   const pt=landscapePoint(e.clientX,e.clientY);
   yaw-=(pt.x-lastLookX)*.0055;
-  pitch=THREE.MathUtils.clamp(pitch+(lastLookY-pt.y)*.004,.17,.94);
+  if(buildMode&&buildOverview)buildViewPitch=THREE.MathUtils.clamp(buildViewPitch+(lastLookY-pt.y)*.004,.62,1.22);
+  else pitch=THREE.MathUtils.clamp(pitch+(lastLookY-pt.y)*.004,.17,.94);
   lastLookX=pt.x;lastLookY=pt.y;
 });
 for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,e=>{releaseEditHold(e);recovery.finish(e.pointerId);});
@@ -2482,9 +2522,16 @@ let stepSoundCooldown=0,ambienceCooldown=12,moodTimer=0;
 const viewRay=new THREE.Raycaster();let uiTimer=0,saveTimer=0,roofTimer=0,farmVisualTimer=0;let forestLodTimer=0;
 function updateCamera(dt){
   const forward=new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw));
-  const target=new THREE.Vector3(player.position.x,1.53+player.position.y,player.position.z);
-  const desired=target.clone().addScaledVector(forward,-cameraDistance*Math.cos(pitch));
-  desired.y+=cameraDistance*Math.sin(pitch);
+  const overview=buildMode&&!buildPickerOpen&&buildOverview;
+  const target=overview?
+    new THREE.Vector3(player.position.x*.35+previewPosition.x*.65,
+      (isUpper(selected)||selectedLevel===1?2.55:1.1)+player.position.y*.20,
+      player.position.z*.35+previewPosition.z*.65):
+    new THREE.Vector3(player.position.x,1.53+player.position.y,player.position.z);
+  const viewDistance=overview?Math.max(cameraDistance,12.5):cameraDistance;
+  const viewPitch=overview?buildViewPitch:pitch;
+  const desired=target.clone().addScaledVector(forward,-viewDistance*Math.cos(viewPitch));
+  desired.y+=viewDistance*Math.sin(viewPitch);
   // Pull the camera forward when a solid house surface blocks its line of sight.
   const diff=desired.clone().sub(target),distance=diff.length();viewRay.set(target,diff.normalize());
   const hits=viewRay.intersectObjects(cameraOccluders.filter(o=>o.visible&&o.parent?.visible!==false),false);
@@ -2626,7 +2673,7 @@ function tick(){
   renderer.render(scene,camera);
 }
 camera.position.set(0,4.8,-7);camera.lookAt(0,1.53,0);
-window.__wildernessDebug=()=>({playMode:guestMode?'guest':'account',torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.24.3',tutorial:tutorial?{...tutorial}:null,zombies:{difficulty:'balanced',max:ZOMBIE_BALANCED.maxNearby,night:isZombieNight(atmosphere.elapsed,DAY_SECONDS),active:zombies.filter(z=>z.active).map(z=>({id:z.id,x:z.x,z:z.z,hp:z.hp}))},animatedSurvivor:survivorAnimations.info(),wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
+window.__wildernessDebug=()=>({playMode:guestMode?'guest':'account',torches:JSON.parse(JSON.stringify(torches)),villages:VILLAGES.map(v=>({id:v.id,houses:v.homes.length,residents:v.people.length})),village:{id:VILLAGE.id,houseCount:livingVillage.houseCount,villagers:livingVillage.villagerCount,nearby:nearbyVillager(player.position,atmosphere.elapsed)?.name||null},chestsClaimed:exploration.claimed.filter(id=>id.startsWith('vloot:')).length,landscape:landscapeViewport().width>landscapeViewport().height,accountReady:!!window.__wildernessProfileAllowed,portraitGate:landscapeGate.isBlocked(),deepCave:JSON.parse(JSON.stringify(deepCave)),mazeWalls:MAZE_WALLS.length,oreVeins:ORE_VEINS.length,campfires:JSON.parse(JSON.stringify(campfires)),cameraDistance,skyVisible:{sun:celestial.sun.visible,moon:celestial.moon.visible},artModels:premiumArt.modelCount,multiTouchPointers:inputs.count,version:'0.24.4',buildOverview,tutorial:tutorial?{...tutorial}:null,zombies:{difficulty:'balanced',max:ZOMBIE_BALANCED.maxNearby,night:isZombieNight(atmosphere.elapsed,DAY_SECONDS),active:zombies.filter(z=>z.active).map(z=>({id:z.id,x:z.x,z:z.z,hp:z.hp}))},animatedSurvivor:survivorAnimations.info(),wardrobe:JSON.parse(JSON.stringify(wardrobe)),physics:{...physics},forage:JSON.parse(JSON.stringify(forage)),survival:JSON.parse(JSON.stringify(survival)),atmosphere:JSON.parse(JSON.stringify(atmosphere)),soundEnabled,effectsQuality,exploration:JSON.parse(JSON.stringify(exploration)),farm:JSON.parse(JSON.stringify(farm)),health,stamina,combatMode,safe:safeHere(),wolves:wolves.map(w=>({id:w.id,hp:w.hp,x:w.x,z:w.z,deadUntil:w.deadUntil})),x:player.position.x,z:player.position.z,wood:amount('wood'),stone:amount('stone'),equipped,inventory:inventory.map(s=>s?{...s}:null),plans:plans.map(p=>({name:p.name,parts:p.parts.length})),builds:builds.map(b=>({id:b.id,type:b.type,x:b.x,z:b.z,rot:b.rot})),storage:JSON.parse(JSON.stringify(storage)),resources:resources.map(r=>({id:r.id,x:r.x,z:r.z,hits:r.hits})),buildMode,buildPickerOpen,selected,orientation,previewPosition,placementReason,validPlacement,editing:editingBuilding?{id:editingBuilding.id,draft:editDraft}:null,paused});
 // Cloud save never deletes or changes the old v0.16 key. Loading a remote world
 // first retains a local recovery snapshot, then reloads with autosave suppressed.
 window.__wildernessForceLocalSave=()=>saveGame(true);
