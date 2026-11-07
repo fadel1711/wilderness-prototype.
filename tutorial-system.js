@@ -1,4 +1,4 @@
-// Wilderness v0.24.2 — first-world mandatory interactive onboarding.
+// Wilderness v0.24.3 — first-world mandatory interactive onboarding.
 // All state is stored outside the version-22 world save schema to preserve old cloud saves.
 export const TUTORIAL_LAST_STEP=6;
 export const TUTORIAL_STEPS=Object.freeze([

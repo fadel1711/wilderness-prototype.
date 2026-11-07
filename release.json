@@ -1,5 +1,5 @@
 {
-  "version": "0.24.2",
-  "build": "2026-11-07-first-steps",
-  "description": "Mandatory interactive tutorial on brand-new Wilderness worlds only; safe existing saves; Guest Mode and Nightfall Balanced preserved."
+  "version": "0.24.3",
+  "build": "2026-11-07-interface-simplification",
+  "description": "Clear Backpack and Build tabs; camera zoom moved to settings; all original gameplay, cloud/guest saves and mandatory tutorial preserved."
 }

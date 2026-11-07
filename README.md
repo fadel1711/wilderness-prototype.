@@ -1,49 +1,46 @@
-# Wilderness v0.24.2 — First Steps (mandatory new-world tutorial)
+# Wilderness v0.24.3 — Clear Trails (interface simplification)
 
-This is a full game replacement ZIP, not a patch. It builds on **v0.24.1 Guest Mode** with **v0.24.0 balanced Nightfall zombies** and the same `assets/survivor-animated.glb`.
+Complete **GitHub Pages replacement ZIP** for the last tested **v0.24.2 First Steps** game. No separate preview page. No Supabase SQL changes.
 
-## The new first-time experience
+## What's improved
 
-On a truly **new world** (Guest or account), the player must do these real gameplay tasks before the full sandbox opens:
+- **Backpack:** Four readable tabs: **Items**, **Outfit**, **Supplies**, **Settings**. The inventory is the default view when the Bag opens. Clothing is no longer mixed with crafting supplies and backups.
+- **Creative supplies are still available:** **Bag → Supplies → Refill supplies** (wood/stone/ore/seeds); the original refill handler and amounts are unchanged, including the 999 wood/stone availability.
+- **Construction:** Four categories: **Starter** (Cabin, Campfire, Workbench, Chest, Furnace, Bed), **Parts** (floors, walls, roof, etc.), **Upstairs**, and **More** (decor, stock blueprints and personal saved designs). All original build choices are preserved. Selecting a piece continues to use the existing placement, rotation and editing system.
+- **Camera zoom:** Now lives in **Bag → Settings → Gameplay & display**, instead of occupying the game HUD. Pinch-to-zoom remains supported.
+- **Joystick recovery:** The old `↻ Unstick` control stays near the joystick as a smaller, accessible reset button.
+- **Tutorial:** The mandatory First Steps tutorial still controls its own lessons, highlights the correct building and provides the same progress persistence.
+- **Combat, zombies, villagers, crafting, guest entry, cloud autosave, world import/export, and six-slot hotbar** stay in place.
 
-1. **Move** 3 metres with the joystick.
-2. **Gather** at least 3 wood from a real tree and 2 stone from a real rock with the proper starter tools.
-3. **Build** an actual Workbench on clear land. A one-time, small starter materials pack appears at this stage to avoid repeated grinding; it is separate from the old Creative Supplies refill.
-4. **Craft** a Stone Axe using the actual Workbench recipe.
-5. **Build** an actual Campfire.
-6. **Practice** one real sword attack and one held shield block. A training sword and shield are granted for this safe step; the tutorial does not spawn an aggressive wolf.
+The UI update organizes *the same DOM elements* rather than replacing their event handlers. `interface-system.js` moves controls into tabs at startup. All save/auth/cloud/game modules retain their original logic (versioned asset URLs changed solely to prevent a mixed-version cache).
 
-A compact step card explains the next task and provides a context-aware Help button. A golden beacon marks the nearest relevant tree, rock, or workbench. This happens *inside normal Wilderness gameplay*, not on a separate preview page. You cannot tap Next/Skip to bypass the objectives. Time, survival needs, wolves, and zombies are suspended during the lesson, then resume afterward.
+## iPhone upload — follow in order
 
-Completed steps resume after a browser refresh on the **same device/browser**. The tutorial progress marker uses a **separate mode-specific localStorage key**; the original save schema, server-side Supabase SQL, and auth flow are unchanged. The player's world itself continues using the usual guest/device or account/cloud save system. Tutorial steps do not automatically synchronize between devices, but downloading an existing world will not trigger the tutorial.
+1. **Back up your world first:** open the working v0.24.2 game, select **Bag → Export world**, and save the JSON to your iPhone Files app. Account worlds also cloud-sync, but keep the JSON backup. Do not clear Safari website data.
+2. **Download and extract this ZIP** in Files. You should see `index.html`, `game.js`, `interface-system.js`, other `.js` files, and an `assets` folder.
+3. Open your existing `wilderness-prototype` GitHub repository. Upload/replace **all files in the ZIP's top level to the repository root**, especially `index.html`, `game.js`, `interface-system.js`, `release.json`, `manifest.webmanifest` and the updated versioned JavaScript modules. Keep the same filenames.
+4. Open the ZIP's `assets` folder and upload **its contents** into the existing GitHub **`assets/`** folder. In particular, `assets/survivor-animated.glb` must be at exactly that path. Do **not** create `assets/assets/`, and do not move the model to the root.
+5. Allow GitHub Pages to publish, then open the normal Wilderness game URL. Check that the title/version shows **v0.24.3**. If the old page is cached, fully close/reopen the browser or launch the game URL once with `?refresh=0243` (this does not clear local saves).
+6. Test Bag tabs, Build tabs, movement, inventory, saving and the tutorial before sharing this release with other players. If GitHub Pages reports a missing JS file, verify that all root files—not just `index.html`—were uploaded.
 
-**Existing worlds are protected:** If the account or guest already has an original world save, and no tutorial progress marker is present, the system marks the tutorial complete automatically without altering the world. Importing/restoring an existing world and downloading an existing cloud world also marks tutorial complete. There is no forced tutorial for existing players.
+**No Supabase migration is required.** This package has not been deployed to your GitHub and does not access or mutate your live database.
 
-## iPhone GitHub upload
+## User acceptance checklist
 
-1. First, open your currently working Wilderness game and **Bag → Export world**. Save the JSON backup in iPhone Files. Do not clear website/Safari data.
-2. Unzip `Wilderness-v0.24.2-First-Steps.zip` in iPhone Files.
-3. Upload/replace **all files at the root of the ZIP** in your GitHub repository root, including updated `index.html`, `game.js`, `release.json`, and the **new `tutorial-system.js`**. Do **not** upload only `index.html`.
-4. Upload the **contents** of the ZIP's `assets/` folder into your existing GitHub **`assets/`** folder. Do **not** move `survivor-animated.glb` to the repository root or make a nested extra `assets` folder.
-5. Wait for GitHub Pages to publish; open Wilderness and check **v0.24.2**. Existing account and guest saves should open as before.
-6. For a **new-player test**, use a separate Safari browser/profile or device with no Wilderness saves. Do not clear your own current browser storage. Choose **Play as Guest** and complete the steps. Confirm closing/reopening resumes the same step.
-
-No Supabase migration is required. The author has not deployed this ZIP to GitHub/Supabase or tested the real iPhone 3D rendering; validate on a non-production device or spare test profile first.
-
-## Regression acceptance checks
-
-- Guest can enter without a Supabase account; guest account/world key never overwrites an existing account save.
-- Existing world shows no tutorial and preserves buildings, inventory, health and cloud auto-save.
-- New guest sees step 1; walking progresses; 1 tree and 1 rock harvested unlock the next step.
-- Build Workbench using highlighted control, craft Stone Axe from its actual crafting menu, then place Campfire.
-- Combat practice works through the main action and shield hold; no combat damage during tutorial.
-- Refresh between steps; resume correct objective, items, and built pieces.
-- Existing zombies still spawn after the tutorial when night falls; game world runs as before.
-- No missing assets/JS (especially `assets/survivor-animated.glb` and `tutorial-system.js`); landscape UI remains usable.
+- [ ] Existing account and Guest worlds open with their existing buildings and items.
+- [ ] The Bag opens to Items; Outfit, Supplies and Settings each open and show the correct controls.
+- [ ] Bag → Supplies → **Refill supplies** still grants the usual creative materials.
+- [ ] Bag → Settings → Account & world backup contains Export, Import, account/guest controls.
+- [ ] Camera pinch-to-zoom and Settings camera +/− both work.
+- [ ] Build → Starter contains Cabin, Campfire, Workbench, Chest, Furnace and Bed.
+- [ ] Build → Parts, Upstairs and More contain all previous pieces, blueprints and design tools.
+- [ ] Choose a piece, rotate, place, dismantle and edit; inventory quantities update normally.
+- [ ] The joystick, main action, jump, sword/block/dodge, six-slot hotbar and reset button work on an iPhone in landscape.
+- [ ] Cloud autosave still works for a signed-in test account; Guest mode remains local-only and separate.
+- [ ] On a **new test profile only**, First Steps shows one required item during the workbench/campfire steps and the tutorial advances by real actions. Do not wipe your main device's browser storage to test it.
 
 ## Known limitations
 
-- Tutorial steps use a per-browser marker, not the cloud save schema; they do not sync across a second device.
-- The lesson teaches combat with an unopposed attack and block, **not** a forced wolf battle, to keep new players safe and avoid collision/death-loop issues.
-- Tutorial screens and behavior need real iPhone acceptance testing; the browser runtime cannot be fully exercised offline without the external Three.js CDN.
-- Existing prototype graphics, crafting balance and wider interface remain otherwise unchanged; further general UI simplification should be a distinct design pass.
+- We ran source/syntax, DOM structure, package, and Chromium layout/control-visibility tests. **We did not complete a live Three.js gameplay test on a physical iPhone**, so treat this as an acceptance build until tested on your device.
+- UI tabs are presentation-only. They do not change world files, cloud policies or crafting balance.
+- The current character textures and other existing visual limitations remain untouched. The 3D art upgrade is postponed.
